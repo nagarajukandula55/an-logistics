@@ -259,6 +259,7 @@ model CourierPartner {
   agreements      CourierAgreement[]
   apiConfig       CourierApiConfig?
   orders          Order[]
+  rateCards       RateCard[]
 
   @@index([status])
 }
@@ -306,6 +307,39 @@ model CourierAgreement {
   createdAt         DateTime                @default(now())
 
   @@index([courierPartnerId])
+}
+
+// ---------- Rate cards ----------
+// A courier partner's priced offering: a named, versioned card of
+// weight/zone-banded slabs. Only one card per partner is ACTIVE at a time —
+// mirrors the CourierAgreement supersede-on-create pattern above.
+
+model RateCard {
+  id                String            @id @default(cuid())
+  courierPartnerId  String
+  courierPartner    CourierPartner    @relation(fields: [courierPartnerId], references: [id])
+  name              String
+  isActive          Boolean           @default(true)
+  effectiveFrom     DateTime
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  slabs             RateCardSlab[]
+
+  @@index([courierPartnerId])
+}
+
+model RateCardSlab {
+  id           String   @id @default(cuid())
+  rateCardId   String
+  rateCard     RateCard @relation(fields: [rateCardId], references: [id], onDelete: Cascade)
+  zone         String
+  minWeightKg  Float
+  maxWeightKg  Float
+  price        Float
+  isActive     Boolean  @default(true)
+
+  @@index([rateCardId])
 }
 
 model CourierApiConfig {

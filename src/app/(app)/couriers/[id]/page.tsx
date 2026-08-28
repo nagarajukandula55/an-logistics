@@ -8,6 +8,7 @@ import { StatusControls } from "./StatusControls";
 import { AgreementPanel } from "./AgreementPanel";
 import { ApiConfigPanel } from "./ApiConfigPanel";
 import { BranchesPanel } from "./BranchesPanel";
+import { RateCardsPanel } from "./RateCardsPanel";
 
 export default async function CourierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -18,6 +19,7 @@ export default async function CourierDetailPage({ params }: { params: Promise<{ 
       branches: { include: { serviceAreas: true }, orderBy: { createdAt: "asc" } },
       agreements: { orderBy: { createdAt: "desc" } },
       apiConfig: true,
+      rateCards: { include: { slabs: true }, orderBy: { effectiveFrom: "desc" } },
     },
   });
 
@@ -83,6 +85,15 @@ export default async function CourierDetailPage({ params }: { params: Promise<{ 
             </CardHeader>
             <CardBody>
               <AgreementPanel courierPartnerId={partner.id} agreements={partner.agreements} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="h-section">Rate cards</h2>
+            </CardHeader>
+            <CardBody>
+              <RateCardsPanel courierPartnerId={partner.id} rateCards={partner.rateCards} />
             </CardBody>
           </Card>
         </div>

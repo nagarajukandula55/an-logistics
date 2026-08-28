@@ -7,17 +7,18 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { generateTrackingCode } from "@/lib/tracking-code";
 import { OrderStatus } from "@prisma/client";
+import { optionalPincodeSchema } from "@/lib/validation";
 
 const createOrderSchema = z.object({
   customerId: z.string().min(1, "Select or create a customer"),
   pickupAddress: z.string().min(1, "Pickup address is required"),
   pickupContactName: z.string().min(1, "Pickup contact name is required"),
   pickupContactPhone: z.string().min(1, "Pickup contact phone is required"),
-  pickupPincode: z.string().optional(),
+  pickupPincode: optionalPincodeSchema,
   deliveryAddress: z.string().min(1, "Delivery address is required"),
   deliveryContactName: z.string().min(1, "Delivery contact name is required"),
   deliveryContactPhone: z.string().min(1, "Delivery contact phone is required"),
-  deliveryPincode: z.string().optional(),
+  deliveryPincode: optionalPincodeSchema,
   weightKg: z.coerce.number().positive().optional().or(z.literal("").transform(() => undefined)),
   packageDescription: z.string().optional(),
   codAmount: z.coerce.number().nonnegative().optional().or(z.literal("").transform(() => undefined)),

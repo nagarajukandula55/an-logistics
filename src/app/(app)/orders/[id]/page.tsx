@@ -39,18 +39,6 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     orderBy: { createdAt: "asc" },
   });
 
-  const serviceableBranches = order.deliveryPincode
-    ? await prisma.courierBranch.findMany({
-        where: {
-          isActive: true,
-          courierPartner: { status: "ACTIVE" },
-          serviceAreas: { some: { pincode: order.deliveryPincode } },
-        },
-        include: { courierPartner: true },
-        orderBy: { name: "asc" },
-      })
-    : [];
-
   const needsDispatch = order.status === OrderStatus.CREATED && !order.driverId && !order.courierPartnerId;
   const showPod = order.status === OrderStatus.OUT_FOR_DELIVERY;
 
@@ -177,7 +165,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   </div>
                   <div className="border-t border-border pt-4">
                     <p className="eyebrow mb-2">Courier partner</p>
-                    <CourierAssignPanel orderId={order.id} branches={serviceableBranches} deliveryPincode={order.deliveryPincode} />
+                    <CourierAssignPanel orderId={order.id} deliveryPincode={order.deliveryPincode} />
                   </div>
                 </div>
               ) : (

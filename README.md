@@ -83,18 +83,43 @@ courier partner (`COURIER_PARTNER`). This slice adds:
   partner's default commission when there's no active agreement.
 - **API config** — provider/base URL/webhook fields per partner, clearly
   labeled manual-only until marked active with a non-"manual" provider.
-- **Dispatch routing** — on an order's detail page, if it has a
-  `deliveryPincode`, the dispatcher sees any courier branches covering that
-  pincode (active partner, active branch) alongside the existing self-fleet
-  assignment panel, and can route the order to one. This is additive — the
-  self-fleet flow is unchanged when no courier is chosen.
+- **Dispatch routing with live quote comparison** — on an order's detail
+  page, if it has a `deliveryPincode`, the dispatcher sees a table of every
+  ACTIVE courier partner with a branch covering that pincode, each row
+  showing the pincode-derived zone, quoted price, computed platform fee, and
+  ETA (when the provider returns one), with a per-row Assign action. This is
+  additive — the self-fleet flow is unchanged when no courier is chosen.
+- **Rate cards** (`/couriers/[id]`) — each courier partner can define
+  versioned `RateCard`s made of `RateCardSlab` rows (zone + weight band +
+  price). Creating a new rate card automatically deactivates the partner's
+  prior active one, mirroring the agreement supersede pattern. Zones are
+  free text (e.g. `LOCAL`/`REGIONAL`/`NATIONAL`) so partners can define their
+  own; the platform derives a zone for a given shipment with a deterministic
+  pincode-prefix heuristic (`src/lib/zone.ts`): same first 3 digits of
+  pickup/delivery pincode → `LOCAL`, same first 2 digits only → `REGIONAL`,
+  otherwise `NATIONAL`. This is a real, deliberate approximation (common in
+  Indian logistics zoning), not a placeholder — real distance/geocoding-based
+  zoning is not built.
+- **Pluggable courier-provider adapter** (`src/lib/courier-providers/`) — a
+  `CourierProvider` interface (`checkServiceability`, `getQuote`) that both
+  serviceability checks and quote generation go through. `MANUAL` partners
+  are served by `manual-provider.ts`, which answers from our own
+  `ServiceArea` and `RateCard` data (no external calls). Adding a real
+  per-courier adapter later (Delhivery, DTDC, etc.) is a new file
+  implementing `CourierProvider`, wired into `registry.ts` by
+  `CourierApiConfig.provider` — no other code changes needed.
 
 **Planned next phase (explicitly out of scope for this slice):**
 - Customer-facing booking/tracking portal beyond the existing `/track/[code]`
   page. The schema already models `Customer` and `User.role = CUSTOMER` as
   first-class, so this can be built without a schema rewrite.
-- Real HTTP integration with courier partner APIs (the `CourierApiConfig`
-  fields are captured but no calls are made against them yet).
+- Real HTTP integration with courier partner APIs — `CourierApiConfig`
+  fields are captured, and `getCourierProvider()` resolves an `API`-type
+  partner to a stub whose methods throw
+  `"Real API integration not yet implemented for provider: <name>"`. This is
+  the intended final behavior for this slice, not a TODO left broken; the
+  quote-comparison table shows those partners as "no rate card configured"
+  rather than failing.
 - Payout / settlement / invoicing / wallets for courier partners.
 - Fully automatic, no-human order-to-courier assignment (routing today
   surfaces serviceable branches for a human dispatcher to pick from;
@@ -112,10 +137,15 @@ courier partner (`COURIER_PARTNER`). This slice adds:
 - `CourierApiConfig.apiKeyEncrypted` is stored as plain text, not actually
   encrypted — needs real encryption-at-rest before any real API key is put
   in it.
-- Platform fee (`Order.platformFeeAmount`) is computed against `codAmount` as
-  a stand-in for real order/shipment value — there's no separate declared
-  value or rate-card model yet, so the fee is left `null` when an order has
-  no COD amount rather than being fabricated.
+- Platform fee (`Order.platformFeeAmount`) recorded at assignment time is
+  still computed against `codAmount` as a stand-in for real order/shipment
+  value, and is left `null` when an order has no COD amount rather than
+  being fabricated. The quote-comparison table's platform fee, by contrast,
+  is computed against the courier's quoted rate-card price. Reconciling
+  these two into one order-value model is a planned follow-up.
+- A courier partner with no active `RateCard`, or one whose slabs don't
+  cover the shipment's zone/weight, shows as "no rate card configured" in
+  the quote table rather than being omitted — a real "no quote" state.
 - Older orders (and any order created without a delivery pincode) have no
   `deliveryPincode`, so courier routing can't suggest branches for them —
   the dispatch panel shows an empty state in that case rather than erroring.

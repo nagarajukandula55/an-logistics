@@ -10,6 +10,7 @@ import { Field, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Plus } from "lucide-react";
+import { PINCODE_REGEX } from "@/lib/validation";
 
 type ServiceArea = { id: string; pincode: string; city: string | null };
 type Branch = {
@@ -90,9 +91,15 @@ function BranchRow({ courierPartnerId, branch }: { courierPartnerId: string; bra
   const [pending, startTransition] = useTransition();
   const [togglePending, startToggle] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [pincodeError, setPincodeError] = useState<string | null>(null);
 
   function handleAddArea(formData: FormData) {
     setError(null);
+    const pincode = String(formData.get("pincode") ?? "");
+    if (!PINCODE_REGEX.test(pincode)) {
+      setPincodeError("Enter a valid 6-digit pincode");
+      return;
+    }
     formData.set("courierBranchId", branch.id);
     formData.set("courierPartnerId", courierPartnerId);
     startTransition(async () => {
@@ -145,8 +152,17 @@ function BranchRow({ courierPartnerId, branch }: { courierPartnerId: string; bra
 
       {showAreaForm ? (
         <form action={handleAddArea} className="flex items-end gap-2">
-          <Field label="Pincode" htmlFor={`pincode-${branch.id}`} required className="w-32">
-            <Input id={`pincode-${branch.id}`} name="pincode" required />
+          <Field label="Pincode" htmlFor={`pincode-${branch.id}`} required className="w-32" error={pincodeError ?? undefined}>
+            <Input
+              id={`pincode-${branch.id}`}
+              name="pincode"
+              required
+              invalid={!!pincodeError}
+              onBlur={(e) => {
+                const v = e.target.value;
+                setPincodeError(v && !PINCODE_REGEX.test(v) ? "Enter a valid 6-digit pincode" : null);
+              }}
+            />
           </Field>
           <Field label="City" htmlFor={`areaCity-${branch.id}`} hint="Optional" className="flex-1">
             <Input id={`areaCity-${branch.id}`} name="city" />

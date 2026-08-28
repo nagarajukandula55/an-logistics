@@ -1,35 +1,56 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { assignOrderToCourierAction } from "@/lib/actions/couriers";
-import { Field, Select } from "@/components/ui/Field";
+import { useEffect, useState, useTransition } from "react";
+import { assignOrderToCourierAction, getQuotesForOrder, type CourierQuote } from "@/lib/actions/couriers";
 import { Button } from "@/components/ui/Button";
-
-type Branch = {
-  id: string;
-  name: string;
-  city: string;
-  courierPartner: { id: string; name: string; commissionType: string; commissionValue: number };
-};
+import { Badge } from "@/components/ui/Badge";
+import { Spinner } from "@/components/ui/Spinner";
 
 export function CourierAssignPanel({
   orderId,
-  branches,
   deliveryPincode,
 }: {
   orderId: string;
-  branches: Branch[];
   deliveryPincode: string | null;
 }) {
-  const [branchId, setBranchId] = useState(branches[0]?.id ?? "");
+  const [quotes, setQuotes] = useState<CourierQuote[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [assignError, setAssignError] = useState<string | null>(null);
+  const [assigningBranchId, setAssigningBranchId] = useState<string | null>(null);
   const [pending, startTransition] = useTransition();
-  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!deliveryPincode) return;
+    let cancelled = false;
+    getQuotesForOrder(orderId)
+      .then((result) => {
+        if (!cancelled) setQuotes(result);
+      })
+      .catch((err) => {
+        if (!cancelled) setLoadError(err instanceof Error ? err.message : "Could not load courier quotes");
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [orderId, deliveryPincode]);
 
   if (!deliveryPincode) {
     return <p className="text-sm text-ink-3">Add a delivery pincode to the order to see serviceable courier branches.</p>;
   }
 
-  if (branches.length === 0) {
+  if (loadError) {
+    return <p className="text-sm text-danger">{loadError}</p>;
+  }
+
+  if (quotes === null) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-ink-3">
+        <Spinner className="size-4" /> Loading courier quotes…
+      </div>
+    );
+  }
+
+  if (quotes.length === 0) {
     return (
       <p className="text-sm text-ink-3">
         No active courier branch services pincode <span className="tabular">{deliveryPincode}</span>.
@@ -37,8 +58,9 @@ export function CourierAssignPanel({
     );
   }
 
-  function handleAssign() {
-    setError(null);
+  function handleAssign(branchId: string) {
+    setAssignError(null);
+    setAssigningBranchId(branchId);
     const fd = new FormData();
     fd.set("orderId", orderId);
     fd.set("courierBranchId", branchId);
@@ -46,26 +68,62 @@ export function CourierAssignPanel({
       try {
         await assignOrderToCourierAction(fd);
       } catch (err) {
-        setError(err instanceof Error ? err.message : "Could not assign courier");
+        setAssignError(err instanceof Error ? err.message : "Could not assign courier");
       }
     });
   }
 
   return (
     <div className="flex flex-col gap-3">
-      <Field label="Courier branch" htmlFor="courierBranchId" hint={`Serviceable for ${deliveryPincode}`}>
-        <Select id="courierBranchId" value={branchId} onChange={(e) => setBranchId(e.target.value)}>
-          {branches.map((b) => (
-            <option key={b.id} value={b.id}>
-              {b.courierPartner.name} · {b.name} ({b.city})
-            </option>
-          ))}
-        </Select>
-      </Field>
-      {error && <p className="text-xs text-danger">{error}</p>}
-      <Button type="button" variant="secondary" onClick={handleAssign} loading={pending} className="w-full">
-        Route to courier
-      </Button>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs text-ink-3">
+              <th className="pb-2 pr-2 font-medium">Partner</th>
+              <th className="pb-2 pr-2 font-medium">Zone</th>
+              <th className="pb-2 pr-2 font-medium">Price</th>
+              <th className="pb-2 pr-2 font-medium">Platform fee</th>
+              <th className="pb-2 pr-2 font-medium">ETA</th>
+              <th className="pb-2 font-medium" />
+            </tr>
+          </thead>
+          <tbody>
+            {quotes.map((q) => (
+              <tr key={q.branchId} className="border-t border-border">
+                <td className="py-2 pr-2 text-ink">
+                  {q.partnerName}
+                  <span className="block text-xs text-ink-3">{q.branchName}</span>
+                </td>
+                <td className="py-2 pr-2">
+                  <Badge tone="info">{q.zone}</Badge>
+                </td>
+                <td className="py-2 pr-2 tabular text-ink">
+                  {q.noRateCard ? (
+                    <span className="text-ink-3">No rate card configured</span>
+                  ) : (
+                    `₹${q.price!.toFixed(2)}`
+                  )}
+                </td>
+                <td className="py-2 pr-2 tabular text-ink-2">{q.platformFee != null ? `₹${q.platformFee.toFixed(2)}` : "—"}</td>
+                <td className="py-2 pr-2 tabular text-ink-2">{q.etaDays != null ? `${q.etaDays}d` : "—"}</td>
+                <td className="py-2">
+                  <Button
+                    type="button"
+                    size="sm"
+                    variant="secondary"
+                    loading={pending && assigningBranchId === q.branchId}
+                    disabled={pending}
+                    onClick={() => handleAssign(q.branchId)}
+                  >
+                    Assign
+                  </Button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      {assignError && <p className="text-xs text-danger">{assignError}</p>}
     </div>
   );
 }

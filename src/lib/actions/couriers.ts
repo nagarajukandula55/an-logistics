@@ -14,6 +14,10 @@ import {
   OrderFulfillmentType,
   OrderStatus,
 } from "@prisma/client";
+import { getCourierProvider } from "@/lib/courier-providers/registry";
+import { determineZone } from "@/lib/zone";
+import { findServiceableBranches, computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
+import { pincodeSchema } from "@/lib/validation";
 
 export type ActionState = { ok: boolean; error?: string };
 
@@ -138,7 +142,7 @@ export async function setCourierBranchActiveAction(formData: FormData) {
 const createServiceAreaSchema = z.object({
   courierBranchId: z.string().min(1),
   courierPartnerId: z.string().min(1),
-  pincode: z.string().min(1, "Pincode is required"),
+  pincode: pincodeSchema,
   city: z.string().optional(),
 });
 
@@ -254,19 +258,6 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
  * ACTIVE partners with ACTIVE (isActive) branches. Used to offer
  * courier-partner options alongside self-fleet dispatch on an order.
  */
-export async function findServiceableBranches(pincode: string) {
-  if (!pincode) return [];
-
-  return prisma.courierBranch.findMany({
-    where: {
-      isActive: true,
-      courierPartner: { status: CourierPartnerStatus.ACTIVE },
-      serviceAreas: { some: { pincode } },
-    },
-    include: { courierPartner: true },
-    orderBy: { name: "asc" },
-  });
-}
 
 const assignCourierSchema = z.object({
   orderId: z.string().min(1),
@@ -304,27 +295,26 @@ export async function assignOrderToCourierAction(formData: FormData) {
 
   const partner = branch.courierPartner;
 
+  // Confirm serviceability through the pluggable provider adapter rather
+  // than querying ServiceArea directly, so MANUAL vs. future API partners
+  // go through one code path.
+  if (order.deliveryPincode) {
+    const provider = getCourierProvider(partner);
+    const serviceability = await provider.checkServiceability(partner, order.deliveryPincode);
+    if (!serviceability.serviceable) {
+      throw new Error("Courier branch does not service the delivery pincode");
+    }
+  }
+
   // Prefer the partner's currently-ACTIVE agreement's commission terms over
   // the partner's own defaults, per real onboarding/agreement lifecycle.
-  const activeAgreement = await prisma.courierAgreement.findFirst({
-    where: { courierPartnerId: partner.id, status: CourierAgreementStatus.ACTIVE },
-    orderBy: { effectiveFrom: "desc" },
-  });
-  const commissionType = activeAgreement?.commissionType ?? partner.commissionType;
-  const commissionValue = activeAgreement?.commissionValue ?? partner.commissionValue;
+  const commission = await getEffectiveCommission(partner.id, partner);
 
   // Platform fee is computed against codAmount as a stand-in for real order
-  // value — there is no separate declared-value/rate-card field yet. If
-  // codAmount is null we deliberately leave the fee null rather than
-  // fabricate a number; real order-value/rate-card modeling is a planned
-  // next-phase gap (see README).
-  let platformFeeAmount: number | null = null;
-  if (order.codAmount != null) {
-    platformFeeAmount =
-      commissionType === CommissionType.PERCENT
-        ? Math.round(order.codAmount * (commissionValue / 100) * 100) / 100
-        : commissionValue;
-  }
+  // value — there is no separate declared-value field yet. If codAmount is
+  // null we deliberately leave the fee null rather than fabricate a number;
+  // real order-value modeling is a planned next-phase gap (see README).
+  const platformFeeAmount = computePlatformFee(commission, order.codAmount);
 
   await prisma.$transaction([
     prisma.order.update({
@@ -349,4 +339,150 @@ export async function assignOrderToCourierAction(formData: FormData) {
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
   revalidatePath("/dispatch");
+}
+
+// ---------- Quote comparison ----------
+
+export type CourierQuote = {
+  partnerId: string;
+  partnerName: string;
+  branchId: string;
+  branchName: string;
+  zone: string;
+  price: number | null;
+  etaDays?: number;
+  platformFee: number | null;
+  netCourierPayout: number | null;
+  noRateCard: boolean;
+};
+
+/**
+ * Builds a live, sorted quote-comparison list for an order across every
+ * ACTIVE courier partner with a branch that services the delivery pincode.
+ * Partners with no usable quote (no active rate card / no matching slab /
+ * API not yet implemented) are still shown, ranked last, with
+ * noRateCard: true — they are a real "no quote available" state, not
+ * omitted from the list.
+ */
+export async function getQuotesForOrder(orderId: string): Promise<CourierQuote[]> {
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new Error("Order not found");
+  if (!order.deliveryPincode) return [];
+
+  const branches = await findServiceableBranches(order.deliveryPincode);
+  const weightKg = order.weightKg ?? 0;
+  const zone = determineZone(order.pickupPincode ?? "", order.deliveryPincode);
+
+  const quotes: CourierQuote[] = await Promise.all(
+    branches.map(async (branch) => {
+      const partner = branch.courierPartner;
+      const provider = getCourierProvider(partner);
+
+      let quote: { price: number; etaDays?: number } | null = null;
+      try {
+        quote = await provider.getQuote(partner, {
+          pickupPincode: order.pickupPincode ?? "",
+          deliveryPincode: order.deliveryPincode!,
+          weightKg,
+        });
+      } catch {
+        // API integration not yet implemented, or provider lookup failed —
+        // treat as "no quote available" rather than failing the whole list.
+        quote = null;
+      }
+
+      const commission = await getEffectiveCommission(partner.id, partner);
+      const platformFee = quote ? computePlatformFee(commission, quote.price) : null;
+      const netCourierPayout = quote && platformFee != null ? Math.round((quote.price - platformFee) * 100) / 100 : null;
+
+      return {
+        partnerId: partner.id,
+        partnerName: partner.name,
+        branchId: branch.id,
+        branchName: branch.name,
+        zone,
+        price: quote?.price ?? null,
+        etaDays: quote?.etaDays,
+        platformFee,
+        netCourierPayout,
+        noRateCard: quote === null,
+      };
+    })
+  );
+
+  return quotes.sort((a, b) => {
+    if (a.noRateCard !== b.noRateCard) return a.noRateCard ? 1 : -1;
+    if (a.price == null || b.price == null) return 0;
+    return a.price - b.price;
+  });
+}
+
+// ---------- Rate cards ----------
+
+const createRateCardSlabSchema = z.object({
+  zone: z.string().min(1),
+  minWeightKg: z.coerce.number().nonnegative(),
+  maxWeightKg: z.coerce.number().positive(),
+  price: z.coerce.number().nonnegative(),
+});
+
+const createRateCardSchema = z.object({
+  courierPartnerId: z.string().min(1),
+  name: z.string().min(1, "Rate card name is required"),
+  effectiveFrom: z.string().min(1, "Effective-from date is required"),
+  slabs: z.array(createRateCardSlabSchema).min(1, "Add at least one slab"),
+});
+
+/**
+ * Creates a new rate card for a partner from a JSON-encoded payload
+ * (slabs are a variable-length list, not flat form fields). Mirrors
+ * createOrUpdateAgreementAction's supersede pattern: a new rate card
+ * auto-deactivates the partner's prior active one.
+ */
+export async function createRateCardAction(formData: FormData) {
+  await requireSession();
+
+  let slabs: unknown;
+  try {
+    slabs = JSON.parse(String(formData.get("slabsJson") ?? "[]"));
+  } catch {
+    throw new Error("Invalid slab data");
+  }
+
+  const parsed = createRateCardSchema.safeParse({
+    courierPartnerId: formData.get("courierPartnerId"),
+    name: formData.get("name"),
+    effectiveFrom: formData.get("effectiveFrom"),
+    slabs,
+  });
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  }
+  const data = parsed.data;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.rateCard.updateMany({
+      where: { courierPartnerId: data.courierPartnerId, isActive: true },
+      data: { isActive: false },
+    });
+
+    await tx.rateCard.create({
+      data: {
+        courierPartnerId: data.courierPartnerId,
+        name: data.name,
+        effectiveFrom: new Date(data.effectiveFrom),
+        isActive: true,
+        slabs: {
+          create: data.slabs.map((s) => ({
+            zone: s.zone,
+            minWeightKg: s.minWeightKg,
+            maxWeightKg: s.maxWeightKg,
+            price: s.price,
+          })),
+        },
+      },
+    });
+  });
+
+  revalidatePath(`/couriers/${data.courierPartnerId}`);
 }

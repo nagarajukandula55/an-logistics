@@ -6,6 +6,7 @@ import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Plus, X } from "lucide-react";
+import { PINCODE_REGEX } from "@/lib/validation";
 
 type CustomerOption = { id: string; name: string; phone: string | null };
 
@@ -22,6 +23,12 @@ export function NewOrderForm({ customers: initialCustomers }: { customers: Custo
   const [customerError, setCustomerError] = useState<string | null>(null);
 
   const errors = state.errors ?? {};
+  const [pickupPincodeError, setPickupPincodeError] = useState<string | null>(null);
+  const [deliveryPincodeError, setDeliveryPincodeError] = useState<string | null>(null);
+
+  function validatePincodeOnBlur(value: string, setter: (msg: string | null) => void) {
+    setter(value && !PINCODE_REGEX.test(value) ? "Enter a valid 6-digit pincode" : null);
+  }
 
   function handleCreateCustomer() {
     if (!newCustomerName.trim()) {
@@ -119,8 +126,18 @@ export function NewOrderForm({ customers: initialCustomers }: { customers: Custo
               <Input id="pickupContactPhone" name="pickupContactPhone" required invalid={!!errors.pickupContactPhone} />
             </Field>
           </div>
-          <Field label="Pickup pincode" htmlFor="pickupPincode" hint="Optional" error={errors.pickupPincode?.[0]}>
-            <Input id="pickupPincode" name="pickupPincode" invalid={!!errors.pickupPincode} />
+          <Field
+            label="Pickup pincode"
+            htmlFor="pickupPincode"
+            hint="Optional"
+            error={pickupPincodeError ?? errors.pickupPincode?.[0]}
+          >
+            <Input
+              id="pickupPincode"
+              name="pickupPincode"
+              invalid={!!pickupPincodeError || !!errors.pickupPincode}
+              onBlur={(e) => validatePincodeOnBlur(e.target.value, setPickupPincodeError)}
+            />
           </Field>
         </CardBody>
       </Card>
@@ -143,9 +160,14 @@ export function NewOrderForm({ customers: initialCustomers }: { customers: Custo
             label="Delivery pincode"
             htmlFor="deliveryPincode"
             hint="Used to find serviceable courier partner branches"
-            error={errors.deliveryPincode?.[0]}
+            error={deliveryPincodeError ?? errors.deliveryPincode?.[0]}
           >
-            <Input id="deliveryPincode" name="deliveryPincode" invalid={!!errors.deliveryPincode} />
+            <Input
+              id="deliveryPincode"
+              name="deliveryPincode"
+              invalid={!!deliveryPincodeError || !!errors.deliveryPincode}
+              onBlur={(e) => validatePincodeOnBlur(e.target.value, setDeliveryPincodeError)}
+            />
           </Field>
         </CardBody>
       </Card>
