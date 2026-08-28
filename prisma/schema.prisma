@@ -127,6 +127,16 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum OrderFulfillmentType {
+  SELF_FLEET
+  COURIER_PARTNER
+}
+
+enum OrderAssignmentMethod {
+  MANUAL
+  AUTO
+}
+
 model Order {
   id                    String      @id @default(cuid())
   trackingCode          String      @unique
@@ -136,12 +146,14 @@ model Order {
   pickupAddress         String
   pickupContactName     String
   pickupContactPhone    String
+  pickupPincode         String?
   originWarehouseId     String?
   originWarehouse       Warehouse?  @relation("OriginWarehouse", fields: [originWarehouseId], references: [id])
 
   deliveryAddress       String
   deliveryContactName   String
   deliveryContactPhone  String
+  deliveryPincode       String?
   destinationWarehouseId String?
   destinationWarehouse  Warehouse?  @relation("DestinationWarehouse", fields: [destinationWarehouseId], references: [id])
 
@@ -156,6 +168,15 @@ model Order {
   vehicleId             String?
   vehicle               Vehicle?    @relation(fields: [vehicleId], references: [id])
 
+  fulfillmentType       OrderFulfillmentType   @default(SELF_FLEET)
+  assignmentMethod      OrderAssignmentMethod  @default(MANUAL)
+  courierPartnerId      String?
+  courierPartner        CourierPartner? @relation(fields: [courierPartnerId], references: [id])
+  courierBranchId       String?
+  courierBranch         CourierBranch?  @relation(fields: [courierBranchId], references: [id])
+  platformFeeAmount     Float?
+  courierPayoutAmount   Float?
+
   createdAt             DateTime    @default(now())
   updatedAt              DateTime   @updatedAt
 
@@ -165,6 +186,8 @@ model Order {
   @@index([customerId])
   @@index([driverId])
   @@index([status])
+  @@index([deliveryPincode])
+  @@index([courierPartnerId])
 }
 
 model OrderStatusEvent {
@@ -186,4 +209,113 @@ model ProofOfDelivery {
   photoUrl     String?
   notes        String?
   createdAt    DateTime @default(now())
+}
+
+// ---------- Courier aggregator marketplace ----------
+// Courier partners onboard onto the platform and fulfill orders alongside
+// (not instead of) the self-fleet model above. Manual/WhatsApp coordination
+// today; real per-courier API integration is a planned next phase.
+
+enum CourierPartnerStatus {
+  PENDING
+  ACTIVE
+  SUSPENDED
+  TERMINATED
+}
+
+enum CourierIntegrationType {
+  MANUAL
+  API
+}
+
+enum CommissionType {
+  PERCENT
+  FLAT
+}
+
+enum CourierAgreementStatus {
+  DRAFT
+  ACTIVE
+  EXPIRED
+  TERMINATED
+}
+
+model CourierPartner {
+  id              String                  @id @default(cuid())
+  name            String
+  legalName       String?
+  contactName     String
+  contactPhone    String
+  contactEmail    String?
+  status          CourierPartnerStatus    @default(PENDING)
+  integrationType CourierIntegrationType  @default(MANUAL)
+  commissionType  CommissionType          @default(PERCENT)
+  commissionValue Float
+  notes           String?
+  createdAt       DateTime                @default(now())
+  updatedAt       DateTime                @updatedAt
+
+  branches        CourierBranch[]
+  agreements      CourierAgreement[]
+  apiConfig       CourierApiConfig?
+  orders          Order[]
+
+  @@index([status])
+}
+
+model CourierBranch {
+  id               String         @id @default(cuid())
+  courierPartnerId String
+  courierPartner   CourierPartner @relation(fields: [courierPartnerId], references: [id])
+  name             String
+  address          String
+  city             String
+  contactPhone     String
+  isActive         Boolean        @default(true)
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  serviceAreas     ServiceArea[]
+  orders           Order[]
+
+  @@index([courierPartnerId])
+}
+
+model ServiceArea {
+  id              String        @id @default(cuid())
+  courierBranchId String
+  courierBranch   CourierBranch @relation(fields: [courierBranchId], references: [id])
+  pincode         String
+  city            String?
+  createdAt       DateTime      @default(now())
+
+  @@index([pincode])
+  @@index([courierBranchId])
+}
+
+model CourierAgreement {
+  id                String                  @id @default(cuid())
+  courierPartnerId  String
+  courierPartner    CourierPartner          @relation(fields: [courierPartnerId], references: [id])
+  effectiveFrom     DateTime
+  effectiveTo       DateTime?
+  commissionType    CommissionType
+  commissionValue   Float
+  documentUrl       String?
+  status            CourierAgreementStatus  @default(DRAFT)
+  createdAt         DateTime                @default(now())
+
+  @@index([courierPartnerId])
+}
+
+model CourierApiConfig {
+  id                String         @id @default(cuid())
+  courierPartnerId  String         @unique
+  courierPartner    CourierPartner @relation(fields: [courierPartnerId], references: [id])
+  provider          String
+  baseUrl           String?
+  // NOT real encryption — stored as-is. Known gap, see README.
+  apiKeyEncrypted    String?
+  webhookUrl        String?
+  isActive          Boolean        @default(false)
 }

@@ -119,6 +119,9 @@ export function NewOrderForm({ customers: initialCustomers }: { customers: Custo
               <Input id="pickupContactPhone" name="pickupContactPhone" required invalid={!!errors.pickupContactPhone} />
             </Field>
           </div>
+          <Field label="Pickup pincode" htmlFor="pickupPincode" hint="Optional" error={errors.pickupPincode?.[0]}>
+            <Input id="pickupPincode" name="pickupPincode" invalid={!!errors.pickupPincode} />
+          </Field>
         </CardBody>
       </Card>
 
@@ -136,6 +139,14 @@ export function NewOrderForm({ customers: initialCustomers }: { customers: Custo
               <Input id="deliveryContactPhone" name="deliveryContactPhone" required invalid={!!errors.deliveryContactPhone} />
             </Field>
           </div>
+          <Field
+            label="Delivery pincode"
+            htmlFor="deliveryPincode"
+            hint="Used to find serviceable courier partner branches"
+            error={errors.deliveryPincode?.[0]}
+          >
+            <Input id="deliveryPincode" name="deliveryPincode" invalid={!!errors.deliveryPincode} />
+          </Field>
         </CardBody>
       </Card>
 

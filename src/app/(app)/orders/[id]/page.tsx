@@ -7,6 +7,7 @@ import { Badge, orderStatusTone, orderStatusLabel } from "@/components/ui/Badge"
 import { format } from "date-fns";
 import { OrderStatus } from "@prisma/client";
 import { DispatchPanel } from "./DispatchPanel";
+import { CourierAssignPanel } from "./CourierAssignPanel";
 import { StatusControls } from "./StatusControls";
 import { PodPanel } from "./PodPanel";
 
@@ -19,6 +20,8 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       customer: true,
       driver: { include: { user: true } },
       vehicle: true,
+      courierPartner: true,
+      courierBranch: true,
       statusEvents: { orderBy: { createdAt: "desc" } },
       proofOfDelivery: true,
     },
@@ -36,7 +39,19 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
     orderBy: { createdAt: "asc" },
   });
 
-  const needsDispatch = order.status === OrderStatus.CREATED;
+  const serviceableBranches = order.deliveryPincode
+    ? await prisma.courierBranch.findMany({
+        where: {
+          isActive: true,
+          courierPartner: { status: "ACTIVE" },
+          serviceAreas: { some: { pincode: order.deliveryPincode } },
+        },
+        include: { courierPartner: true },
+        orderBy: { name: "asc" },
+      })
+    : [];
+
+  const needsDispatch = order.status === OrderStatus.CREATED && !order.driverId && !order.courierPartnerId;
   const showPod = order.status === OrderStatus.OUT_FOR_DELIVERY;
 
   return (
@@ -140,15 +155,38 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                     </div>
                   )}
                 </div>
+              ) : order.courierPartner ? (
+                <div className="flex flex-col gap-2 text-sm">
+                  <div>
+                    <p className="text-ink-3">Courier partner</p>
+                    <p className="text-ink">{order.courierPartner.name}</p>
+                    {order.courierBranch && <p className="text-ink-3">{order.courierBranch.name}</p>}
+                  </div>
+                  {order.platformFeeAmount != null && (
+                    <div>
+                      <p className="text-ink-3">Platform fee</p>
+                      <p className="text-ink tabular">₹{order.platformFeeAmount.toFixed(2)}</p>
+                    </div>
+                  )}
+                </div>
               ) : needsDispatch ? (
-                <DispatchPanel orderId={order.id} drivers={availableDrivers} vehicles={availableVehicles} />
+                <div className="flex flex-col gap-6">
+                  <div>
+                    <p className="eyebrow mb-2">Self fleet</p>
+                    <DispatchPanel orderId={order.id} drivers={availableDrivers} vehicles={availableVehicles} />
+                  </div>
+                  <div className="border-t border-border pt-4">
+                    <p className="eyebrow mb-2">Courier partner</p>
+                    <CourierAssignPanel orderId={order.id} branches={serviceableBranches} deliveryPincode={order.deliveryPincode} />
+                  </div>
+                </div>
               ) : (
                 <p className="text-sm text-ink-3">Not assigned.</p>
               )}
             </CardBody>
           </Card>
 
-          {order.driver && !showPod && order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.FAILED && order.status !== OrderStatus.CANCELLED && (
+          {(order.driver || order.courierPartner) && !showPod && order.status !== OrderStatus.DELIVERED && order.status !== OrderStatus.FAILED && order.status !== OrderStatus.CANCELLED && (
             <Card>
               <CardHeader>
                 <h2 className="h-section">Advance status</h2>

@@ -1,8 +1,9 @@
 # AN Logistics
 
-Internal operations console for AN Logistics: order intake, dispatch (driver +
-vehicle assignment), and delivery tracking, including a public no-auth
-tracking page for a shipment's tracking code.
+Operations console for AN Logistics, a courier aggregator marketplace: order
+intake, dispatch to either your own fleet (driver + vehicle) or a third-party
+courier partner, delivery tracking, and courier-partner onboarding — plus a
+public no-auth tracking page for a shipment's tracking code.
 
 ## Stack
 
@@ -55,16 +56,50 @@ tracking page for a shipment's tracking code.
 
 ## Scope
 
-**In this slice:** order intake, dispatch (assign driver + vehicle to an
-order), delivery lifecycle status updates (`ASSIGNED → PICKED_UP →
+**In this slice:** order intake (now including optional pickup/delivery
+pincodes), dispatch to either your own fleet (assign driver + vehicle) or a
+courier partner, delivery lifecycle status updates (`ASSIGNED → PICKED_UP →
 IN_TRANSIT → OUT_FOR_DELIVERY → DELIVERED/FAILED`), proof-of-delivery capture,
 fleet setup (drivers, vehicles), and a public `/track/[code]` page — the one
 customer-facing surface right now.
 
-**Planned next:** a customer self-service portal. The schema already models
-`Customer` and `User.role = CUSTOMER` as first-class, so that portal can be
-built without a schema rewrite — it just needs its own routes, auth flow, and
-an order-creation/tracking UI scoped to a logged-in customer's own orders.
+### Courier aggregator marketplace
+
+The platform is a courier aggregator: courier partners onboard onto the
+platform, and each order can be fulfilled either by your own fleet
+(`Order.fulfillmentType = SELF_FLEET`, the original model, unchanged) or by a
+courier partner (`COURIER_PARTNER`). This slice adds:
+
+- **Courier partner onboarding** (`/couriers`, `/couriers/new`) — partner
+  profile, contact details, integration type (manual/API), and default
+  commission (percent or flat).
+- **Partner lifecycle** — `PENDING → ACTIVE ⇄ SUSPENDED → TERMINATED`,
+  changed from the partner detail page (`/couriers/[id]`).
+- **Branches and service areas** — each partner can have multiple branches,
+  each covering one or more pincodes (`ServiceArea`), used to route orders.
+- **Commission agreements** — versioned `CourierAgreement` records per
+  partner; creating a new `ACTIVE` agreement automatically expires the prior
+  one, so exactly one is authoritative at a time. Falls back to the
+  partner's default commission when there's no active agreement.
+- **API config** — provider/base URL/webhook fields per partner, clearly
+  labeled manual-only until marked active with a non-"manual" provider.
+- **Dispatch routing** — on an order's detail page, if it has a
+  `deliveryPincode`, the dispatcher sees any courier branches covering that
+  pincode (active partner, active branch) alongside the existing self-fleet
+  assignment panel, and can route the order to one. This is additive — the
+  self-fleet flow is unchanged when no courier is chosen.
+
+**Planned next phase (explicitly out of scope for this slice):**
+- Customer-facing booking/tracking portal beyond the existing `/track/[code]`
+  page. The schema already models `Customer` and `User.role = CUSTOMER` as
+  first-class, so this can be built without a schema rewrite.
+- Real HTTP integration with courier partner APIs (the `CourierApiConfig`
+  fields are captured but no calls are made against them yet).
+- Payout / settlement / invoicing / wallets for courier partners.
+- Fully automatic, no-human order-to-courier assignment (routing today
+  surfaces serviceable branches for a human dispatcher to pick from;
+  `Order.assignmentMethod` is modeled with an `AUTO` value for this future
+  work but only `MANUAL` is ever written today).
 
 **Known gaps:**
 - No password-reset / change-password flow (seeded admin password must be
@@ -74,3 +109,13 @@ an order-creation/tracking UI scoped to a logged-in customer's own orders.
 - No pagination on the orders list (capped at the 100 most recent).
 - Driver/vehicle records currently can't be edited or deactivated from the UI
   — only created.
+- `CourierApiConfig.apiKeyEncrypted` is stored as plain text, not actually
+  encrypted — needs real encryption-at-rest before any real API key is put
+  in it.
+- Platform fee (`Order.platformFeeAmount`) is computed against `codAmount` as
+  a stand-in for real order/shipment value — there's no separate declared
+  value or rate-card model yet, so the fee is left `null` when an order has
+  no COD amount rather than being fabricated.
+- Older orders (and any order created without a delivery pincode) have no
+  `deliveryPincode`, so courier routing can't suggest branches for them —
+  the dispatch panel shows an empty state in that case rather than erroring.

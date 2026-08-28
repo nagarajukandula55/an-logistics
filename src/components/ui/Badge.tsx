@@ -63,3 +63,21 @@ const DRIVER_VEHICLE_TONE: Record<string, BadgeTone> = {
 export function fleetStatusTone(status: string): BadgeTone {
   return DRIVER_VEHICLE_TONE[status] ?? "neutral";
 }
+
+const COURIER_PARTNER_STATUS_TONE: Record<string, BadgeTone> = {
+  PENDING: "warning",
+  ACTIVE: "success",
+  SUSPENDED: "warning",
+  TERMINATED: "danger",
+};
+
+export function courierPartnerStatusTone(status: string): BadgeTone {
+  return COURIER_PARTNER_STATUS_TONE[status] ?? "neutral";
+}
+
+export function enumLabel(value: string): string {
+  return value
+    .split("_")
+    .map((w) => w.charAt(0) + w.slice(1).toLowerCase())
+    .join(" ");
+}

@@ -2,13 +2,14 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Truck, Package, Users, LogOut } from "lucide-react";
+import { Truck, Package, Users, LogOut, Handshake } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutAction } from "@/lib/actions/auth-signout";
 
 const LINKS = [
   { href: "/orders", label: "Orders", icon: Package },
   { href: "/dispatch", label: "Dispatch", icon: Truck },
+  { href: "/couriers", label: "Couriers", icon: Handshake },
   { href: "/drivers", label: "Drivers", icon: Users },
   { href: "/vehicles", label: "Vehicles", icon: Truck },
 ];
