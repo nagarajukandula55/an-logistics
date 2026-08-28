@@ -15,8 +15,8 @@ export function LoginForm() {
     <Card>
       <CardBody>
         <form action={formAction} className="flex flex-col gap-4">
-          <Field label="Email" htmlFor="email" required>
-            <Input id="email" name="email" type="email" autoComplete="email" required placeholder="you@an-logistics.com" />
+          <Field label="Username" htmlFor="username" required>
+            <Input id="username" name="username" type="text" autoComplete="username" required placeholder="admin" />
           </Field>
           <Field label="Password" htmlFor="password" required>
             <Input id="password" name="password" type="password" autoComplete="current-password" required />
