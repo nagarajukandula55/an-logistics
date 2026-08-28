@@ -21,12 +21,26 @@ export const authConfig = {
         pathname.startsWith("/track");
 
       if (isPublic) return true;
-      return isLoggedIn;
+      if (!isLoggedIn) return false;
+
+      const mustChangePassword = auth?.user?.mustChangePassword;
+      if (mustChangePassword && pathname !== "/change-password") {
+        return Response.redirect(new URL("/change-password", request.nextUrl));
+      }
+      if (!mustChangePassword && pathname === "/change-password") {
+        return Response.redirect(new URL("/orders", request.nextUrl));
+      }
+
+      return true;
     },
-    jwt({ token, user }) {
+    jwt({ token, user, trigger, session }) {
       if (user) {
         token.role = user.role;
         token.id = user.id;
+        token.mustChangePassword = user.mustChangePassword;
+      }
+      if (trigger === "update" && session?.user?.mustChangePassword === false) {
+        token.mustChangePassword = false;
       }
       return token;
     },
@@ -34,6 +48,7 @@ export const authConfig = {
       if (session.user) {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
+        session.user.mustChangePassword = Boolean(token.mustChangePassword);
       }
       return session;
     },
