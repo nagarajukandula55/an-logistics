@@ -1,0 +1,144 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #f6f7f9;
+  --surface: #ffffff;
+  --surface-2: #f1f3f6;
+  --surface-3: #e6e9ee;
+  --ink: #111418;
+  --ink-2: #4b5563;
+  --ink-3: #8a93a3;
+  --border: #e2e5ea;
+  --border-strong: #cdd2db;
+
+  --accent: #2f5fe0;
+  --accent-hover: #274ec2;
+  --accent-soft: #e8edfc;
+
+  --success: #15803d;
+  --success-soft: #e6f4ea;
+  --warning: #b45309;
+  --warning-soft: #fdf1de;
+  --danger: #b91c1c;
+  --danger-soft: #fbe7e7;
+  --info: #0369a1;
+  --info-soft: #e3f2fb;
+
+  --radius-control: 0.5rem;
+  --radius-card: 0.875rem;
+}
+
+[data-theme="dark"] {
+  --bg: #0b0d10;
+  --surface: #14171b;
+  --surface-2: #1b1f24;
+  --surface-3: #23282f;
+  --ink: #f0f2f5;
+  --ink-2: #b3bac4;
+  --ink-3: #7b8494;
+  --border: #262b32;
+  --border-strong: #343a42;
+
+  --accent: #5b82ea;
+  --accent-hover: #7796ee;
+  --accent-soft: #1b2740;
+
+  --success: #4ade80;
+  --success-soft: #16321f;
+  --warning: #f5a524;
+  --warning-soft: #3a2a0e;
+  --danger: #f87171;
+  --danger-soft: #3a1a1a;
+  --info: #38bdf8;
+  --info-soft: #103244;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0b0d10;
+    --surface: #14171b;
+    --surface-2: #1b1f24;
+    --surface-3: #23282f;
+    --ink: #f0f2f5;
+    --ink-2: #b3bac4;
+    --ink-3: #7b8494;
+    --border: #262b32;
+    --border-strong: #343a42;
+
+    --accent: #5b82ea;
+    --accent-hover: #7796ee;
+    --accent-soft: #1b2740;
+
+    --success: #4ade80;
+    --success-soft: #16321f;
+    --warning: #f5a524;
+    --warning-soft: #3a2a0e;
+    --danger: #f87171;
+    --danger-soft: #3a1a1a;
+    --info: #38bdf8;
+    --info-soft: #103244;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-surface-3: var(--surface-3);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-ink-3: var(--ink-3);
+  --color-border: var(--border);
+  --color-border-strong: var(--border-strong);
+
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-soft: var(--accent-soft);
+
+  --color-success: var(--success);
+  --color-success-soft: var(--success-soft);
+  --color-warning: var(--warning);
+  --color-warning-soft: var(--warning-soft);
+  --color-danger: var(--danger);
+  --color-danger-soft: var(--danger-soft);
+  --color-info: var(--info);
+  --color-info-soft: var(--info-soft);
+
+  --radius-control: var(--radius-control);
+  --radius-card: var(--radius-card);
+
+  --shadow-card: 0 1px 2px rgba(16, 24, 40, 0.06), 0 1px 1px rgba(16, 24, 40, 0.04);
+  --shadow-card-lg: 0 8px 24px rgba(16, 24, 40, 0.10), 0 2px 6px rgba(16, 24, 40, 0.06);
+}
+
+body {
+  background: var(--bg);
+  color: var(--ink);
+  font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+.h-page {
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--ink);
+}
+
+.h-section {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.tabular {
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: "tnum";
+}

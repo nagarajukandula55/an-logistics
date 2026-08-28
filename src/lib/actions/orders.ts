@@ -1,0 +1,243 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+import { prisma } from "@/lib/prisma";
+import { auth } from "@/auth";
+import { generateTrackingCode } from "@/lib/tracking-code";
+import { OrderStatus } from "@prisma/client";
+
+const createOrderSchema = z.object({
+  customerId: z.string().min(1, "Select or create a customer"),
+  pickupAddress: z.string().min(1, "Pickup address is required"),
+  pickupContactName: z.string().min(1, "Pickup contact name is required"),
+  pickupContactPhone: z.string().min(1, "Pickup contact phone is required"),
+  deliveryAddress: z.string().min(1, "Delivery address is required"),
+  deliveryContactName: z.string().min(1, "Delivery contact name is required"),
+  deliveryContactPhone: z.string().min(1, "Delivery contact phone is required"),
+  weightKg: z.coerce.number().positive().optional().or(z.literal("").transform(() => undefined)),
+  packageDescription: z.string().optional(),
+  codAmount: z.coerce.number().nonnegative().optional().or(z.literal("").transform(() => undefined)),
+});
+
+export type CreateOrderState = {
+  ok: boolean;
+  errors?: Record<string, string[]>;
+  message?: string;
+};
+
+export async function createOrderAction(_prev: CreateOrderState, formData: FormData): Promise<CreateOrderState> {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const raw = Object.fromEntries(formData.entries());
+  const parsed = createOrderSchema.safeParse(raw);
+
+  if (!parsed.success) {
+    return { ok: false, errors: parsed.error.flatten().fieldErrors };
+  }
+
+  const data = parsed.data;
+
+  const order = await prisma.order.create({
+    data: {
+      trackingCode: generateTrackingCode(),
+      customerId: data.customerId,
+      pickupAddress: data.pickupAddress,
+      pickupContactName: data.pickupContactName,
+      pickupContactPhone: data.pickupContactPhone,
+      deliveryAddress: data.deliveryAddress,
+      deliveryContactName: data.deliveryContactName,
+      deliveryContactPhone: data.deliveryContactPhone,
+      weightKg: data.weightKg,
+      packageDescription: data.packageDescription || null,
+      codAmount: data.codAmount,
+      status: OrderStatus.CREATED,
+      statusEvents: {
+        create: { status: OrderStatus.CREATED, note: "Order created" },
+      },
+    },
+  });
+
+  revalidatePath("/orders");
+  redirect(`/orders/${order.id}`);
+}
+
+const createCustomerSchema = z.object({
+  name: z.string().min(1),
+  phone: z.string().optional(),
+  email: z.string().email().optional().or(z.literal("")),
+  address: z.string().optional(),
+});
+
+export async function createCustomerAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const parsed = createCustomerSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map((i) => i.message).join(", "));
+  }
+
+  const customer = await prisma.customer.create({
+    data: {
+      name: parsed.data.name,
+      phone: parsed.data.phone || null,
+      email: parsed.data.email || null,
+      address: parsed.data.address || null,
+    },
+  });
+
+  revalidatePath("/orders/new");
+  return customer;
+}
+
+const assignSchema = z.object({
+  orderId: z.string().min(1),
+  driverId: z.string().min(1, "Select a driver"),
+  vehicleId: z.string().min(1, "Select a vehicle"),
+});
+
+export async function assignDriverVehicleAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const parsed = assignSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map((i) => i.message).join(", "));
+  }
+  const { orderId, driverId, vehicleId } = parsed.data;
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new Error("Order not found");
+  if (order.driverId) throw new Error("Order is already assigned");
+
+  await prisma.$transaction([
+    prisma.order.update({
+      where: { id: orderId },
+      data: {
+        driverId,
+        vehicleId,
+        status: OrderStatus.ASSIGNED,
+        statusEvents: {
+          create: { status: OrderStatus.ASSIGNED, note: "Driver and vehicle assigned" },
+        },
+      },
+    }),
+    prisma.driver.update({ where: { id: driverId }, data: { status: "ON_TRIP", vehicleId } }),
+    prisma.vehicle.update({ where: { id: vehicleId }, data: { status: "ON_TRIP" } }),
+  ]);
+
+  revalidatePath(`/orders/${orderId}`);
+  revalidatePath("/orders");
+  revalidatePath("/dispatch");
+  revalidatePath("/drivers");
+  revalidatePath("/vehicles");
+}
+
+const NEXT_STATUS: Partial<Record<OrderStatus, OrderStatus[]>> = {
+  ASSIGNED: [OrderStatus.PICKED_UP, OrderStatus.CANCELLED],
+  PICKED_UP: [OrderStatus.IN_TRANSIT],
+  IN_TRANSIT: [OrderStatus.OUT_FOR_DELIVERY],
+  OUT_FOR_DELIVERY: [OrderStatus.DELIVERED, OrderStatus.FAILED],
+  CREATED: [OrderStatus.CANCELLED],
+};
+
+const advanceSchema = z.object({
+  orderId: z.string().min(1),
+  status: z.enum(Object.values(OrderStatus) as [string, ...string[]]),
+  note: z.string().optional(),
+});
+
+export async function advanceOrderStatusAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const parsed = advanceSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map((i) => i.message).join(", "));
+  }
+  const { orderId, note } = parsed.data;
+  const status = parsed.data.status as OrderStatus;
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new Error("Order not found");
+
+  const allowed = NEXT_STATUS[order.status] ?? [];
+  if (!allowed.includes(status)) {
+    throw new Error(`Cannot move order from ${order.status} to ${status}`);
+  }
+
+  const isTerminal = status === OrderStatus.DELIVERED || status === OrderStatus.FAILED || status === OrderStatus.CANCELLED;
+
+  await prisma.$transaction(async (tx) => {
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status,
+        statusEvents: { create: { status, note: note || null } },
+      },
+    });
+
+    if (isTerminal && order.driverId) {
+      await tx.driver.update({ where: { id: order.driverId }, data: { status: "AVAILABLE" } });
+    }
+    if (isTerminal && order.vehicleId) {
+      await tx.vehicle.update({ where: { id: order.vehicleId }, data: { status: "AVAILABLE" } });
+    }
+  });
+
+  revalidatePath(`/orders/${orderId}`);
+  revalidatePath("/orders");
+  revalidatePath("/dispatch");
+  revalidatePath("/drivers");
+  revalidatePath("/vehicles");
+}
+
+const podSchema = z.object({
+  orderId: z.string().min(1),
+  signedByName: z.string().min(1, "Signee name is required"),
+  notes: z.string().optional(),
+});
+
+export async function capturePodAction(formData: FormData) {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+
+  const parsed = podSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    throw new Error(parsed.error.issues.map((i) => i.message).join(", "));
+  }
+  const { orderId, signedByName, notes } = parsed.data;
+
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order) throw new Error("Order not found");
+
+  await prisma.$transaction(async (tx) => {
+    await tx.proofOfDelivery.upsert({
+      where: { orderId },
+      create: { orderId, signedByName, notes: notes || null },
+      update: { signedByName, notes: notes || null },
+    });
+
+    await tx.order.update({
+      where: { id: orderId },
+      data: {
+        status: OrderStatus.DELIVERED,
+        statusEvents: { create: { status: OrderStatus.DELIVERED, note: `Delivered — signed by ${signedByName}` } },
+      },
+    });
+
+    if (order.driverId) await tx.driver.update({ where: { id: order.driverId }, data: { status: "AVAILABLE" } });
+    if (order.vehicleId) await tx.vehicle.update({ where: { id: order.vehicleId }, data: { status: "AVAILABLE" } });
+  });
+
+  revalidatePath(`/orders/${orderId}`);
+  revalidatePath("/orders");
+  revalidatePath("/dispatch");
+  revalidatePath("/drivers");
+  revalidatePath("/vehicles");
+}
+
+export const ORDER_NEXT_STATUS = NEXT_STATUS;
