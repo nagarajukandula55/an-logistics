@@ -15,11 +15,13 @@ public no-auth tracking page for a shipment's tracking code.
 ## Setup
 
 1. Copy the env file and fill in a real Postgres connection string (Neon,
-   Supabase, or any Postgres instance) and an auth secret:
+   Supabase, or any Postgres instance), an auth secret, and an encryption key:
 
    ```bash
    cp .env.example .env
-   # then edit .env — set DATABASE_URL, and AUTH_SECRET (openssl rand -base64 32)
+   # then edit .env — set DATABASE_URL, AUTH_SECRET (openssl rand -base64 32),
+   # and ENCRYPTION_KEY (openssl rand -base64 32) — used to encrypt
+   # CourierApiConfig.apiKeyEncrypted at rest.
    ```
 
 2. Install dependencies (already done if you cloned this repo as-is):
@@ -42,9 +44,8 @@ public no-auth tracking page for a shipment's tracking code.
 
    This creates `admin@an-logistics.com` / `ChangeMe123!` unless you set
    `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in your environment first. Sign
-   in and treat that password as temporary — there's no in-app change-password
-   flow yet, so update it directly in the database (or via a script) if you
-   keep the seeded account.
+   in and change that password via `/change-password`, or reset it as an
+   admin from `/users`.
 
 5. Run the app:
 
@@ -127,16 +128,23 @@ courier partner (`COURIER_PARTNER`). This slice adds:
   work but only `MANUAL` is ever written today).
 
 **Known gaps:**
-- No password-reset / change-password flow (seeded admin password must be
-  rotated manually against the database for now).
+- No self-service ("forgot password") flow — that needs a real email/SMS
+  provider, which isn't wired up. What exists instead: a self-service
+  change-password flow at `/change-password` (for a signed-in user who knows
+  their current password) and an ADMIN-only "reset another user's password"
+  action on `/users`, which sets a new temporary password and
+  `mustChangePassword=true` so the user is forced through `/change-password`
+  on next login. **Still needed to unblock true self-service:** a transactional
+  email or SMS provider (e.g. Resend, SendGrid, Twilio) with API credentials.
 - No file upload for proof-of-delivery photos (`ProofOfDelivery.photoUrl` is
-  modeled but not yet wired to any upload UI).
-- No pagination on the orders list (capped at the 100 most recent).
-- Driver/vehicle records currently can't be edited or deactivated from the UI
-  — only created.
-- `CourierApiConfig.apiKeyEncrypted` is stored as plain text, not actually
-  encrypted — needs real encryption-at-rest before any real API key is put
-  in it.
+  modeled but not yet wired to any upload UI). **Still needed to unblock:** a
+  file storage provider (e.g. Vercel Blob or S3) with a real access
+  token/credentials.
+- Real HTTP integration with courier partner APIs is still not built (see
+  above) — **still needed:** real per-courier API credentials.
+- `CourierApiConfig.apiKeyEncrypted` is now genuinely encrypted at rest with
+  AES-256-GCM (`src/lib/crypto.ts`, `ENCRYPTION_KEY` env var) — decryption is
+  available via `decryptApiKey()` for when a real API call is added.
 - Platform fee (`Order.platformFeeAmount`) recorded at assignment time is
   still computed against `codAmount` as a stand-in for real order/shipment
   value, and is left `null` when an order has no COD amount rather than

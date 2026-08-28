@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { Badge, fleetStatusTone } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NewVehicleForm } from "./NewVehicleForm";
+import { VehicleRow } from "./VehicleRow";
 
 export default async function VehiclesPage() {
   const vehicles = await prisma.vehicle.findMany({ orderBy: { createdAt: "desc" } });
@@ -26,18 +26,12 @@ export default async function VehiclesPage() {
                       <th className="px-4 py-3 font-medium">Type</th>
                       <th className="px-4 py-3 font-medium">Capacity</th>
                       <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {vehicles.map((v) => (
-                      <tr key={v.id} className="border-b border-border last:border-0">
-                        <td className="px-4 py-3 text-ink tabular">{v.registration}</td>
-                        <td className="px-4 py-3 text-ink-2">{v.type}</td>
-                        <td className="px-4 py-3 text-ink-2 tabular">{v.capacityKg ? `${v.capacityKg} kg` : "—"}</td>
-                        <td className="px-4 py-3">
-                          <Badge tone={fleetStatusTone(v.status)}>{v.status.replace("_", " ")}</Badge>
-                        </td>
-                      </tr>
+                      <VehicleRow key={v.id} vehicle={v} />
                     ))}
                   </tbody>
                 </table>

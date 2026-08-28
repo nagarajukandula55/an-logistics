@@ -18,6 +18,7 @@ import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { determineZone } from "@/lib/zone";
 import { findServiceableBranches, computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
 import { pincodeSchema } from "@/lib/validation";
+import { encryptApiKey } from "@/lib/crypto";
 
 export type ActionState = { ok: boolean; error?: string };
 
@@ -229,20 +230,25 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
   }
   const data = parsed.data;
 
+  // Encrypt the API key at rest. An empty submission leaves the previously
+  // stored (already-encrypted) value untouched rather than wiping it, so an
+  // admin can update the provider/URL/webhook without re-entering the key.
+  const newEncryptedKey = data.apiKeyEncrypted ? encryptApiKey(data.apiKeyEncrypted) : undefined;
+
   await prisma.courierApiConfig.upsert({
     where: { courierPartnerId: data.courierPartnerId },
     create: {
       courierPartnerId: data.courierPartnerId,
       provider: data.provider,
       baseUrl: data.baseUrl || null,
-      apiKeyEncrypted: data.apiKeyEncrypted || null,
+      apiKeyEncrypted: newEncryptedKey ?? null,
       webhookUrl: data.webhookUrl || null,
       isActive: data.isActive,
     },
     update: {
       provider: data.provider,
       baseUrl: data.baseUrl || null,
-      apiKeyEncrypted: data.apiKeyEncrypted || null,
+      ...(newEncryptedKey !== undefined ? { apiKeyEncrypted: newEncryptedKey } : {}),
       webhookUrl: data.webhookUrl || null,
       isActive: data.isActive,
     },

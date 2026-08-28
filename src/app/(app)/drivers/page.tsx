@@ -1,9 +1,9 @@
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
-import { Badge, fleetStatusTone } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { NewDriverForm } from "./NewDriverForm";
+import { DriverRow } from "./DriverRow";
 
 export default async function DriversPage() {
   const drivers = await prisma.driver.findMany({
@@ -30,19 +30,12 @@ export default async function DriversPage() {
                       <th className="px-4 py-3 font-medium">License</th>
                       <th className="px-4 py-3 font-medium">Vehicle</th>
                       <th className="px-4 py-3 font-medium">Status</th>
+                      <th className="px-4 py-3 font-medium text-right">Actions</th>
                     </tr>
                   </thead>
                   <tbody>
                     {drivers.map((d) => (
-                      <tr key={d.id} className="border-b border-border last:border-0">
-                        <td className="px-4 py-3 text-ink">{d.user.name}</td>
-                        <td className="px-4 py-3 text-ink-2">{d.phone}</td>
-                        <td className="px-4 py-3 text-ink-2 tabular">{d.licenseNo}</td>
-                        <td className="px-4 py-3 text-ink-2">{d.vehicle?.registration ?? "—"}</td>
-                        <td className="px-4 py-3">
-                          <Badge tone={fleetStatusTone(d.status)}>{d.status.replace("_", " ")}</Badge>
-                        </td>
-                      </tr>
+                      <DriverRow key={d.id} driver={d} />
                     ))}
                   </tbody>
                 </table>

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Truck, Package, Users, LogOut, Handshake } from "lucide-react";
+import { Truck, Package, Users, LogOut, Handshake, ShieldCheck } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutAction } from "@/lib/actions/auth-signout";
 
@@ -14,8 +14,11 @@ const LINKS = [
   { href: "/vehicles", label: "Vehicles", icon: Truck },
 ];
 
+const ADMIN_LINKS = [{ href: "/users", label: "Users", icon: ShieldCheck }];
+
 export function AppNav({ userName, role }: { userName: string; role: string }) {
   const pathname = usePathname();
+  const links = role === "ADMIN" ? [...LINKS, ...ADMIN_LINKS] : LINKS;
 
   return (
     <header className="border-b border-border bg-surface">
@@ -23,7 +26,7 @@ export function AppNav({ userName, role }: { userName: string; role: string }) {
         <div className="flex items-center gap-6">
           <span className="font-semibold text-ink">AN Logistics</span>
           <nav className="flex items-center gap-1">
-            {LINKS.map(({ href, label, icon: Icon }) => {
+            {links.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
               return (
                 <Link

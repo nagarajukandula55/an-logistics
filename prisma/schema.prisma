@@ -348,7 +348,8 @@ model CourierApiConfig {
   courierPartner    CourierPartner @relation(fields: [courierPartnerId], references: [id])
   provider          String
   baseUrl           String?
-  // NOT real encryption — stored as-is. Known gap, see README.
+  // AES-256-GCM ciphertext (iv:authTag:ciphertext, base64), see src/lib/crypto.ts.
+  // Encrypted on write in createOrUpdateApiConfigAction; requires ENCRYPTION_KEY.
   apiKeyEncrypted    String?
   webhookUrl        String?
   isActive          Boolean        @default(false)
