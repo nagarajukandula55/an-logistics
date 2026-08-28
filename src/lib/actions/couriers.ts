@@ -217,6 +217,7 @@ const apiConfigSchema = z.object({
   provider: z.string().min(1, "Provider name is required"),
   baseUrl: z.string().optional(),
   apiKeyEncrypted: z.string().optional(),
+  clearApiKey: z.coerce.boolean().default(false),
   webhookUrl: z.string().optional(),
   isActive: z.coerce.boolean().default(false),
 });
@@ -230,10 +231,18 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
   }
   const data = parsed.data;
 
-  // Encrypt the API key at rest. An empty submission leaves the previously
-  // stored (already-encrypted) value untouched rather than wiping it, so an
-  // admin can update the provider/URL/webhook without re-entering the key.
-  const newEncryptedKey = data.apiKeyEncrypted ? encryptApiKey(data.apiKeyEncrypted) : undefined;
+  // A blank key field means "leave the stored key untouched" — the form
+  // never pre-fills the key input with the stored (encrypted) value, so a
+  // non-empty submission always means the admin actually typed a new key.
+  // The explicit "clear" checkbox is the only way to wipe a stored key.
+  let newEncryptedKey: string | undefined;
+  try {
+    newEncryptedKey = data.apiKeyEncrypted ? encryptApiKey(data.apiKeyEncrypted) : undefined;
+  } catch (err) {
+    console.error("Failed to encrypt courier API key:", err);
+    throw new Error("Could not save the API key — encryption is not configured correctly. Contact an administrator.");
+  }
+  const shouldClearKey = data.clearApiKey && !data.apiKeyEncrypted;
 
   await prisma.courierApiConfig.upsert({
     where: { courierPartnerId: data.courierPartnerId },
@@ -248,7 +257,11 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
     update: {
       provider: data.provider,
       baseUrl: data.baseUrl || null,
-      ...(newEncryptedKey !== undefined ? { apiKeyEncrypted: newEncryptedKey } : {}),
+      ...(shouldClearKey
+        ? { apiKeyEncrypted: null }
+        : newEncryptedKey !== undefined
+          ? { apiKeyEncrypted: newEncryptedKey }
+          : {}),
       webhookUrl: data.webhookUrl || null,
       isActive: data.isActive,
     },

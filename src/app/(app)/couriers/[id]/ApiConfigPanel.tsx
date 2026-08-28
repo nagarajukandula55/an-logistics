@@ -43,9 +43,24 @@ export function ApiConfigPanel({ courierPartnerId, config }: { courierPartnerId:
       <Field label="Base URL" htmlFor="baseUrl" hint="Optional">
         <Input id="baseUrl" name="baseUrl" type="url" defaultValue={config?.baseUrl ?? ""} />
       </Field>
-      <Field label="API key" htmlFor="apiKeyEncrypted" hint="Stored as-is for now — not yet encrypted at rest">
-        <Input id="apiKeyEncrypted" name="apiKeyEncrypted" type="password" defaultValue={config?.apiKeyEncrypted ?? ""} />
+      <Field
+        label="API key"
+        htmlFor="apiKeyEncrypted"
+        hint={config?.apiKeyEncrypted ? "Encrypted at rest. Leave blank to keep the current key." : "Encrypted at rest."}
+      >
+        <Input
+          id="apiKeyEncrypted"
+          name="apiKeyEncrypted"
+          type="password"
+          placeholder={config?.apiKeyEncrypted ? "•••••••• (unchanged)" : ""}
+        />
       </Field>
+      {config?.apiKeyEncrypted && (
+        <label className="flex items-center gap-2 text-sm text-ink-2">
+          <input type="checkbox" name="clearApiKey" value="true" className="rounded border-border" />
+          Clear the stored API key
+        </label>
+      )}
       <Field label="Webhook URL" htmlFor="webhookUrl" hint="Optional">
         <Input id="webhookUrl" name="webhookUrl" type="url" defaultValue={config?.webhookUrl ?? ""} />
       </Field>

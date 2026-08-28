@@ -30,7 +30,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   if (!order) notFound();
 
   const availableDrivers = await prisma.driver.findMany({
-    where: { status: "AVAILABLE" },
+    where: { status: "AVAILABLE", user: { isActive: true } },
     include: { user: true },
     orderBy: { createdAt: "asc" },
   });

@@ -8,6 +8,20 @@ import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { DriverStatus, VehicleStatus } from "@prisma/client";
 
+const FLEET_MANAGER_ROLES = ["ADMIN", "DISPATCHER"];
+
+// Fleet data (drivers/vehicles) is operational, not something every
+// authenticated role (e.g. DRIVER, CUSTOMER) should be able to edit or
+// deactivate — only admins/dispatchers manage it.
+async function requireFleetManager() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  if (!FLEET_MANAGER_ROLES.includes(session.user.role)) {
+    return { ok: false as const, error: "You don't have permission to do that." };
+  }
+  return { ok: true as const };
+}
+
 const createVehicleSchema = z.object({
   registration: z.string().min(1, "Registration is required"),
   type: z.string().min(1, "Vehicle type is required"),
@@ -17,8 +31,8 @@ const createVehicleSchema = z.object({
 export type ActionState = { ok: boolean; error?: string };
 
 export async function createVehicleAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const guard = await requireFleetManager();
+  if (!guard.ok) return guard;
 
   const parsed = createVehicleSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -49,8 +63,8 @@ const updateVehicleSchema = z.object({
 });
 
 export async function updateVehicleAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const guard = await requireFleetManager();
+  if (!guard.ok) return guard;
 
   const parsed = updateVehicleSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -72,8 +86,8 @@ export async function updateVehicleAction(_prev: ActionState, formData: FormData
 }
 
 export async function deactivateVehicleAction(vehicleId: string): Promise<ActionState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const guard = await requireFleetManager();
+  if (!guard.ok) return guard;
 
   try {
     await prisma.vehicle.update({
@@ -97,8 +111,8 @@ const createDriverSchema = z.object({
 });
 
 export async function createDriverAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const guard = await requireFleetManager();
+  if (!guard.ok) return guard;
 
   const parsed = createDriverSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -141,14 +155,20 @@ const updateDriverSchema = z.object({
 });
 
 export async function updateDriverAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const guard = await requireFleetManager();
+  if (!guard.ok) return guard;
 
   const parsed = updateDriverSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
   const { driverId, phone, licenseNo, status } = parsed.data;
+
+  const driver = await prisma.driver.findUnique({ where: { id: driverId }, include: { user: true } });
+  if (!driver) return { ok: false, error: "Driver not found" };
+  if (!driver.user.isActive && status !== DriverStatus.OFF_DUTY) {
+    return { ok: false, error: "Reactivate this driver before changing their dispatch status." };
+  }
 
   try {
     await prisma.driver.update({
@@ -167,8 +187,8 @@ export async function updateDriverAction(_prev: ActionState, formData: FormData)
 // frees them from dispatch (Driver.status = OFF_DUTY), rather than adding a
 // redundant Driver-level active flag — User.isActive already models this.
 export async function deactivateDriverAction(driverId: string): Promise<ActionState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const guard = await requireFleetManager();
+  if (!guard.ok) return guard;
 
   try {
     const driver = await prisma.driver.findUnique({ where: { id: driverId } });
@@ -187,8 +207,8 @@ export async function deactivateDriverAction(driverId: string): Promise<ActionSt
 }
 
 export async function reactivateDriverAction(driverId: string): Promise<ActionState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const guard = await requireFleetManager();
+  if (!guard.ok) return guard;
 
   try {
     const driver = await prisma.driver.findUnique({ where: { id: driverId } });

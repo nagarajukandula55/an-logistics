@@ -22,6 +22,7 @@ export function VehicleRow({ vehicle }: { vehicle: VehicleRowData }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(updateVehicleAction, initialState);
   const [transitioning, startTransition] = useTransition();
+  const [rowError, setRowError] = useState<string | null>(null);
 
   if (editing) {
     return (
@@ -76,26 +77,31 @@ export function VehicleRow({ vehicle }: { vehicle: VehicleRowData }) {
         <Badge tone={fleetStatusTone(vehicle.status)}>{vehicle.status.replace("_", " ")}</Badge>
       </td>
       <td className="px-4 py-3">
-        <div className="flex items-center justify-end gap-2">
-          <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
-            <Pencil className="size-4" /> Edit
-          </Button>
-          {vehicle.status !== VehicleStatus.INACTIVE && (
-            <Button
-              type="button"
-              size="sm"
-              variant="danger"
-              loading={transitioning}
-              onClick={() => {
-                if (!confirm(`Deactivate vehicle ${vehicle.registration}?`)) return;
-                startTransition(() => {
-                  deactivateVehicleAction(vehicle.id);
-                });
-              }}
-            >
-              Deactivate
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center justify-end gap-2">
+            <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
+              <Pencil className="size-4" /> Edit
             </Button>
-          )}
+            {vehicle.status !== VehicleStatus.INACTIVE && (
+              <Button
+                type="button"
+                size="sm"
+                variant="danger"
+                loading={transitioning}
+                onClick={() => {
+                  if (!confirm(`Deactivate vehicle ${vehicle.registration}?`)) return;
+                  setRowError(null);
+                  startTransition(async () => {
+                    const result = await deactivateVehicleAction(vehicle.id);
+                    if (!result.ok) setRowError(result.error ?? "Could not deactivate vehicle");
+                  });
+                }}
+              >
+                Deactivate
+              </Button>
+            )}
+          </div>
+          {rowError && <p className="text-xs text-danger">{rowError}</p>}
         </div>
       </td>
     </tr>

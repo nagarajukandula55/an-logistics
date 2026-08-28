@@ -28,17 +28,13 @@ export function DriverRow({ driver }: { driver: DriverRowData }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(updateDriverAction, initialState);
   const [transitioning, startTransition] = useTransition();
+  const [rowError, setRowError] = useState<string | null>(null);
 
   if (editing) {
     return (
       <tr className="border-b border-border last:border-0 bg-surface-2">
         <td className="px-4 py-3 text-ink" colSpan={6}>
-          <form
-            action={(fd) => {
-              formAction(fd);
-            }}
-            className="flex flex-wrap items-end gap-3"
-          >
+          <form action={formAction} className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="driverId" value={driver.id} />
             <span className="text-sm font-medium text-ink self-center pr-2">{driver.user.name}</span>
             <Field label="Phone" htmlFor={`phone-${driver.id}`} className="w-36">
@@ -88,40 +84,47 @@ export function DriverRow({ driver }: { driver: DriverRowData }) {
         <Badge tone={fleetStatusTone(driver.status)}>{driver.status.replace("_", " ")}</Badge>
       </td>
       <td className="px-4 py-3">
-        <div className="flex items-center justify-end gap-2">
-          <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
-            <Pencil className="size-4" /> Edit
-          </Button>
-          {driver.user.isActive ? (
-            <Button
-              type="button"
-              size="sm"
-              variant="danger"
-              loading={transitioning}
-              onClick={() => {
-                if (!confirm(`Deactivate ${driver.user.name}? This disables their login.`)) return;
-                startTransition(() => {
-                  deactivateDriverAction(driver.id);
-                });
-              }}
-            >
-              Deactivate
+        <div className="flex flex-col items-end gap-1">
+          <div className="flex items-center justify-end gap-2">
+            <Button type="button" size="sm" variant="ghost" onClick={() => setEditing(true)}>
+              <Pencil className="size-4" /> Edit
             </Button>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              variant="secondary"
-              loading={transitioning}
-              onClick={() => {
-                startTransition(() => {
-                  reactivateDriverAction(driver.id);
-                });
-              }}
-            >
-              Reactivate
-            </Button>
-          )}
+            {driver.user.isActive ? (
+              <Button
+                type="button"
+                size="sm"
+                variant="danger"
+                loading={transitioning}
+                onClick={() => {
+                  if (!confirm(`Deactivate ${driver.user.name}? This disables their login.`)) return;
+                  setRowError(null);
+                  startTransition(async () => {
+                    const result = await deactivateDriverAction(driver.id);
+                    if (!result.ok) setRowError(result.error ?? "Could not deactivate driver");
+                  });
+                }}
+              >
+                Deactivate
+              </Button>
+            ) : (
+              <Button
+                type="button"
+                size="sm"
+                variant="secondary"
+                loading={transitioning}
+                onClick={() => {
+                  setRowError(null);
+                  startTransition(async () => {
+                    const result = await reactivateDriverAction(driver.id);
+                    if (!result.ok) setRowError(result.error ?? "Could not reactivate driver");
+                  });
+                }}
+              >
+                Reactivate
+              </Button>
+            )}
+          </div>
+          {rowError && <p className="text-xs text-danger">{rowError}</p>}
         </div>
       </td>
     </tr>

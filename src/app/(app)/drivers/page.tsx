@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
@@ -6,6 +8,10 @@ import { NewDriverForm } from "./NewDriverForm";
 import { DriverRow } from "./DriverRow";
 
 export default async function DriversPage() {
+  const session = await auth();
+  if (!session?.user) redirect("/login");
+  if (!["ADMIN", "DISPATCHER"].includes(session.user.role)) redirect("/orders");
+
   const drivers = await prisma.driver.findMany({
     include: { user: true, vehicle: true },
     orderBy: { createdAt: "desc" },

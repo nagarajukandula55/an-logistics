@@ -23,6 +23,7 @@ export function UserRow({ user, currentUserId }: { user: UserRowData; currentUse
   const [state, formAction, pending] = useActionState(adminResetPasswordAction, initialState);
   const [transitioning, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
+  const [rowError, setRowError] = useState<string | null>(null);
 
   return (
     <>
@@ -36,26 +37,31 @@ export function UserRow({ user, currentUserId }: { user: UserRowData; currentUse
           <Badge tone={user.isActive ? "success" : "neutral"}>{user.isActive ? "Active" : "Deactivated"}</Badge>
         </td>
         <td className="px-4 py-3">
-          <div className="flex items-center justify-end gap-2">
-            <Button type="button" size="sm" variant="ghost" onClick={() => setResetting((v) => !v)}>
-              <KeyRound className="size-4" /> Reset password
-            </Button>
-            <Button
-              type="button"
-              size="sm"
-              variant={user.isActive ? "danger" : "secondary"}
-              loading={transitioning}
-              disabled={user.id === currentUserId}
-              title={user.id === currentUserId ? "You cannot deactivate your own account" : undefined}
-              onClick={() => {
-                if (user.isActive && !confirm(`Deactivate ${user.name}? They will not be able to sign in.`)) return;
-                startTransition(() => {
-                  toggleUserActiveAction(user.id);
-                });
-              }}
-            >
-              {user.isActive ? "Deactivate" : "Reactivate"}
-            </Button>
+          <div className="flex flex-col items-end gap-1">
+            <div className="flex items-center justify-end gap-2">
+              <Button type="button" size="sm" variant="ghost" onClick={() => setResetting((v) => !v)}>
+                <KeyRound className="size-4" /> Reset password
+              </Button>
+              <Button
+                type="button"
+                size="sm"
+                variant={user.isActive ? "danger" : "secondary"}
+                loading={transitioning}
+                disabled={user.id === currentUserId}
+                title={user.id === currentUserId ? "You cannot deactivate your own account" : undefined}
+                onClick={() => {
+                  if (user.isActive && !confirm(`Deactivate ${user.name}? They will not be able to sign in.`)) return;
+                  setRowError(null);
+                  startTransition(async () => {
+                    const result = await toggleUserActiveAction(user.id);
+                    if (!result.ok) setRowError(result.error ?? "Could not update user");
+                  });
+                }}
+              >
+                {user.isActive ? "Deactivate" : "Reactivate"}
+              </Button>
+            </div>
+            {rowError && <p className="text-xs text-danger">{rowError}</p>}
           </div>
         </td>
       </tr>

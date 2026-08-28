@@ -35,18 +35,17 @@ export default async function OrdersPage({
       : {}),
   };
 
-  const [orders, total] = await Promise.all([
-    prisma.order.findMany({
-      where,
-      include: { customer: true, driver: { include: { user: true } } },
-      orderBy: { createdAt: "desc" },
-      skip: (page - 1) * PAGE_SIZE,
-      take: PAGE_SIZE,
-    }),
-    prisma.order.count({ where }),
-  ]);
-
+  const total = await prisma.order.count({ where });
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE));
+  const clampedPage = Math.min(page, totalPages);
+
+  const orders = await prisma.order.findMany({
+    where,
+    include: { customer: true, driver: { include: { user: true } } },
+    orderBy: { createdAt: "desc" },
+    skip: (clampedPage - 1) * PAGE_SIZE,
+    take: PAGE_SIZE,
+  });
   const pageQuery = (p: number) => {
     const params = new URLSearchParams();
     if (filter) params.set("status", filter);
@@ -151,12 +150,12 @@ export default async function OrdersPage({
       {total > 0 && (
         <div className="flex items-center justify-between mt-4 text-sm text-ink-3">
           <p>
-            Showing {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, total)} of {total} order
+            Showing {(clampedPage - 1) * PAGE_SIZE + 1}–{Math.min(clampedPage * PAGE_SIZE, total)} of {total} order
             {total === 1 ? "" : "s"}
           </p>
           <div className="flex items-center gap-2">
-            {page > 1 ? (
-              <Link href={pageQuery(page - 1)}>
+            {clampedPage > 1 ? (
+              <Link href={pageQuery(clampedPage - 1)}>
                 <Button variant="secondary" size="sm">
                   <ChevronLeft className="size-4" /> Previous
                 </Button>
@@ -167,10 +166,10 @@ export default async function OrdersPage({
               </Button>
             )}
             <span className="tabular px-1">
-              Page {page} of {totalPages}
+              Page {clampedPage} of {totalPages}
             </span>
-            {page < totalPages ? (
-              <Link href={pageQuery(page + 1)}>
+            {clampedPage < totalPages ? (
+              <Link href={pageQuery(clampedPage + 1)}>
                 <Button variant="secondary" size="sm">
                   Next <ChevronRight className="size-4" />
                 </Button>
