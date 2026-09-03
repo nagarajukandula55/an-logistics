@@ -19,7 +19,12 @@ export async function findServiceableBranches(pincode: string) {
       serviceAreas: { some: { pincode } },
     },
     include: { courierPartner: true },
-    orderBy: { name: "asc" },
+    // Higher CourierPartner.priority goes first — our own self-fleet
+    // (registered as a partner row too, see the public-booking flow's doc
+    // comment) is set to the highest priority, so "check our own network
+    // first, then fall back to a ranked local partner" falls out of this
+    // one ordering instead of special-casing self-fleet.
+    orderBy: [{ courierPartner: { priority: "desc" } }, { name: "asc" }],
   });
 }
 
