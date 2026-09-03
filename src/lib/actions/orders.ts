@@ -8,6 +8,7 @@ import { generateTrackingCode } from "@/lib/tracking-code";
 import { OrderStatus } from "@prisma/client";
 import { optionalPincodeSchema } from "@/lib/validation";
 import { requireTenantSession } from "@/lib/tenant";
+import { notifyTenantOnStatusChange } from "@/lib/webhooks";
 
 const createOrderSchema = z.object({
   customerId: z.string().min(1, "Select or create a customer"),
@@ -174,13 +175,14 @@ export async function advanceOrderStatusAction(formData: FormData) {
 
   const isTerminal = status === OrderStatus.DELIVERED || status === OrderStatus.FAILED || status === OrderStatus.CANCELLED;
 
-  await prisma.$transaction(async (tx) => {
-    await tx.order.update({
+  const [, event] = await prisma.$transaction(async (tx) => {
+    const updated = await tx.order.update({
       where: { id: orderId },
       data: {
         status,
         statusEvents: { create: { status, note: note || null } },
       },
+      include: { statusEvents: { orderBy: { createdAt: "desc" }, take: 1 } },
     });
 
     if (isTerminal && order.driverId) {
@@ -189,7 +191,9 @@ export async function advanceOrderStatusAction(formData: FormData) {
     if (isTerminal && order.vehicleId) {
       await tx.vehicle.update({ where: { id: order.vehicleId }, data: { status: "AVAILABLE" } });
     }
+    return [updated, updated.statusEvents[0]] as const;
   });
+  notifyTenantOnStatusChange(order, event).catch(() => {});
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
@@ -216,24 +220,27 @@ export async function capturePodAction(formData: FormData) {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.tenantId !== tenantId) throw new Error("Order not found");
 
-  await prisma.$transaction(async (tx) => {
+  const event = await prisma.$transaction(async (tx) => {
     await tx.proofOfDelivery.upsert({
       where: { orderId },
       create: { orderId, signedByName, notes: notes || null },
       update: { signedByName, notes: notes || null },
     });
 
-    await tx.order.update({
+    const updated = await tx.order.update({
       where: { id: orderId },
       data: {
         status: OrderStatus.DELIVERED,
         statusEvents: { create: { status: OrderStatus.DELIVERED, note: `Delivered — signed by ${signedByName}` } },
       },
+      include: { statusEvents: { orderBy: { createdAt: "desc" }, take: 1 } },
     });
 
     if (order.driverId) await tx.driver.update({ where: { id: order.driverId }, data: { status: "AVAILABLE" } });
     if (order.vehicleId) await tx.vehicle.update({ where: { id: order.vehicleId }, data: { status: "AVAILABLE" } });
+    return updated.statusEvents[0];
   });
+  notifyTenantOnStatusChange(order, event).catch(() => {});
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");

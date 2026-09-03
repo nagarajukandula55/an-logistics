@@ -18,7 +18,12 @@ export const authConfig = {
       const isPublic =
         pathname.startsWith("/login") ||
         pathname.startsWith("/api/auth") ||
-        pathname.startsWith("/track");
+        pathname.startsWith("/track") ||
+        // Machine-to-machine surface — authenticated by its own API-key
+        // (src/lib/api-auth.ts) / webhook-signature checks, not the
+        // session cookie this callback gates.
+        pathname.startsWith("/api/v1") ||
+        pathname.startsWith("/api/webhooks");
 
       if (isPublic) return true;
       if (!isLoggedIn) return false;

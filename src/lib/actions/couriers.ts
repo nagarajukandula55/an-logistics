@@ -220,6 +220,11 @@ const apiConfigSchema = z.object({
   provider: z.string().min(1, "Provider name is required"),
   baseUrl: z.string().optional(),
   apiKeyEncrypted: z.string().optional(),
+  // Shiprocket authenticates with email+password, not a single API key —
+  // when provider is SHIPROCKET these are combined into the encrypted
+  // JSON blob stored in apiKeyEncrypted instead (see shiprocket-provider.ts).
+  shiprocketEmail: z.string().optional(),
+  shiprocketPassword: z.string().optional(),
   clearApiKey: z.coerce.boolean().default(false),
   webhookUrl: z.string().optional(),
   isActive: z.coerce.boolean().default(false),
@@ -238,9 +243,15 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
   // never pre-fills the key input with the stored (encrypted) value, so a
   // non-empty submission always means the admin actually typed a new key.
   // The explicit "clear" checkbox is the only way to wipe a stored key.
+  const isShiprocket = data.provider.toUpperCase() === "SHIPROCKET";
+  const rawSecret =
+    isShiprocket && data.shiprocketEmail && data.shiprocketPassword
+      ? JSON.stringify({ email: data.shiprocketEmail, password: data.shiprocketPassword })
+      : data.apiKeyEncrypted;
+
   let newEncryptedKey: string | undefined;
   try {
-    newEncryptedKey = data.apiKeyEncrypted ? encryptApiKey(data.apiKeyEncrypted) : undefined;
+    newEncryptedKey = rawSecret ? encryptApiKey(rawSecret) : undefined;
   } catch (err) {
     console.error("Failed to encrypt courier API key:", err);
     throw new Error("Could not save the API key — encryption is not configured correctly. Contact an administrator.");
@@ -321,7 +332,7 @@ export async function assignOrderToCourierAction(formData: FormData) {
   // than querying ServiceArea directly, so MANUAL vs. future API partners
   // go through one code path.
   if (order.deliveryPincode) {
-    const provider = getCourierProvider(partner);
+    const provider = await getCourierProvider(partner);
     const serviceability = await provider.checkServiceability(partner, order.deliveryPincode);
     if (!serviceability.serviceable) {
       throw new Error("Courier branch does not service the delivery pincode");
@@ -398,7 +409,7 @@ export async function getQuotesForOrder(orderId: string): Promise<CourierQuote[]
   const quotes: CourierQuote[] = await Promise.all(
     branches.map(async (branch) => {
       const partner = branch.courierPartner;
-      const provider = getCourierProvider(partner);
+      const provider = await getCourierProvider(partner);
 
       let quote: { price: number; etaDays?: number } | null = null;
       try {
