@@ -272,6 +272,11 @@ model Order {
   providerRef           String?
   providerLabelUrl      String?
   chargedAmount         Float?
+  // Which specific option within the assigned provider was picked at
+  // dispatch time (e.g. one of Shiprocket's several bundled couriers) —
+  // set by assignOrderToCourierAction, read by provider.createShipment
+  // when the shipment is actually booked.
+  selectedProviderCourierId String?
 
   createdAt             DateTime    @default(now())
   updatedAt              DateTime   @updatedAt

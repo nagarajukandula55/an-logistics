@@ -2,7 +2,7 @@ import type { CourierPartner } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import { findServiceableBranchForPartner } from "@/lib/courier-queries";
 import { determineZone } from "@/lib/zone";
-import type { CourierProvider, QuoteInput, QuoteResult, ServiceabilityResult } from "./types";
+import type { CourierProvider, QuoteInput, QuoteOption, QuoteResult, ServiceabilityResult } from "./types";
 
 /**
  * Provider implementation for MANUAL (non-API) courier partners: today's
@@ -30,5 +30,14 @@ export const manualProvider: CourierProvider = {
     if (!slab) return null;
 
     return { price: slab.price, etaDays: undefined };
+  },
+
+  // A manually-onboarded partner (a directly-connected DTDC, Bluedart,
+  // etc.) has exactly one rate — wrap getQuote's single result so callers
+  // that want a uniform multi-option list (the dispatch UI's per-provider
+  // tabs) don't need to special-case providers without a real getQuotes.
+  async getQuotes(partner, input: QuoteInput): Promise<QuoteOption[]> {
+    const quote = await manualProvider.getQuote(partner, input);
+    return quote ? [{ price: quote.price, etaDays: quote.etaDays }] : [];
   },
 };

@@ -20,6 +20,17 @@ export type QuoteResult = {
   providerCourierId?: string;
 };
 
+// A single bookable option within a provider's quote — most providers
+// (MANUAL partners like a directly-onboarded DTDC or Bluedart) have exactly
+// one, but an aggregator like Shiprocket returns many (one per courier in
+// its own network) that should all be selectable, not just the cheapest.
+export type QuoteOption = {
+  price: number;
+  etaDays?: number;
+  providerCourierId?: string;
+  label?: string; // e.g. Shiprocket's own courier_name, distinguishing options within one provider
+};
+
 export type CreateShipmentInput = {
   orderId: string;
   pickupPincode: string;
@@ -57,6 +68,13 @@ export type TrackingResult = {
 export interface CourierProvider {
   checkServiceability(partner: CourierPartner, pincode: string): Promise<ServiceabilityResult>;
   getQuote(partner: CourierPartner, input: QuoteInput): Promise<QuoteResult | null>;
+  // All bookable options this provider has for the lane, not just the
+  // cheapest — lets the dispatch UI show every real courier an aggregator
+  // (Shiprocket) offers, grouped under that provider's own tab, rather than
+  // silently collapsing to one. Providers that only ever have one option
+  // (MANUAL partners) can omit this — callers fall back to wrapping
+  // getQuote's single result.
+  getQuotes?(partner: CourierPartner, input: QuoteInput): Promise<QuoteOption[]>;
   createShipment?(partner: CourierPartner, input: CreateShipmentInput): Promise<CreateShipmentResult>;
   trackShipment?(partner: CourierPartner, providerRef: string): Promise<TrackingResult>;
   cancelShipment?(partner: CourierPartner, providerRef: string): Promise<{ success: boolean }>;

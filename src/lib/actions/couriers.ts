@@ -295,6 +295,10 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
 const assignCourierSchema = z.object({
   orderId: z.string().min(1),
   courierBranchId: z.string().min(1, "Select a courier branch"),
+  // Which specific option within the provider was picked (e.g. one of
+  // Shiprocket's bundled couriers) — optional since MANUAL partners only
+  // ever have one option and don't need to disambiguate.
+  providerCourierId: z.string().optional(),
 });
 
 /**
@@ -311,7 +315,7 @@ export async function assignOrderToCourierAction(formData: FormData) {
   if (!parsed.success) {
     throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
   }
-  const { orderId, courierBranchId } = parsed.data;
+  const { orderId, courierBranchId, providerCourierId } = parsed.data;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || order.tenantId !== session.user.tenantId) throw new Error("Order not found");
@@ -356,6 +360,7 @@ export async function assignOrderToCourierAction(formData: FormData) {
         fulfillmentType: OrderFulfillmentType.COURIER_PARTNER,
         courierPartnerId: partner.id,
         courierBranchId: branch.id,
+        selectedProviderCourierId: providerCourierId || null,
         assignmentMethod: OrderAssignmentMethod.MANUAL,
         platformFeeAmount,
         status: OrderStatus.ASSIGNED,
@@ -376,28 +381,38 @@ export async function assignOrderToCourierAction(formData: FormData) {
 
 // ---------- Quote comparison ----------
 
-export type CourierQuote = {
+export type CourierQuoteOption = {
+  price: number;
+  etaDays?: number;
+  providerCourierId?: string;
+  label?: string;
+  platformFee: number | null;
+  netCourierPayout: number | null;
+};
+
+// One entry per connected provider (Shiprocket, a directly-onboarded DTDC,
+// Bluedart, ...) servicing the delivery pincode — each with every bookable
+// option that provider offers, so the dispatch UI can show a tab per
+// provider and let staff compare options within it, rather than flattening
+// everything (and Shiprocket's own bundled couriers) into one undifferentiated list.
+export type ProviderQuoteGroup = {
   partnerId: string;
   partnerName: string;
   branchId: string;
   branchName: string;
   zone: string;
-  price: number | null;
-  etaDays?: number;
-  platformFee: number | null;
-  netCourierPayout: number | null;
-  noRateCard: boolean;
+  options: CourierQuoteOption[];
 };
 
 /**
- * Builds a live, sorted quote-comparison list for an order across every
- * ACTIVE courier partner with a branch that services the delivery pincode.
- * Partners with no usable quote (no active rate card / no matching slab /
- * API not yet implemented) are still shown, ranked last, with
- * noRateCard: true — they are a real "no quote available" state, not
- * omitted from the list.
+ * Builds a live quote comparison for an order, grouped by connected
+ * provider (one group per ACTIVE courier partner with a branch servicing
+ * the delivery pincode). A provider with no usable quote (no active rate
+ * card / no matching slab / API error) is still returned, with an empty
+ * options list, so its tab exists and explains itself rather than
+ * silently vanishing.
  */
-export async function getQuotesForOrder(orderId: string): Promise<CourierQuote[]> {
+export async function getProviderQuotesForOrder(orderId: string): Promise<ProviderQuoteGroup[]> {
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw new Error("Order not found");
   if (!order.deliveryPincode) return [];
@@ -406,27 +421,44 @@ export async function getQuotesForOrder(orderId: string): Promise<CourierQuote[]
   const weightKg = order.weightKg ?? 0;
   const zone = determineZone(order.pickupPincode ?? "", order.deliveryPincode);
 
-  const quotes: CourierQuote[] = await Promise.all(
+  return Promise.all(
     branches.map(async (branch) => {
       const partner = branch.courierPartner;
       const provider = await getCourierProvider(partner);
+      const commission = await getEffectiveCommission(partner.id, partner);
 
-      let quote: { price: number; etaDays?: number } | null = null;
+      let rawOptions: { price: number; etaDays?: number; providerCourierId?: string; label?: string }[] = [];
       try {
-        quote = await provider.getQuote(partner, {
-          pickupPincode: order.pickupPincode ?? "",
-          deliveryPincode: order.deliveryPincode!,
-          weightKg,
-        });
+        rawOptions = provider.getQuotes
+          ? await provider.getQuotes(partner, {
+              pickupPincode: order.pickupPincode ?? "",
+              deliveryPincode: order.deliveryPincode!,
+              weightKg,
+            })
+          : [];
+        if (!provider.getQuotes) {
+          const quote = await provider.getQuote(partner, {
+            pickupPincode: order.pickupPincode ?? "",
+            deliveryPincode: order.deliveryPincode!,
+            weightKg,
+          });
+          if (quote) rawOptions = [quote];
+        }
       } catch {
         // API integration not yet implemented, or provider lookup failed —
-        // treat as "no quote available" rather than failing the whole list.
-        quote = null;
+        // this provider's tab just shows no options, rather than failing
+        // the whole comparison.
+        rawOptions = [];
       }
 
-      const commission = await getEffectiveCommission(partner.id, partner);
-      const platformFee = quote ? computePlatformFee(commission, quote.price) : null;
-      const netCourierPayout = quote && platformFee != null ? Math.round((quote.price - platformFee) * 100) / 100 : null;
+      const options: CourierQuoteOption[] = rawOptions.map((o) => {
+        const platformFee = computePlatformFee(commission, o.price);
+        return {
+          ...o,
+          platformFee,
+          netCourierPayout: platformFee != null ? Math.round((o.price - platformFee) * 100) / 100 : null,
+        };
+      });
 
       return {
         partnerId: partner.id,
@@ -434,20 +466,10 @@ export async function getQuotesForOrder(orderId: string): Promise<CourierQuote[]
         branchId: branch.id,
         branchName: branch.name,
         zone,
-        price: quote?.price ?? null,
-        etaDays: quote?.etaDays,
-        platformFee,
-        netCourierPayout,
-        noRateCard: quote === null,
+        options,
       };
     })
   );
-
-  return quotes.sort((a, b) => {
-    if (a.noRateCard !== b.noRateCard) return a.noRateCard ? 1 : -1;
-    if (a.price == null || b.price == null) return 0;
-    return a.price - b.price;
-  });
 }
 
 // ---------- Rate cards ----------

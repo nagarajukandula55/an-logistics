@@ -6,6 +6,7 @@ import type {
   CourierProvider,
   QuoteInput,
   QuoteResult,
+  QuoteOption,
   ServiceabilityResult,
   CreateShipmentInput,
   CreateShipmentResult,
@@ -60,6 +61,25 @@ export const shiprocketProvider: CourierProvider = {
       etaDays: cheapest.estimated_delivery_days ?? undefined,
       providerCourierId: String(cheapest.courier_company_id),
     };
+  },
+
+  async getQuotes(partner: CourierPartner, input: QuoteInput): Promise<QuoteOption[]> {
+    const creds = await getCredentials(partner);
+    const data = await shiprocketRequest(
+      creds,
+      `/courier/serviceability/?pickup_postcode=${input.pickupPincode}` +
+        `&delivery_postcode=${input.deliveryPincode}&cod=0&weight=${input.weightKg}`
+    );
+    const available = data?.data?.available_courier_companies ?? [];
+
+    return available
+      .map((c: any) => ({
+        price: Number(c.freight_charge) || 0,
+        etaDays: c.estimated_delivery_days ?? undefined,
+        providerCourierId: String(c.courier_company_id),
+        label: c.courier_name,
+      }))
+      .sort((a: QuoteOption, b: QuoteOption) => a.price - b.price);
   },
 
   async createShipment(partner: CourierPartner, input: CreateShipmentInput): Promise<CreateShipmentResult> {
