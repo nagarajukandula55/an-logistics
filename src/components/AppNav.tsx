@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Truck, Package, Users, LogOut, Handshake, ShieldCheck } from "lucide-react";
+import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutAction } from "@/lib/actions/auth-signout";
 
@@ -14,7 +14,10 @@ const LINKS = [
   { href: "/vehicles", label: "Vehicles", icon: Truck },
 ];
 
-const ADMIN_LINKS = [{ href: "/users", label: "Users", icon: ShieldCheck }];
+const ADMIN_LINKS = [
+  { href: "/users", label: "Users", icon: ShieldCheck },
+  { href: "/tenants", label: "Tenants", icon: Building2 },
+];
 
 export function AppNav({ userName, role }: { userName: string; role: string }) {
   const pathname = usePathname();

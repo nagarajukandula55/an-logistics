@@ -1,11 +1,10 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireTenantSession } from "@/lib/tenant";
 import { DriverStatus, VehicleStatus } from "@prisma/client";
 
 const FLEET_MANAGER_ROLES = ["ADMIN", "DISPATCHER"];
@@ -14,12 +13,11 @@ const FLEET_MANAGER_ROLES = ["ADMIN", "DISPATCHER"];
 // authenticated role (e.g. DRIVER, CUSTOMER) should be able to edit or
 // deactivate — only admins/dispatchers manage it.
 async function requireFleetManager() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { session, tenantId } = await requireTenantSession();
   if (!FLEET_MANAGER_ROLES.includes(session.user.role)) {
     return { ok: false as const, error: "You don't have permission to do that." };
   }
-  return { ok: true as const };
+  return { ok: true as const, tenantId };
 }
 
 const createVehicleSchema = z.object({
@@ -42,6 +40,7 @@ export async function createVehicleAction(_prev: ActionState, formData: FormData
   try {
     await prisma.vehicle.create({
       data: {
+        tenantId: guard.tenantId,
         registration: parsed.data.registration.toUpperCase(),
         type: parsed.data.type,
         capacityKg: parsed.data.capacityKg,
@@ -74,7 +73,7 @@ export async function updateVehicleAction(_prev: ActionState, formData: FormData
 
   try {
     await prisma.vehicle.update({
-      where: { id: vehicleId },
+      where: { id: vehicleId, tenantId: guard.tenantId },
       data: { type, capacityKg: capacityKg ?? null, status },
     });
   } catch {
@@ -91,7 +90,7 @@ export async function deactivateVehicleAction(vehicleId: string): Promise<Action
 
   try {
     await prisma.vehicle.update({
-      where: { id: vehicleId },
+      where: { id: vehicleId, tenantId: guard.tenantId },
       data: { status: VehicleStatus.INACTIVE },
     });
   } catch {
@@ -134,8 +133,9 @@ export async function createDriverAction(_prev: ActionState, formData: FormData)
         email,
         passwordHash,
         role: "DRIVER",
+        tenantId: guard.tenantId,
         driverProfile: {
-          create: { phone, licenseNo },
+          create: { phone, licenseNo, tenantId: guard.tenantId },
         },
       },
     });
@@ -165,7 +165,7 @@ export async function updateDriverAction(_prev: ActionState, formData: FormData)
   const { driverId, phone, licenseNo, status } = parsed.data;
 
   const driver = await prisma.driver.findUnique({ where: { id: driverId }, include: { user: true } });
-  if (!driver) return { ok: false, error: "Driver not found" };
+  if (!driver || driver.tenantId !== guard.tenantId) return { ok: false, error: "Driver not found" };
   if (!driver.user.isActive && status !== DriverStatus.OFF_DUTY) {
     return { ok: false, error: "Reactivate this driver before changing their dispatch status." };
   }
@@ -192,7 +192,7 @@ export async function deactivateDriverAction(driverId: string): Promise<ActionSt
 
   try {
     const driver = await prisma.driver.findUnique({ where: { id: driverId } });
-    if (!driver) return { ok: false, error: "Driver not found" };
+    if (!driver || driver.tenantId !== guard.tenantId) return { ok: false, error: "Driver not found" };
 
     await prisma.$transaction([
       prisma.user.update({ where: { id: driver.userId }, data: { isActive: false } }),
@@ -212,7 +212,7 @@ export async function reactivateDriverAction(driverId: string): Promise<ActionSt
 
   try {
     const driver = await prisma.driver.findUnique({ where: { id: driverId } });
-    if (!driver) return { ok: false, error: "Driver not found" };
+    if (!driver || driver.tenantId !== guard.tenantId) return { ok: false, error: "Driver not found" };
 
     await prisma.user.update({ where: { id: driver.userId }, data: { isActive: true } });
   } catch {

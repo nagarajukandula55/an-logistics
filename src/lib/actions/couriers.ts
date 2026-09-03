@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireTenantSession } from "@/lib/tenant";
 import {
   CommissionType,
   CourierAgreementStatus,
@@ -22,9 +22,12 @@ import { encryptApiKey } from "@/lib/crypto";
 
 export type ActionState = { ok: boolean; error?: string };
 
+// CourierPartner/branch/rate-card data is a shared routable-provider pool,
+// not tenant-scoped (see Tenant model doc comment in schema.prisma) — any
+// authenticated staff user can manage it. Only Order lookups within this
+// file need tenant scoping.
 async function requireSession() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { session } = await requireTenantSession();
   return session;
 }
 
@@ -291,7 +294,7 @@ const assignCourierSchema = z.object({
  * against codAmount (left null when there is no COD amount to compute against).
  */
 export async function assignOrderToCourierAction(formData: FormData) {
-  await requireSession();
+  const session = await requireSession();
 
   const parsed = assignCourierSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -300,7 +303,7 @@ export async function assignOrderToCourierAction(formData: FormData) {
   const { orderId, courierBranchId } = parsed.data;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) throw new Error("Order not found");
+  if (!order || order.tenantId !== session.user.tenantId) throw new Error("Order not found");
   if (order.driverId || order.courierPartnerId) throw new Error("Order is already assigned");
 
   const branch = await prisma.courierBranch.findUnique({

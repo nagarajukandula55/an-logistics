@@ -7,6 +7,75 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+// ---------- Tenancy ----------
+// A Tenant is "whose orders/users/billing these are" — distinct from
+// CourierPartner ("a fulfillment option we can route to"). A business that
+// is both a client (brings us their own order volume) and a fulfillment
+// partner (their network can be routed to) gets one row of each, joined by
+// CourierPartner.tenantId. INTERNAL is our own business; MARKETPLACE is the
+// singleton bucket public aggregator bookings roll up to; CLIENT is anyone
+// else (a business we run, or a company like a courier that becomes a
+// direct client) whose volume we operate through this platform.
+
+enum TenantType {
+  INTERNAL
+  CLIENT
+  MARKETPLACE
+}
+
+enum TenantStatus {
+  ACTIVE
+  SUSPENDED
+  ONBOARDING
+}
+
+model Tenant {
+  id                     String          @id @default(cuid())
+  slug                   String          @unique
+  name                   String
+  type                   TenantType
+  status                 TenantStatus    @default(ONBOARDING)
+  billingEmail           String?
+  billingAddress         String?
+  gstin                  String?
+  defaultCommissionType  CommissionType?
+  defaultCommissionValue Float?
+  webhookUrl             String?
+  webhookSecret          String?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  users          User[]
+  orders         Order[]
+  vehicles       Vehicle[]
+  drivers        Driver[]
+  warehouses     Warehouse[]
+  customers      Customer[]
+  courierPartner CourierPartner?
+  apiKeys        TenantApiKey[]
+  invoices       Invoice[]       @relation("InvoiceForTenant")
+  settlements    Settlement[]    @relation("SettlementForTenant")
+
+  @@index([type])
+  @@index([status])
+}
+
+model TenantApiKey {
+  id         String    @id @default(cuid())
+  tenantId   String
+  tenant     Tenant    @relation(fields: [tenantId], references: [id])
+  label      String
+  keyPrefix  String    @unique
+  keyHash    String
+  scopes     String[]
+  lastUsedAt DateTime?
+  revokedAt  DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([tenantId])
+  @@index([keyPrefix])
+}
+
 // ---------- Access control ----------
 
 enum UserRole {
@@ -28,11 +97,15 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
+  tenant        Tenant?   @relation(fields: [tenantId], references: [id])
+  tenantId      String?
+
   driverProfile Driver?
   customer      Customer? @relation(fields: [customerId], references: [id])
   customerId    String?
 
   @@index([customerId])
+  @@index([tenantId])
 }
 
 // ---------- Customers ----------
@@ -50,10 +123,14 @@ model Customer {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
+  tenant      Tenant?  @relation(fields: [tenantId], references: [id])
+  tenantId    String?
+
   users    User[]
   orders   Order[]
 
   @@index([name])
+  @@index([tenantId])
 }
 
 // ---------- Fleet ----------
@@ -74,8 +151,13 @@ model Vehicle {
   createdAt    DateTime      @default(now())
   updatedAt    DateTime      @updatedAt
 
+  tenant       Tenant?       @relation(fields: [tenantId], references: [id])
+  tenantId     String?
+
   drivers Driver[]
   orders  Order[]
+
+  @@index([tenantId])
 }
 
 enum DriverStatus {
@@ -96,9 +178,13 @@ model Driver {
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
 
+  tenant       Tenant?      @relation(fields: [tenantId], references: [id])
+  tenantId     String?
+
   orders Order[]
 
   @@index([vehicleId])
+  @@index([tenantId])
 }
 
 // ---------- Locations ----------
@@ -110,8 +196,13 @@ model Warehouse {
   city      String
   createdAt DateTime @default(now())
 
+  tenant    Tenant?  @relation(fields: [tenantId], references: [id])
+  tenantId  String?
+
   originOrders      Order[] @relation("OriginWarehouse")
   destinationOrders Order[] @relation("DestinationWarehouse")
+
+  @@index([tenantId])
 }
 
 // ---------- Orders / shipments ----------
@@ -140,6 +231,8 @@ enum OrderAssignmentMethod {
 model Order {
   id                    String      @id @default(cuid())
   trackingCode          String      @unique
+  tenantId              String?
+  tenant                Tenant?     @relation(fields: [tenantId], references: [id])
   customerId            String
   customer              Customer    @relation(fields: [customerId], references: [id])
 
@@ -176,18 +269,24 @@ model Order {
   courierBranch         CourierBranch?  @relation(fields: [courierBranchId], references: [id])
   platformFeeAmount     Float?
   courierPayoutAmount   Float?
+  providerRef           String?
+  providerLabelUrl      String?
+  chargedAmount         Float?
 
   createdAt             DateTime    @default(now())
   updatedAt              DateTime   @updatedAt
 
   statusEvents          OrderStatusEvent[]
   proofOfDelivery        ProofOfDelivery?
+  invoiceLineItems       InvoiceLineItem[]
+  settlementLineItems    SettlementLineItem[]
 
   @@index([customerId])
   @@index([driverId])
   @@index([status])
   @@index([deliveryPincode])
   @@index([courierPartnerId])
+  @@index([tenantId])
 }
 
 model OrderStatusEvent {
@@ -251,15 +350,27 @@ model CourierPartner {
   integrationType CourierIntegrationType  @default(MANUAL)
   commissionType  CommissionType          @default(PERCENT)
   commissionValue Float
+  // Routing precedence when multiple partners (including our own self-fleet,
+  // which is registered as a partner row too) service a pincode — higher
+  // goes first. Lets "check our own network, then fall back to a ranked
+  // local partner" be an explicit admin setting rather than alphabetical.
+  priority        Int                     @default(0)
   notes           String?
   createdAt       DateTime                @default(now())
   updatedAt       DateTime                @updatedAt
+
+  // Nullable: most partners are pure fulfillment options with no tenant
+  // login/billing identity of their own. Set only when a partner is also
+  // onboarded as a client/business we operate (see Tenant doc comment).
+  tenant          Tenant?                 @relation(fields: [tenantId], references: [id])
+  tenantId        String?                 @unique
 
   branches        CourierBranch[]
   agreements      CourierAgreement[]
   apiConfig       CourierApiConfig?
   orders          Order[]
   rateCards       RateCard[]
+  settlements     Settlement[]
 
   @@index([status])
 }
@@ -353,4 +464,99 @@ model CourierApiConfig {
   apiKeyEncrypted    String?
   webhookUrl        String?
   isActive          Boolean        @default(false)
+}
+
+// ---------- Billing ----------
+// Two distinct money-flow directions: Invoice is us billing a CLIENT tenant
+// for platform usage; Settlement is us reconciling payouts with a
+// CourierPartner. A partner who is also a tenant can see their Settlements
+// through their tenant portal view (Settlement.tenantId).
+
+enum InvoiceStatus {
+  DRAFT
+  SENT
+  PAID
+  OVERDUE
+  VOID
+}
+
+enum SettlementStatus {
+  DRAFT
+  FINALIZED
+  PAID
+}
+
+model Invoice {
+  id            String        @id @default(cuid())
+  invoiceNumber String        @unique
+  tenantId      String
+  tenant        Tenant        @relation("InvoiceForTenant", fields: [tenantId], references: [id])
+  periodStart   DateTime
+  periodEnd     DateTime
+  status        InvoiceStatus @default(DRAFT)
+  subtotal      Float
+  taxAmount     Float         @default(0)
+  totalAmount   Float
+  issuedAt      DateTime?
+  dueAt         DateTime?
+  paidAt        DateTime?
+  pdfUrl        String?
+  notes         String?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+
+  lineItems     InvoiceLineItem[]
+
+  @@index([tenantId])
+  @@index([status])
+}
+
+model InvoiceLineItem {
+  id          String   @id @default(cuid())
+  invoiceId   String
+  invoice     Invoice  @relation(fields: [invoiceId], references: [id], onDelete: Cascade)
+  orderId     String?
+  order       Order?   @relation(fields: [orderId], references: [id])
+  description String
+  quantity    Float    @default(1)
+  unitPrice   Float
+  amount      Float
+
+  @@index([invoiceId])
+  @@index([orderId])
+}
+
+model Settlement {
+  id                 String           @id @default(cuid())
+  settlementNumber   String           @unique
+  courierPartnerId   String
+  courierPartner     CourierPartner   @relation(fields: [courierPartnerId], references: [id])
+  tenantId           String?
+  tenant             Tenant?          @relation("SettlementForTenant", fields: [tenantId], references: [id])
+  periodStart        DateTime
+  periodEnd          DateTime
+  status             SettlementStatus @default(DRAFT)
+  grossPayoutAmount  Float
+  commissionDeducted Float
+  netAmount          Float
+  paidAt             DateTime?
+  createdAt          DateTime         @default(now())
+
+  lineItems          SettlementLineItem[]
+
+  @@index([courierPartnerId])
+  @@index([tenantId])
+}
+
+model SettlementLineItem {
+  id               String     @id @default(cuid())
+  settlementId     String
+  settlement       Settlement @relation(fields: [settlementId], references: [id], onDelete: Cascade)
+  orderId          String
+  order            Order      @relation(fields: [orderId], references: [id])
+  payoutAmount     Float
+  commissionAmount Float
+
+  @@index([settlementId])
+  @@index([orderId])
 }

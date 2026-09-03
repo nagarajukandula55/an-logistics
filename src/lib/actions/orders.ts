@@ -4,10 +4,10 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
 import { generateTrackingCode } from "@/lib/tracking-code";
 import { OrderStatus } from "@prisma/client";
 import { optionalPincodeSchema } from "@/lib/validation";
+import { requireTenantSession } from "@/lib/tenant";
 
 const createOrderSchema = z.object({
   customerId: z.string().min(1, "Select or create a customer"),
@@ -31,8 +31,7 @@ export type CreateOrderState = {
 };
 
 export async function createOrderAction(_prev: CreateOrderState, formData: FormData): Promise<CreateOrderState> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { tenantId } = await requireTenantSession();
 
   const raw = Object.fromEntries(formData.entries());
   const parsed = createOrderSchema.safeParse(raw);
@@ -46,6 +45,7 @@ export async function createOrderAction(_prev: CreateOrderState, formData: FormD
   const order = await prisma.order.create({
     data: {
       trackingCode: generateTrackingCode(),
+      tenantId,
       customerId: data.customerId,
       pickupAddress: data.pickupAddress,
       pickupContactName: data.pickupContactName,
@@ -77,8 +77,7 @@ const createCustomerSchema = z.object({
 });
 
 export async function createCustomerAction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { tenantId } = await requireTenantSession();
 
   const parsed = createCustomerSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -87,6 +86,7 @@ export async function createCustomerAction(formData: FormData) {
 
   const customer = await prisma.customer.create({
     data: {
+      tenantId,
       name: parsed.data.name,
       phone: parsed.data.phone || null,
       email: parsed.data.email || null,
@@ -105,8 +105,7 @@ const assignSchema = z.object({
 });
 
 export async function assignDriverVehicleAction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { tenantId } = await requireTenantSession();
 
   const parsed = assignSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -115,7 +114,7 @@ export async function assignDriverVehicleAction(formData: FormData) {
   const { orderId, driverId, vehicleId } = parsed.data;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) throw new Error("Order not found");
+  if (!order || order.tenantId !== tenantId) throw new Error("Order not found");
   if (order.driverId) throw new Error("Order is already assigned");
 
   await prisma.$transaction([
@@ -156,8 +155,7 @@ const advanceSchema = z.object({
 });
 
 export async function advanceOrderStatusAction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { tenantId } = await requireTenantSession();
 
   const parsed = advanceSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -167,7 +165,7 @@ export async function advanceOrderStatusAction(formData: FormData) {
   const status = parsed.data.status as OrderStatus;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) throw new Error("Order not found");
+  if (!order || order.tenantId !== tenantId) throw new Error("Order not found");
 
   const allowed = NEXT_STATUS[order.status] ?? [];
   if (!allowed.includes(status)) {
@@ -207,8 +205,7 @@ const podSchema = z.object({
 });
 
 export async function capturePodAction(formData: FormData) {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { tenantId } = await requireTenantSession();
 
   const parsed = podSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -217,7 +214,7 @@ export async function capturePodAction(formData: FormData) {
   const { orderId, signedByName, notes } = parsed.data;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order) throw new Error("Order not found");
+  if (!order || order.tenantId !== tenantId) throw new Error("Order not found");
 
   await prisma.$transaction(async (tx) => {
     await tx.proofOfDelivery.upsert({

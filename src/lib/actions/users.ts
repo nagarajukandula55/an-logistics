@@ -1,25 +1,23 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { redirect } from "next/navigation";
 import crypto from "crypto";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireTenantSession } from "@/lib/tenant";
 import type { Session } from "next-auth";
 
 export type ActionState = { ok: boolean; error?: string; tempPassword?: string };
 
-type AdminGuard = { ok: true; session: Session } | { ok: false; error: string };
+type AdminGuard = { ok: true; session: Session; tenantId: string } | { ok: false; error: string };
 
 async function requireAdmin(): Promise<AdminGuard> {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { session, tenantId } = await requireTenantSession();
   if (session.user.role !== "ADMIN") {
     return { ok: false, error: "Only admins can perform this action" };
   }
-  return { ok: true, session };
+  return { ok: true, session, tenantId };
 }
 
 function generateTempPassword(): string {
@@ -48,7 +46,7 @@ export async function adminResetPasswordAction(_prev: ActionState, formData: For
   const { userId } = parsed.data;
 
   const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target) {
+  if (!target || target.tenantId !== guard.tenantId) {
     return { ok: false, error: "User not found" };
   }
 
@@ -77,8 +75,8 @@ export async function toggleUserActiveAction(userId: string): Promise<ActionStat
     return { ok: false, error: "You cannot deactivate your own account" };
   }
 
-  const target = await prisma.user.findUnique({ where: { id: userId }, select: { isActive: true } });
-  if (!target) return { ok: false, error: "User not found" };
+  const target = await prisma.user.findUnique({ where: { id: userId }, select: { isActive: true, tenantId: true } });
+  if (!target || target.tenantId !== guard.tenantId) return { ok: false, error: "User not found" };
 
   await prisma.user.update({
     where: { id: userId },

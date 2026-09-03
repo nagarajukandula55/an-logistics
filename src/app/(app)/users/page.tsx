@@ -1,17 +1,17 @@
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
-import { auth } from "@/auth";
+import { requireTenantSession } from "@/lib/tenant";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { UserRow } from "./UserRow";
 
 export default async function UsersPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { session, tenantId } = await requireTenantSession();
   if (session.user.role !== "ADMIN") redirect("/orders");
 
   const users = await prisma.user.findMany({
+    where: { tenantId },
     orderBy: { createdAt: "desc" },
   });
 

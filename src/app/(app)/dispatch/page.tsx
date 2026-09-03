@@ -5,21 +5,24 @@ import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { Badge, orderStatusTone, orderStatusLabel, fleetStatusTone } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { OrderStatus } from "@prisma/client";
+import { requireTenantSession } from "@/lib/tenant";
 
 export default async function DispatchPage() {
+  const { tenantId } = await requireTenantSession();
+
   const [pendingOrders, activeOrders, drivers, vehicles] = await Promise.all([
     prisma.order.findMany({
-      where: { status: OrderStatus.CREATED },
+      where: { tenantId, status: OrderStatus.CREATED },
       include: { customer: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.order.findMany({
-      where: { status: { in: [OrderStatus.ASSIGNED, OrderStatus.PICKED_UP, OrderStatus.IN_TRANSIT, OrderStatus.OUT_FOR_DELIVERY] } },
+      where: { tenantId, status: { in: [OrderStatus.ASSIGNED, OrderStatus.PICKED_UP, OrderStatus.IN_TRANSIT, OrderStatus.OUT_FOR_DELIVERY] } },
       include: { customer: true, driver: { include: { user: true } }, vehicle: true },
       orderBy: { updatedAt: "desc" },
     }),
-    prisma.driver.findMany({ include: { user: true, vehicle: true }, orderBy: { status: "asc" } }),
-    prisma.vehicle.findMany({ orderBy: { status: "asc" } }),
+    prisma.driver.findMany({ where: { tenantId }, include: { user: true, vehicle: true }, orderBy: { status: "asc" } }),
+    prisma.vehicle.findMany({ where: { tenantId }, orderBy: { status: "asc" } }),
   ]);
 
   return (

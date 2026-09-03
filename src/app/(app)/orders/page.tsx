@@ -9,6 +9,7 @@ import { Plus, ChevronLeft, ChevronRight } from "lucide-react";
 import { OrderStatus, Prisma } from "@prisma/client";
 import { format } from "date-fns";
 import { OrderSearchForm } from "./OrderSearchForm";
+import { requireTenantSession } from "@/lib/tenant";
 
 const STATUSES = Object.values(OrderStatus);
 const PAGE_SIZE = 25;
@@ -18,12 +19,14 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string; page?: string }>;
 }) {
+  const { tenantId } = await requireTenantSession();
   const { status, q, page: pageParam } = await searchParams;
   const filter = status && STATUSES.includes(status as OrderStatus) ? (status as OrderStatus) : undefined;
   const search = q?.trim() || undefined;
   const page = Math.max(1, Number(pageParam) || 1);
 
   const where: Prisma.OrderWhereInput = {
+    tenantId,
     ...(filter ? { status: filter } : {}),
     ...(search
       ? {

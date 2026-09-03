@@ -10,12 +10,14 @@ import { DispatchPanel } from "./DispatchPanel";
 import { CourierAssignPanel } from "./CourierAssignPanel";
 import { StatusControls } from "./StatusControls";
 import { PodPanel } from "./PodPanel";
+import { requireTenantSession } from "@/lib/tenant";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { tenantId } = await requireTenantSession();
 
   const order = await prisma.order.findUnique({
-    where: { id },
+    where: { id, tenantId },
     include: {
       customer: true,
       driver: { include: { user: true } },
@@ -30,12 +32,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
   if (!order) notFound();
 
   const availableDrivers = await prisma.driver.findMany({
-    where: { status: "AVAILABLE", user: { isActive: true } },
+    where: { tenantId, status: "AVAILABLE", user: { isActive: true } },
     include: { user: true },
     orderBy: { createdAt: "asc" },
   });
   const availableVehicles = await prisma.vehicle.findMany({
-    where: { status: "AVAILABLE" },
+    where: { tenantId, status: "AVAILABLE" },
     orderBy: { createdAt: "asc" },
   });
 

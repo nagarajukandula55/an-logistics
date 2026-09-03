@@ -38,6 +38,7 @@ export const authConfig = {
         token.role = user.role;
         token.id = user.id;
         token.mustChangePassword = user.mustChangePassword;
+        token.tenantId = (user as { tenantId?: string | null }).tenantId ?? null;
       }
       if (trigger === "update" && session?.user?.mustChangePassword === false) {
         token.mustChangePassword = false;
@@ -49,6 +50,7 @@ export const authConfig = {
         session.user.id = token.id as string;
         session.user.role = token.role as string;
         session.user.mustChangePassword = Boolean(token.mustChangePassword);
+        session.user.tenantId = (token.tenantId as string | null) ?? null;
       }
       return session;
     },

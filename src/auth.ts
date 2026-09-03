@@ -39,6 +39,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           email: user.email,
           role: user.role,
           mustChangePassword: user.mustChangePassword,
+          tenantId: user.tenantId,
         };
       },
     }),

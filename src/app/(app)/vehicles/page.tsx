@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
-import { auth } from "@/auth";
 import { prisma } from "@/lib/prisma";
+import { requireTenantSession } from "@/lib/tenant";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
@@ -8,11 +8,10 @@ import { NewVehicleForm } from "./NewVehicleForm";
 import { VehicleRow } from "./VehicleRow";
 
 export default async function VehiclesPage() {
-  const session = await auth();
-  if (!session?.user) redirect("/login");
+  const { session, tenantId } = await requireTenantSession();
   if (!["ADMIN", "DISPATCHER"].includes(session.user.role)) redirect("/orders");
 
-  const vehicles = await prisma.vehicle.findMany({ orderBy: { createdAt: "desc" } });
+  const vehicles = await prisma.vehicle.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" } });
 
   return (
     <div>
