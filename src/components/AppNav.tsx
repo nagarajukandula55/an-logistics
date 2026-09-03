@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2 } from "lucide-react";
+import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2, Receipt } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutAction } from "@/lib/actions/auth-signout";
 
@@ -17,6 +17,7 @@ const LINKS = [
 const ADMIN_LINKS = [
   { href: "/users", label: "Users", icon: ShieldCheck },
   { href: "/tenants", label: "Tenants", icon: Building2 },
+  { href: "/billing/invoices", label: "Billing", icon: Receipt },
 ];
 
 export function AppNav({ userName, role }: { userName: string; role: string }) {
