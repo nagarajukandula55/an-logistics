@@ -34,7 +34,7 @@ export const authConfig = {
         return Response.redirect(new URL("/change-password", request.nextUrl));
       }
       if (!mustChangePassword && pathname === "/change-password") {
-        return Response.redirect(new URL("/orders", request.nextUrl));
+        return Response.redirect(new URL("/dashboard", request.nextUrl));
       }
 
       return true;
