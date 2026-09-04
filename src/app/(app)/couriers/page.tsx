@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Badge, courierPartnerStatusTone, enumLabel } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
-import { Plus } from "lucide-react";
+import { Plus, BookOpen } from "lucide-react";
 
 export default async function CouriersPage() {
   const partners = await prisma.courierPartner.findMany({
@@ -20,11 +20,18 @@ export default async function CouriersPage() {
         title="Courier partners"
         description="Onboard and manage the courier companies and franchises that fulfill orders on your behalf."
         actions={
-          <Link href="/couriers/new">
-            <Button>
-              <Plus className="size-4" /> Onboard courier
-            </Button>
-          </Link>
+          <div className="flex items-center gap-2">
+            <Link href="/couriers/guide">
+              <Button variant="secondary">
+                <BookOpen className="size-4" /> How to connect a courier
+              </Button>
+            </Link>
+            <Link href="/couriers/new">
+              <Button>
+                <Plus className="size-4" /> Onboard courier
+              </Button>
+            </Link>
+          </div>
         }
       />
 
