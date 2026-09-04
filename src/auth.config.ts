@@ -45,6 +45,7 @@ export const authConfig = {
         token.id = user.id;
         token.mustChangePassword = user.mustChangePassword;
         token.tenantId = (user as { tenantId?: string | null }).tenantId ?? null;
+        token.tenantType = (user as { tenantType?: string | null }).tenantType ?? null;
       }
       if (trigger === "update" && session?.user?.mustChangePassword === false) {
         token.mustChangePassword = false;
@@ -57,6 +58,7 @@ export const authConfig = {
         session.user.role = token.role as string;
         session.user.mustChangePassword = Boolean(token.mustChangePassword);
         session.user.tenantId = (token.tenantId as string | null) ?? null;
+        session.user.tenantType = (token.tenantType as string | null) ?? null;
       }
       return session;
     },

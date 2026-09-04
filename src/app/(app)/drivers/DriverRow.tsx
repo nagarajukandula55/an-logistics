@@ -24,7 +24,7 @@ type DriverRowData = {
 
 const initialState: ActionState = { ok: false };
 
-export function DriverRow({ driver }: { driver: DriverRowData }) {
+export function DriverRow({ driver, tenantName }: { driver: DriverRowData; tenantName?: string }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(updateDriverAction, initialState);
   const [transitioning, startTransition] = useTransition();
@@ -33,7 +33,7 @@ export function DriverRow({ driver }: { driver: DriverRowData }) {
   if (editing) {
     return (
       <tr className="border-b border-border last:border-0 bg-surface-2">
-        <td className="px-4 py-3 text-ink" colSpan={6}>
+        <td className="px-4 py-3 text-ink" colSpan={tenantName !== undefined ? 7 : 6}>
           <form action={formAction} className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="driverId" value={driver.id} />
             <span className="text-sm font-medium text-ink self-center pr-2">{driver.user.name}</span>
@@ -77,6 +77,7 @@ export function DriverRow({ driver }: { driver: DriverRowData }) {
           </Badge>
         )}
       </td>
+      {tenantName !== undefined && <td className="px-4 py-3 text-ink-2">{tenantName}</td>}
       <td className="px-4 py-3 text-ink-2">{driver.phone}</td>
       <td className="px-4 py-3 text-ink-2 tabular">{driver.licenseNo}</td>
       <td className="px-4 py-3 text-ink-2">{driver.vehicle?.registration ?? "—"}</td>

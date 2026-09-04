@@ -27,8 +27,8 @@ export type ActionState = { ok: boolean; error?: string };
 // authenticated staff user can manage it. Only Order lookups within this
 // file need tenant scoping.
 async function requireSession() {
-  const { session } = await requireTenantSession();
-  return session;
+  const { session, isStaff } = await requireTenantSession();
+  return { session, isStaff };
 }
 
 // ---------- Courier partner ----------
@@ -309,7 +309,7 @@ const assignCourierSchema = z.object({
  * against codAmount (left null when there is no COD amount to compute against).
  */
 export async function assignOrderToCourierAction(formData: FormData) {
-  const session = await requireSession();
+  const { session, isStaff } = await requireSession();
 
   const parsed = assignCourierSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -318,7 +318,7 @@ export async function assignOrderToCourierAction(formData: FormData) {
   const { orderId, courierBranchId, providerCourierId } = parsed.data;
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
-  if (!order || order.tenantId !== session.user.tenantId) throw new Error("Order not found");
+  if (!order || (!isStaff && order.tenantId !== session.user.tenantId)) throw new Error("Order not found");
   if (order.driverId || order.courierPartnerId) throw new Error("Order is already assigned");
 
   const branch = await prisma.courierBranch.findUnique({

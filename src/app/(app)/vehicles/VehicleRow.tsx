@@ -18,7 +18,7 @@ type VehicleRowData = {
 
 const initialState: ActionState = { ok: false };
 
-export function VehicleRow({ vehicle }: { vehicle: VehicleRowData }) {
+export function VehicleRow({ vehicle, tenantName }: { vehicle: VehicleRowData; tenantName?: string }) {
   const [editing, setEditing] = useState(false);
   const [state, formAction, pending] = useActionState(updateVehicleAction, initialState);
   const [transitioning, startTransition] = useTransition();
@@ -27,7 +27,7 @@ export function VehicleRow({ vehicle }: { vehicle: VehicleRowData }) {
   if (editing) {
     return (
       <tr className="border-b border-border last:border-0 bg-surface-2">
-        <td className="px-4 py-3 text-ink" colSpan={5}>
+        <td className="px-4 py-3 text-ink" colSpan={tenantName !== undefined ? 6 : 5}>
           <form action={formAction} className="flex flex-wrap items-end gap-3">
             <input type="hidden" name="vehicleId" value={vehicle.id} />
             <span className="text-sm font-medium text-ink tabular self-center pr-2">{vehicle.registration}</span>
@@ -71,6 +71,7 @@ export function VehicleRow({ vehicle }: { vehicle: VehicleRowData }) {
   return (
     <tr className="border-b border-border last:border-0">
       <td className="px-4 py-3 text-ink tabular">{vehicle.registration}</td>
+      {tenantName !== undefined && <td className="px-4 py-3 text-ink-2">{tenantName}</td>}
       <td className="px-4 py-3 text-ink-2">{vehicle.type}</td>
       <td className="px-4 py-3 text-ink-2 tabular">{vehicle.capacityKg ? `${vehicle.capacityKg} kg` : "—"}</td>
       <td className="px-4 py-3">

@@ -8,14 +8,17 @@ import { NewDriverForm } from "./NewDriverForm";
 import { DriverRow } from "./DriverRow";
 
 export default async function DriversPage() {
-  const { session, tenantId } = await requireTenantSession();
+  const { session, tenantId, isStaff } = await requireTenantSession();
   if (!["ADMIN", "DISPATCHER"].includes(session.user.role)) redirect("/orders");
 
   const drivers = await prisma.driver.findMany({
-    where: { tenantId },
-    include: { user: true, vehicle: true },
+    where: isStaff ? {} : { tenantId },
+    include: { user: true, vehicle: true, tenant: true },
     orderBy: { createdAt: "desc" },
   });
+  const tenants = isStaff
+    ? await prisma.tenant.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
+    : [];
 
   return (
     <div>
@@ -32,6 +35,7 @@ export default async function DriversPage() {
                   <thead>
                     <tr className="border-b border-border text-left text-ink-3">
                       <th className="px-4 py-3 font-medium">Name</th>
+                      {isStaff && <th className="px-4 py-3 font-medium">Tenant</th>}
                       <th className="px-4 py-3 font-medium">Phone</th>
                       <th className="px-4 py-3 font-medium">License</th>
                       <th className="px-4 py-3 font-medium">Vehicle</th>
@@ -41,7 +45,7 @@ export default async function DriversPage() {
                   </thead>
                   <tbody>
                     {drivers.map((d) => (
-                      <DriverRow key={d.id} driver={d} />
+                      <DriverRow key={d.id} driver={d} tenantName={isStaff ? d.tenant?.name ?? "—" : undefined} />
                     ))}
                   </tbody>
                 </table>
@@ -50,7 +54,7 @@ export default async function DriversPage() {
           )}
         </div>
 
-        <NewDriverForm />
+        <NewDriverForm tenants={tenants} />
       </div>
     </div>
   );

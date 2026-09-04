@@ -18,7 +18,15 @@ type UserRowData = {
 
 const initialState: ActionState = { ok: false };
 
-export function UserRow({ user, currentUserId }: { user: UserRowData; currentUserId: string }) {
+export function UserRow({
+  user,
+  currentUserId,
+  tenantName,
+}: {
+  user: UserRowData;
+  currentUserId: string;
+  tenantName?: string;
+}) {
   const [resetting, setResetting] = useState(false);
   const [state, formAction, pending] = useActionState(adminResetPasswordAction, initialState);
   const [transitioning, startTransition] = useTransition();
@@ -29,6 +37,7 @@ export function UserRow({ user, currentUserId }: { user: UserRowData; currentUse
     <>
       <tr className="border-b border-border last:border-0">
         <td className="px-4 py-3 text-ink">{user.name}</td>
+        {tenantName !== undefined && <td className="px-4 py-3 text-ink-2">{tenantName}</td>}
         <td className="px-4 py-3 text-ink-2">{user.email}</td>
         <td className="px-4 py-3">
           <Badge tone="neutral">{user.role}</Badge>
@@ -67,7 +76,7 @@ export function UserRow({ user, currentUserId }: { user: UserRowData; currentUse
       </tr>
       {resetting && (
         <tr className="border-b border-border last:border-0 bg-surface-2">
-          <td colSpan={5} className="px-4 py-3">
+          <td colSpan={tenantName !== undefined ? 6 : 5} className="px-4 py-3">
             {state.ok && state.tempPassword ? (
               <div className="flex flex-wrap items-center gap-3">
                 <p className="text-sm text-ink">

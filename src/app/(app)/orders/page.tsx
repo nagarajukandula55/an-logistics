@@ -19,14 +19,14 @@ export default async function OrdersPage({
 }: {
   searchParams: Promise<{ status?: string; q?: string; page?: string }>;
 }) {
-  const { tenantId } = await requireTenantSession();
+  const { tenantId, isStaff } = await requireTenantSession();
   const { status, q, page: pageParam } = await searchParams;
   const filter = status && STATUSES.includes(status as OrderStatus) ? (status as OrderStatus) : undefined;
   const search = q?.trim() || undefined;
   const page = Math.max(1, Number(pageParam) || 1);
 
   const where: Prisma.OrderWhereInput = {
-    tenantId,
+    ...(isStaff ? {} : { tenantId }),
     ...(filter ? { status: filter } : {}),
     ...(search
       ? {
@@ -44,7 +44,7 @@ export default async function OrdersPage({
 
   const orders = await prisma.order.findMany({
     where,
-    include: { customer: true, driver: { include: { user: true } } },
+    include: { customer: true, driver: { include: { user: true } }, tenant: true },
     orderBy: { createdAt: "desc" },
     skip: (clampedPage - 1) * PAGE_SIZE,
     take: PAGE_SIZE,
@@ -115,6 +115,7 @@ export default async function OrdersPage({
               <thead>
                 <tr className="border-b border-border text-left text-ink-3">
                   <th className="px-4 py-3 font-medium">Tracking code</th>
+                  {isStaff && <th className="px-4 py-3 font-medium">Tenant</th>}
                   <th className="px-4 py-3 font-medium">Customer</th>
                   <th className="px-4 py-3 font-medium">Route</th>
                   <th className="px-4 py-3 font-medium">Driver</th>
@@ -133,6 +134,9 @@ export default async function OrdersPage({
                         {order.trackingCode}
                       </Link>
                     </td>
+                    {isStaff && (
+                      <td className="px-4 py-3 text-ink-2">{order.tenant?.name ?? "—"}</td>
+                    )}
                     <td className="px-4 py-3 text-ink">{order.customer.name}</td>
                     <td className="px-4 py-3 text-ink-2 max-w-xs truncate">
                       {order.pickupAddress} → {order.deliveryAddress}

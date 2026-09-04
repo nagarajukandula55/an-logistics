@@ -2,13 +2,13 @@
 
 import { useActionState, useRef, useEffect } from "react";
 import { createVehicleAction, type ActionState } from "@/lib/actions/fleet";
-import { Field, Input } from "@/components/ui/Field";
+import { Field, Input, Select } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 
 const initialState: ActionState = { ok: false };
 
-export function NewVehicleForm() {
+export function NewVehicleForm({ tenants = [] }: { tenants?: { id: string; name: string }[] }) {
   const [state, formAction, pending] = useActionState(createVehicleAction, initialState);
   const formRef = useRef<HTMLFormElement>(null);
 
@@ -23,6 +23,20 @@ export function NewVehicleForm() {
       </CardHeader>
       <CardBody>
         <form ref={formRef} action={formAction} className="flex flex-col gap-3">
+          {tenants.length > 0 && (
+            <Field label="Tenant" htmlFor="tenantId" required>
+              <Select id="tenantId" name="tenantId" required defaultValue="">
+                <option value="" disabled>
+                  Select tenant
+                </option>
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          )}
           <Field label="Registration" htmlFor="registration" required>
             <Input id="registration" name="registration" placeholder="e.g. KA01AB1234" required />
           </Field>

@@ -8,10 +8,17 @@ import { NewVehicleForm } from "./NewVehicleForm";
 import { VehicleRow } from "./VehicleRow";
 
 export default async function VehiclesPage() {
-  const { session, tenantId } = await requireTenantSession();
+  const { session, tenantId, isStaff } = await requireTenantSession();
   if (!["ADMIN", "DISPATCHER"].includes(session.user.role)) redirect("/orders");
 
-  const vehicles = await prisma.vehicle.findMany({ where: { tenantId }, orderBy: { createdAt: "desc" } });
+  const vehicles = await prisma.vehicle.findMany({
+    where: isStaff ? {} : { tenantId },
+    include: { tenant: true },
+    orderBy: { createdAt: "desc" },
+  });
+  const tenants = isStaff
+    ? await prisma.tenant.findMany({ orderBy: { name: "asc" }, select: { id: true, name: true } })
+    : [];
 
   return (
     <div>
@@ -28,6 +35,7 @@ export default async function VehiclesPage() {
                   <thead>
                     <tr className="border-b border-border text-left text-ink-3">
                       <th className="px-4 py-3 font-medium">Registration</th>
+                      {isStaff && <th className="px-4 py-3 font-medium">Tenant</th>}
                       <th className="px-4 py-3 font-medium">Type</th>
                       <th className="px-4 py-3 font-medium">Capacity</th>
                       <th className="px-4 py-3 font-medium">Status</th>
@@ -36,7 +44,7 @@ export default async function VehiclesPage() {
                   </thead>
                   <tbody>
                     {vehicles.map((v) => (
-                      <VehicleRow key={v.id} vehicle={v} />
+                      <VehicleRow key={v.id} vehicle={v} tenantName={isStaff ? v.tenant?.name ?? "—" : undefined} />
                     ))}
                   </tbody>
                 </table>
@@ -45,7 +53,7 @@ export default async function VehiclesPage() {
           )}
         </div>
 
-        <NewVehicleForm />
+        <NewVehicleForm tenants={tenants} />
       </div>
     </div>
   );

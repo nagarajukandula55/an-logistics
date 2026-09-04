@@ -7,11 +7,12 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { UserRow } from "./UserRow";
 
 export default async function UsersPage() {
-  const { session, tenantId } = await requireTenantSession();
+  const { session, tenantId, isStaff } = await requireTenantSession();
   if (session.user.role !== "ADMIN") redirect("/orders");
 
   const users = await prisma.user.findMany({
-    where: { tenantId },
+    where: isStaff ? {} : { tenantId },
+    include: { tenant: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -32,6 +33,7 @@ export default async function UsersPage() {
               <thead>
                 <tr className="border-b border-border text-left text-ink-3">
                   <th className="px-4 py-3 font-medium">Name</th>
+                  {isStaff && <th className="px-4 py-3 font-medium">Tenant</th>}
                   <th className="px-4 py-3 font-medium">Email</th>
                   <th className="px-4 py-3 font-medium">Role</th>
                   <th className="px-4 py-3 font-medium">Status</th>
@@ -40,7 +42,12 @@ export default async function UsersPage() {
               </thead>
               <tbody>
                 {users.map((u) => (
-                  <UserRow key={u.id} user={u} currentUserId={session.user.id} />
+                  <UserRow
+                    key={u.id}
+                    user={u}
+                    currentUserId={session.user.id}
+                    tenantName={isStaff ? u.tenant?.name ?? "—" : undefined}
+                  />
                 ))}
               </tbody>
             </table>

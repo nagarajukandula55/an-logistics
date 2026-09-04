@@ -14,16 +14,17 @@ import { requireTenantSession } from "@/lib/tenant";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
-  const { tenantId } = await requireTenantSession();
+  const { tenantId, isStaff } = await requireTenantSession();
 
-  const order = await prisma.order.findUnique({
-    where: { id, tenantId },
+  const order = await prisma.order.findFirst({
+    where: isStaff ? { id } : { id, tenantId },
     include: {
       customer: true,
       driver: { include: { user: true } },
       vehicle: true,
       courierPartner: true,
       courierBranch: true,
+      tenant: true,
       statusEvents: { orderBy: { createdAt: "desc" } },
       proofOfDelivery: true,
     },
@@ -31,13 +32,16 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
 
   if (!order) notFound();
 
+  // Fleet offered for dispatch belongs to the order's own tenant, not
+  // necessarily the acting staff user's tenant.
+  const orderTenantId = order.tenantId;
   const availableDrivers = await prisma.driver.findMany({
-    where: { tenantId, status: "AVAILABLE", user: { isActive: true } },
+    where: { tenantId: orderTenantId, status: "AVAILABLE", user: { isActive: true } },
     include: { user: true },
     orderBy: { createdAt: "asc" },
   });
   const availableVehicles = await prisma.vehicle.findMany({
-    where: { tenantId, status: "AVAILABLE" },
+    where: { tenantId: orderTenantId, status: "AVAILABLE" },
     orderBy: { createdAt: "asc" },
   });
 
@@ -49,7 +53,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
       <PageHeader
         eyebrow="Order"
         title={order.trackingCode}
-        description={order.customer.name}
+        description={isStaff ? `${order.customer.name} · ${order.tenant?.name ?? "Unknown tenant"}` : order.customer.name}
         actions={<Badge tone={orderStatusTone(order.status)}>{orderStatusLabel(order.status)}</Badge>}
       />
 

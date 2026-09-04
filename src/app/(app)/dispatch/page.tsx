@@ -8,21 +8,22 @@ import { OrderStatus } from "@prisma/client";
 import { requireTenantSession } from "@/lib/tenant";
 
 export default async function DispatchPage() {
-  const { tenantId } = await requireTenantSession();
+  const { tenantId, isStaff } = await requireTenantSession();
+  const tenantFilter = isStaff ? {} : { tenantId };
 
   const [pendingOrders, activeOrders, drivers, vehicles] = await Promise.all([
     prisma.order.findMany({
-      where: { tenantId, status: OrderStatus.CREATED },
-      include: { customer: true },
+      where: { ...tenantFilter, status: OrderStatus.CREATED },
+      include: { customer: true, tenant: true },
       orderBy: { createdAt: "asc" },
     }),
     prisma.order.findMany({
-      where: { tenantId, status: { in: [OrderStatus.ASSIGNED, OrderStatus.PICKED_UP, OrderStatus.IN_TRANSIT, OrderStatus.OUT_FOR_DELIVERY] } },
-      include: { customer: true, driver: { include: { user: true } }, vehicle: true },
+      where: { ...tenantFilter, status: { in: [OrderStatus.ASSIGNED, OrderStatus.PICKED_UP, OrderStatus.IN_TRANSIT, OrderStatus.OUT_FOR_DELIVERY] } },
+      include: { customer: true, driver: { include: { user: true } }, vehicle: true, tenant: true },
       orderBy: { updatedAt: "desc" },
     }),
-    prisma.driver.findMany({ where: { tenantId }, include: { user: true, vehicle: true }, orderBy: { status: "asc" } }),
-    prisma.vehicle.findMany({ where: { tenantId }, orderBy: { status: "asc" } }),
+    prisma.driver.findMany({ where: tenantFilter, include: { user: true, vehicle: true, tenant: true }, orderBy: { status: "asc" } }),
+    prisma.vehicle.findMany({ where: tenantFilter, include: { tenant: true }, orderBy: { status: "asc" } }),
   ]);
 
   return (
@@ -46,7 +47,10 @@ export default async function DispatchPage() {
                         <Link href={`/orders/${o.id}`} className="text-accent font-medium tabular">
                           {o.trackingCode}
                         </Link>
-                        <p className="text-sm text-ink-2">{o.customer.name}</p>
+                        <p className="text-sm text-ink-2">
+                          {o.customer.name}
+                          {isStaff && <span className="text-ink-3"> · {o.tenant?.name ?? "—"}</span>}
+                        </p>
                         <p className="text-xs text-ink-3 max-w-md truncate">
                           {o.pickupAddress} → {o.deliveryAddress}
                         </p>
@@ -78,6 +82,7 @@ export default async function DispatchPage() {
                         </Link>
                         <p className="text-sm text-ink-2">
                           {o.driver?.user.name ?? "—"} {o.vehicle ? `· ${o.vehicle.registration}` : ""}
+                          {isStaff && <span className="text-ink-3"> · {o.tenant?.name ?? "—"}</span>}
                         </p>
                       </div>
                       <Badge tone={orderStatusTone(o.status)}>{orderStatusLabel(o.status)}</Badge>
@@ -100,7 +105,10 @@ export default async function DispatchPage() {
                   <li key={d.id} className="py-2.5 flex items-center justify-between gap-2">
                     <div>
                       <p className="text-sm text-ink">{d.user.name}</p>
-                      <p className="text-xs text-ink-3">{d.vehicle?.registration ?? "No vehicle"}</p>
+                      <p className="text-xs text-ink-3">
+                        {d.vehicle?.registration ?? "No vehicle"}
+                        {isStaff && ` · ${d.tenant?.name ?? "—"}`}
+                      </p>
                     </div>
                     <Badge tone={fleetStatusTone(d.status)}>{d.status.replace("_", " ")}</Badge>
                   </li>
@@ -119,7 +127,10 @@ export default async function DispatchPage() {
                   <li key={v.id} className="py-2.5 flex items-center justify-between gap-2">
                     <div>
                       <p className="text-sm text-ink">{v.registration}</p>
-                      <p className="text-xs text-ink-3">{v.type}</p>
+                      <p className="text-xs text-ink-3">
+                        {v.type}
+                        {isStaff && ` · ${v.tenant?.name ?? "—"}`}
+                      </p>
                     </div>
                     <Badge tone={fleetStatusTone(v.status)}>{v.status.replace("_", " ")}</Badge>
                   </li>

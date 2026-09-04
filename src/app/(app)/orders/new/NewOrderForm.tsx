@@ -1,6 +1,6 @@
 "use client";
 
-import { useActionState, useState, useTransition } from "react";
+import { useActionState, useEffect, useState, useTransition } from "react";
 import { createOrderAction, createCustomerAction, type CreateOrderState } from "@/lib/actions/orders";
 import { Field, Input, Select, Textarea } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
@@ -8,19 +8,36 @@ import { Card, CardBody } from "@/components/ui/Card";
 import { Plus, X } from "lucide-react";
 import { PINCODE_REGEX } from "@/lib/validation";
 
-type CustomerOption = { id: string; name: string; phone: string | null };
+type CustomerOption = { id: string; name: string; phone: string | null; tenantId: string | null };
+type TenantOption = { id: string; name: string };
 
 const initialState: CreateOrderState = { ok: false };
 
-export function NewOrderForm({ customers: initialCustomers }: { customers: CustomerOption[] }) {
+export function NewOrderForm({
+  customers: initialCustomers,
+  tenants = [],
+  defaultTenantId,
+}: {
+  customers: CustomerOption[];
+  tenants?: TenantOption[];
+  defaultTenantId: string;
+}) {
+  const isStaff = tenants.length > 0;
+  const [selectedTenantId, setSelectedTenantId] = useState(defaultTenantId);
   const [state, formAction, pending] = useActionState(createOrderAction, initialState);
-  const [customers, setCustomers] = useState(initialCustomers);
-  const [selectedCustomerId, setSelectedCustomerId] = useState(initialCustomers[0]?.id ?? "");
+  const [allCustomers, setCustomers] = useState(initialCustomers);
+  const customers = isStaff ? allCustomers.filter((c) => c.tenantId === selectedTenantId) : allCustomers;
+  const [selectedCustomerId, setSelectedCustomerId] = useState(customers[0]?.id ?? "");
   const [showNewCustomer, setShowNewCustomer] = useState(initialCustomers.length === 0);
   const [newCustomerName, setNewCustomerName] = useState("");
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [creatingCustomer, startCreatingCustomer] = useTransition();
   const [customerError, setCustomerError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setSelectedCustomerId((prev) => (customers.some((c) => c.id === prev) ? prev : customers[0]?.id ?? ""));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedTenantId]);
 
   const errors = state.errors ?? {};
   const [pickupPincodeError, setPickupPincodeError] = useState<string | null>(null);
@@ -39,10 +56,11 @@ export function NewOrderForm({ customers: initialCustomers }: { customers: Custo
     const fd = new FormData();
     fd.set("name", newCustomerName.trim());
     fd.set("phone", newCustomerPhone.trim());
+    if (isStaff) fd.set("tenantId", selectedTenantId);
     startCreatingCustomer(async () => {
       try {
         const customer = await createCustomerAction(fd);
-        setCustomers((prev) => [...prev, customer]);
+        setCustomers((prev) => [...prev, { ...customer, tenantId: customer.tenantId ?? selectedTenantId }]);
         setSelectedCustomerId(customer.id);
         setShowNewCustomer(false);
         setNewCustomerName("");
@@ -55,6 +73,28 @@ export function NewOrderForm({ customers: initialCustomers }: { customers: Custo
 
   return (
     <form action={formAction} className="flex flex-col gap-6 max-w-2xl">
+      {isStaff && (
+        <Card>
+          <CardBody className="flex flex-col gap-4">
+            <h2 className="h-section">Tenant</h2>
+            <Field label="Tenant" htmlFor="tenantId" required>
+              <Select
+                id="tenantId"
+                name="tenantId"
+                value={selectedTenantId}
+                onChange={(e) => setSelectedTenantId(e.target.value)}
+              >
+                {tenants.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name}
+                  </option>
+                ))}
+              </Select>
+            </Field>
+          </CardBody>
+        </Card>
+      )}
+
       <Card>
         <CardBody className="flex flex-col gap-4">
           <h2 className="h-section">Customer</h2>

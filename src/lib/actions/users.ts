@@ -10,14 +10,14 @@ import type { Session } from "next-auth";
 
 export type ActionState = { ok: boolean; error?: string; tempPassword?: string };
 
-type AdminGuard = { ok: true; session: Session; tenantId: string } | { ok: false; error: string };
+type AdminGuard = { ok: true; session: Session; tenantId: string; isStaff: boolean } | { ok: false; error: string };
 
 async function requireAdmin(): Promise<AdminGuard> {
-  const { session, tenantId } = await requireTenantSession();
+  const { session, tenantId, isStaff } = await requireTenantSession();
   if (session.user.role !== "ADMIN") {
     return { ok: false, error: "Only admins can perform this action" };
   }
-  return { ok: true, session, tenantId };
+  return { ok: true, session, tenantId, isStaff };
 }
 
 function generateTempPassword(): string {
@@ -46,7 +46,7 @@ export async function adminResetPasswordAction(_prev: ActionState, formData: For
   const { userId } = parsed.data;
 
   const target = await prisma.user.findUnique({ where: { id: userId } });
-  if (!target || target.tenantId !== guard.tenantId) {
+  if (!target || (!guard.isStaff && target.tenantId !== guard.tenantId)) {
     return { ok: false, error: "User not found" };
   }
 
@@ -76,7 +76,7 @@ export async function toggleUserActiveAction(userId: string): Promise<ActionStat
   }
 
   const target = await prisma.user.findUnique({ where: { id: userId }, select: { isActive: true, tenantId: true } });
-  if (!target || target.tenantId !== guard.tenantId) return { ok: false, error: "User not found" };
+  if (!target || (!guard.isStaff && target.tenantId !== guard.tenantId)) return { ok: false, error: "User not found" };
 
   await prisma.user.update({
     where: { id: userId },

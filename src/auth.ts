@@ -27,7 +27,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
         if (!parsed.success) return null;
         const { username, password } = parsed.data;
 
-        const user = await prisma.user.findUnique({ where: { email: username } });
+        const user = await prisma.user.findUnique({ where: { email: username }, include: { tenant: true } });
         if (!user || !user.isActive) return null;
 
         const valid = await bcrypt.compare(password, user.passwordHash);
@@ -40,6 +40,10 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           role: user.role,
           mustChangePassword: user.mustChangePassword,
           tenantId: user.tenantId,
+          // Staff belonging to an INTERNAL-type tenant manage every tenant's
+          // data from one login; CLIENT-tenant users stay scoped to just
+          // their own tenant (see requireTenantSession in src/lib/tenant.ts).
+          tenantType: user.tenant?.type ?? null,
         };
       },
     }),
