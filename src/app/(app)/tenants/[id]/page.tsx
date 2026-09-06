@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusControls } from "./StatusControls";
 import { ApiKeyPanel } from "./ApiKeyPanel";
+import { WebhookPanel } from "./WebhookPanel";
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -93,6 +94,19 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
             </CardHeader>
             <CardBody>
               <ApiKeyPanel tenantId={tenant.id} apiKeys={tenant.apiKeys} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="h-section">Status webhook</h2>
+            </CardHeader>
+            <CardBody>
+              <WebhookPanel
+                tenantId={tenant.id}
+                webhookUrl={tenant.webhookUrl}
+                hasSecret={Boolean(tenant.webhookSecret)}
+              />
             </CardBody>
           </Card>
         </div>

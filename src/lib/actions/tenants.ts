@@ -113,6 +113,52 @@ export async function createTenantApiKeyAction(
   return { ok: true, plaintextKey };
 }
 
+// Tenant.webhookUrl / Tenant.webhookSecret drive notifyTenantOnStatusChange
+// (src/lib/webhooks.ts), which pushes order status changes to the tenant's
+// receiver. The secret is generated here (never entered by hand) and shown
+// once, the same generate-once-show-plaintext pattern as the API key above —
+// the admin must copy it into the receiving system's env immediately.
+export type SaveWebhookState = { ok: boolean; error?: string; plaintextSecret?: string };
+
+const saveWebhookSchema = z.object({
+  tenantId: z.string().min(1),
+  webhookUrl: z
+    .string()
+    .trim()
+    .refine((v) => v === "" || /^https:\/\/.+/i.test(v), "Webhook URL must be a valid https:// URL")
+    .optional()
+    .or(z.literal("")),
+  regenerateSecret: z.string().optional(),
+});
+
+export async function saveTenantWebhookAction(
+  _prev: SaveWebhookState,
+  formData: FormData
+): Promise<SaveWebhookState> {
+  await requireAdmin();
+
+  const parsed = saveWebhookSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const { tenantId, webhookUrl, regenerateSecret } = parsed.data;
+
+  let plaintextSecret: string | undefined;
+  const data: { webhookUrl?: string | null; webhookSecret?: string } = {
+    webhookUrl: webhookUrl ? webhookUrl : null,
+  };
+
+  if (regenerateSecret === "true") {
+    plaintextSecret = crypto.randomBytes(32).toString("base64url");
+    data.webhookSecret = plaintextSecret;
+  }
+
+  await prisma.tenant.update({ where: { id: tenantId }, data });
+
+  revalidatePath(`/tenants/${tenantId}`);
+  return { ok: true, plaintextSecret };
+}
+
 const revokeApiKeySchema = z.object({ apiKeyId: z.string().min(1), tenantId: z.string().min(1) });
 
 export async function revokeTenantApiKeyAction(formData: FormData) {
