@@ -38,7 +38,12 @@ export async function POST(req: Request) {
 
   const order = await prisma.order.findFirst({ where: { providerRef: awb } });
   if (!order) {
-    return NextResponse.json({ success: false, message: "No matching order for this AWB" }, { status: 404 });
+    // Acknowledge with 200 rather than 404 -- Shiprocket's own "Test
+    // Webhook" button (and likely its retry logic for real events) treats
+    // any non-2xx response as "unable to reach the endpoint" even though
+    // we genuinely received and parsed the payload. A test/unknown AWB is
+    // not a delivery failure on our end, so there's nothing to retry.
+    return NextResponse.json({ success: true, ignored: true, message: "No matching order for this AWB" });
   }
   if (order.status === mapped) {
     return NextResponse.json({ success: true, unchanged: true });
