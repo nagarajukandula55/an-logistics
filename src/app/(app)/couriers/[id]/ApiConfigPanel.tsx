@@ -28,8 +28,12 @@ export function ApiConfigPanel({ courierPartnerId, config }: { courierPartnerId:
     formData.set("courierPartnerId", courierPartnerId);
     startTransition(async () => {
       try {
-        await createOrUpdateApiConfigAction(formData);
-        setSaved(true);
+        const result = await createOrUpdateApiConfigAction(formData);
+        if (result?.error) {
+          setError(result.error);
+        } else {
+          setSaved(true);
+        }
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not save API config");
       }

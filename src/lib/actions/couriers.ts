@@ -230,12 +230,25 @@ const apiConfigSchema = z.object({
   isActive: z.coerce.boolean().default(false),
 });
 
-export async function createOrUpdateApiConfigAction(formData: FormData) {
+// Returns { error } instead of throwing for any expected/validation-type
+// failure. Next.js redacts the message of anything *thrown* from a Server
+// Action once the app is built for production — the client only ever sees
+// a generic "Minified React error #441" digest, no matter how friendly the
+// original throw new Error(...) text was (dev mode shows the real message,
+// which is why this class of bug is easy to miss locally). Returning a
+// plain serializable result instead means the real message reaches the
+// admin in both dev and prod. Genuinely unexpected failures (e.g. the
+// prisma call itself failing) still propagate as a thrown error — those
+// are Next.js/ops/database problems, not something the form should try to
+// explain to the user anyway.
+export async function createOrUpdateApiConfigAction(
+  formData: FormData
+): Promise<{ error: string } | { error?: undefined }> {
   await requireSession();
 
   const parsed = apiConfigSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
-    throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+    return { error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
   const data = parsed.data;
 
@@ -254,7 +267,7 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
     newEncryptedKey = rawSecret ? encryptApiKey(rawSecret) : undefined;
   } catch (err) {
     console.error("Failed to encrypt courier API key:", err);
-    throw new Error("Could not save the API key — encryption is not configured correctly. Contact an administrator.");
+    return { error: "Could not save the API key — encryption is not configured correctly. Contact an administrator." };
   }
   const shouldClearKey = data.clearApiKey && !data.apiKeyEncrypted;
 
@@ -282,6 +295,7 @@ export async function createOrUpdateApiConfigAction(formData: FormData) {
   });
 
   revalidatePath(`/couriers/${data.courierPartnerId}`);
+  return {};
 }
 
 // ---------- Routing / dispatch ----------
