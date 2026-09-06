@@ -79,7 +79,7 @@ export default function CourierGuidePage() {
             </li>
             <li>
               Optionally add a <strong>Webhook URL</strong> pointing Shiprocket's shipment-status
-              webhooks at <span className="font-mono">/api/webhooks/shiprocket</span> on this
+              webhooks at <span className="font-mono">/api/webhooks/tracking-update</span> on this
               deployment, so delivery/tracking status updates flow back automatically instead of
               needing manual status entry.
             </li>

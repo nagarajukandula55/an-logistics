@@ -16,7 +16,10 @@ const SHIPROCKET_STATUS_MAP: Record<string, OrderStatus> = {
   RTO: OrderStatus.FAILED,
 };
 
-// POST /api/webhooks/shiprocket — inbound status push from Shiprocket.
+// POST /api/webhooks/tracking-update — inbound status push from Shiprocket.
+// Deliberately NOT named .../webhooks/shiprocket: Shiprocket's own webhook
+// setup page rejects any URL containing "shiprocket"/"kartrocket"/"sr"/"kr"
+// (confirmed live — "Address in not allowed" until this was renamed).
 // Looked up by AWB (Order.providerRef) since Shiprocket's payload doesn't
 // carry our trackingCode. No signature verification here (Shiprocket
 // webhooks don't support HMAC signing) — acceptable since the only side
