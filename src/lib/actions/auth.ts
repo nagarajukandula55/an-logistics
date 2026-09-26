@@ -13,7 +13,10 @@ export async function loginAction(_prev: LoginState, formData: FormData): Promis
     await signIn("credentials", {
       username,
       password,
-      redirectTo: "/orders",
+      // /post-login reads the fresh session and forwards staff to /orders,
+      // customers to /portal — one shared login page/form for both, since
+      // the role isn't known until after authorize() runs.
+      redirectTo: "/post-login",
     });
     return {};
   } catch (err) {

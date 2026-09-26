@@ -5,7 +5,9 @@ import { createOrUpdateApiConfigAction } from "@/lib/actions/couriers";
 import { Field, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 
-const SHIPROCKET_DEFAULT_BASE_URL = "https://apiv2.shiprocket.in/v1/external";
+// Confirmed live in DTDC's API Playground (CURL tab) — a fixed host, not
+// something DTDC issues per customer.
+const DTDC_DEFAULT_BASE_URL = "https://app.shipsy.in";
 
 type ApiConfig = {
   provider: string;
@@ -20,7 +22,7 @@ export function ApiConfigPanel({ courierPartnerId, config }: { courierPartnerId:
   const [error, setError] = useState<string | null>(null);
   const [saved, setSaved] = useState(false);
   const [provider, setProvider] = useState(config?.provider ?? "");
-  const isShiprocket = provider.trim().toUpperCase() === "SHIPROCKET";
+  const isDtdc = provider.trim().toUpperCase() === "DTDC";
 
   function handleSubmit(formData: FormData) {
     setError(null);
@@ -51,25 +53,28 @@ export function ApiConfigPanel({ courierPartnerId, config }: { courierPartnerId:
           name="provider"
           value={provider}
           onChange={(e) => setProvider(e.target.value)}
-          placeholder="e.g. SHIPROCKET, DELHIVERY"
+          placeholder="e.g. DTDC, DELHIVERY"
           required
         />
       </Field>
-      <Field label="Base URL" htmlFor="baseUrl" hint="Optional">
+      <Field label="Base URL" htmlFor="baseUrl" hint="Defaults to DTDC's fixed API server; only change this if DTDC tells you otherwise.">
         <Input
           id="baseUrl"
           name="baseUrl"
           type="url"
-          defaultValue={config?.baseUrl ?? (isShiprocket ? SHIPROCKET_DEFAULT_BASE_URL : "")}
+          defaultValue={config?.baseUrl ?? (isDtdc ? DTDC_DEFAULT_BASE_URL : "")}
         />
       </Field>
-      {isShiprocket ? (
+      {isDtdc ? (
         <>
-          <Field label="Shiprocket email" htmlFor="shiprocketEmail" hint="Leave blank to keep the stored credentials.">
-            <Input id="shiprocketEmail" name="shiprocketEmail" type="email" placeholder={config?.apiKeyEncrypted ? "•••••••• (unchanged)" : ""} />
+          <Field label="DTDC API key" htmlFor="dtdcApiKey" hint="Leave blank to keep the stored credentials.">
+            <Input id="dtdcApiKey" name="dtdcApiKey" type="password" placeholder={config?.apiKeyEncrypted ? "•••••••• (unchanged)" : ""} />
           </Field>
-          <Field label="Shiprocket password" htmlFor="shiprocketPassword" hint="Encrypted at rest.">
-            <Input id="shiprocketPassword" name="shiprocketPassword" type="password" placeholder={config?.apiKeyEncrypted ? "•••••••• (unchanged)" : ""} />
+          <Field label="DTDC customer code" htmlFor="dtdcCustomerCode" hint="Encrypted at rest, sent with every request.">
+            <Input id="dtdcCustomerCode" name="dtdcCustomerCode" type="password" placeholder={config?.apiKeyEncrypted ? "•••••••• (unchanged)" : ""} />
+          </Field>
+          <Field label="DTDC hub code" htmlFor="dtdcHubCode" hint="Order Manifestation Hub Code for this pickup point, e.g. VF1808.">
+            <Input id="dtdcHubCode" name="dtdcHubCode" placeholder={config?.apiKeyEncrypted ? "unchanged" : "VF1808"} />
           </Field>
         </>
       ) : (

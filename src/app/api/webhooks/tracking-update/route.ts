@@ -1,51 +1,47 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { notifyTenantOnStatusChange } from "@/lib/webhooks";
-import { OrderStatus } from "@prisma/client";
+import { mapDtdcStatus } from "@/lib/courier-providers/dtdc-status";
 
-// Shiprocket's shipment-status webhook maps loosely onto our OrderStatus
-// enum — this list covers the cases relevant to a marketplace order (not
-// every Shiprocket sub-status), matching the vocabulary already used in
-// providers/shiprocketProvider.ts's tracking response.
-const SHIPROCKET_STATUS_MAP: Record<string, OrderStatus> = {
-  "PICKED UP": OrderStatus.PICKED_UP,
-  "IN TRANSIT": OrderStatus.IN_TRANSIT,
-  "OUT FOR DELIVERY": OrderStatus.OUT_FOR_DELIVERY,
-  DELIVERED: OrderStatus.DELIVERED,
-  CANCELLED: OrderStatus.CANCELLED,
-  RTO: OrderStatus.FAILED,
-};
+// DTDC's "Consignment Status Webhook" (Shipsy platform) pushes status
+// updates here. Confirmed against the "Order Status Update Request" SCHEMA
+// (2026-09-26): the event name lives in `type` (lowercase snake_case, e.g.
+// "delivered", "rto_initiated" — NOT an uppercase phrase like Shiprocket
+// used), and the AWB is `courier_partner_reference_number` (our own
+// `reference_number` is DTDC's internal consignment id, which may differ
+// from the AWB stored as Order.providerRef — see createShipment, which
+// currently stores whatever comes back as awb_number/reference_number;
+// revisit if these two numbers turn out to diverge in practice).
+// Status normalization lives in dtdc-status.ts, shared with the polling
+// reconciliation job (api/cron/sync-tracking) so there's exactly one
+// DTDC-status → OrderStatus mapping to keep correct, not two that can drift.
 
-// POST /api/webhooks/tracking-update — inbound status push from Shiprocket.
-// Deliberately NOT named .../webhooks/shiprocket: Shiprocket's own webhook
-// setup page rejects any URL containing "shiprocket"/"kartrocket"/"sr"/"kr"
-// (confirmed live — "Address in not allowed" until this was renamed).
-// Looked up by AWB (Order.providerRef) since Shiprocket's payload doesn't
-// carry our trackingCode. No signature verification here (Shiprocket
-// webhooks don't support HMAC signing) — acceptable since the only side
-// effect is a status transition on an order already tied to a known AWB.
+// POST /api/webhooks/tracking-update — inbound status push from DTDC.
+// Looked up by AWB (Order.providerRef). Auth is a shared `x-api-key` header
+// DTDC sends ("apiKey would have to be shared separately" per their docs) —
+// not verified here yet since CourierApiConfig has nowhere to store that
+// separate webhook secret today; the only side effect of a forged call is
+// a status transition on an order already tied to a known AWB, which is
+// the same acceptable tradeoff the Shiprocket version of this route made.
 export async function POST(req: Request) {
   const payload = await req.json().catch(() => null);
-  const awb: string | undefined = payload?.awb || payload?.awb_code;
-  const rawStatus: string | undefined = payload?.current_status || payload?.shipment_status;
+  const awb: string | undefined = payload?.courier_partner_reference_number || payload?.reference_number;
+  const rawStatus: string | undefined = payload?.type;
   if (!awb || !rawStatus) {
     return NextResponse.json({ success: false, message: "Missing awb or status" }, { status: 400 });
   }
 
-  const mapped = SHIPROCKET_STATUS_MAP[rawStatus.toUpperCase().trim()];
+  const mapped = mapDtdcStatus(rawStatus);
   if (!mapped) {
-    // Sub-status we don't track onto OrderStatus — acknowledge so
-    // Shiprocket doesn't retry, but don't create a status event.
+    // Sub-status we don't track onto OrderStatus — acknowledge so DTDC
+    // doesn't retry, but don't create a status event.
     return NextResponse.json({ success: true, ignored: true });
   }
 
   const order = await prisma.order.findFirst({ where: { providerRef: awb } });
   if (!order) {
-    // Acknowledge with 200 rather than 404 -- Shiprocket's own "Test
-    // Webhook" button (and likely its retry logic for real events) treats
-    // any non-2xx response as "unable to reach the endpoint" even though
-    // we genuinely received and parsed the payload. A test/unknown AWB is
-    // not a delivery failure on our end, so there's nothing to retry.
+    // Acknowledge with 200 rather than 404 -- a test/unknown AWB is not a
+    // delivery failure on our end, so there's nothing to retry.
     return NextResponse.json({ success: true, ignored: true, message: "No matching order for this AWB" });
   }
   if (order.status === mapped) {
@@ -56,7 +52,7 @@ export async function POST(req: Request) {
     where: { id: order.id },
     data: {
       status: mapped,
-      statusEvents: { create: { status: mapped, note: "Shiprocket webhook update" } },
+      statusEvents: { create: { status: mapped, note: "DTDC webhook update" } },
     },
     include: { statusEvents: { orderBy: { createdAt: "desc" }, take: 1 } },
   });

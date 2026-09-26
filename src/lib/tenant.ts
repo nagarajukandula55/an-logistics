@@ -16,6 +16,14 @@ import { auth } from "@/auth";
 export async function requireTenantSession() {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  // A self-service portal account (role=CUSTOMER, see
+  // src/lib/customer-session.ts) is provisioned under the shared MARKETPLACE
+  // tenant just like anonymous /book bookings — if it fell through to the
+  // ordinary tenantId check below, it would satisfy it and see every other
+  // customer's orders under that same shared tenant, not just its own. Every
+  // staff/ops page (orders, dispatch, fleet, …) is gated by this function,
+  // so rejecting the role here once closes that off everywhere at once.
+  if (session.user.role === "CUSTOMER") redirect("/portal");
   if (!session.user.tenantId) {
     throw new Error("This account is not assigned to a tenant yet — contact an administrator.");
   }

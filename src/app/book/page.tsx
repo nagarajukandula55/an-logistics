@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { BookingFlow } from "./BookingFlow";
 
 export default function BookPage() {
@@ -13,6 +14,17 @@ export default function BookPage() {
           </p>
         </div>
         <BookingFlow />
+        <p className="text-xs text-ink-3 text-center mt-4">
+          Want to track your booking history?{" "}
+          <Link href="/portal/signup" className="text-accent">
+            Create an account
+          </Link>{" "}
+          or{" "}
+          <Link href="/login" className="text-accent">
+            sign in
+          </Link>
+          .
+        </p>
       </div>
     </div>
   );

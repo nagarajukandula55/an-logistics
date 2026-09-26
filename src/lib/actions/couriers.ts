@@ -17,6 +17,7 @@ import {
 import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { determineZone } from "@/lib/zone";
 import { findServiceableBranches, computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
+import { getSellPrice, isBelowMarginFloor } from "@/lib/sell-pricing";
 import { pincodeSchema } from "@/lib/validation";
 import { encryptApiKey } from "@/lib/crypto";
 
@@ -220,11 +221,13 @@ const apiConfigSchema = z.object({
   provider: z.string().min(1, "Provider name is required"),
   baseUrl: z.string().optional(),
   apiKeyEncrypted: z.string().optional(),
-  // Shiprocket authenticates with email+password, not a single API key —
-  // when provider is SHIPROCKET these are combined into the encrypted
-  // JSON blob stored in apiKeyEncrypted instead (see shiprocket-provider.ts).
-  shiprocketEmail: z.string().optional(),
-  shiprocketPassword: z.string().optional(),
+  // DTDC authenticates with a static API key plus a customer_code that must
+  // accompany most request bodies — when provider is DTDC these are
+  // combined into the encrypted JSON blob stored in apiKeyEncrypted instead
+  // (see dtdc-provider.ts).
+  dtdcApiKey: z.string().optional(),
+  dtdcCustomerCode: z.string().optional(),
+  dtdcHubCode: z.string().optional(),
   clearApiKey: z.coerce.boolean().default(false),
   webhookUrl: z.string().optional(),
   isActive: z.coerce.boolean().default(false),
@@ -256,10 +259,10 @@ export async function createOrUpdateApiConfigAction(
   // never pre-fills the key input with the stored (encrypted) value, so a
   // non-empty submission always means the admin actually typed a new key.
   // The explicit "clear" checkbox is the only way to wipe a stored key.
-  const isShiprocket = data.provider.toUpperCase() === "SHIPROCKET";
+  const isDtdc = data.provider.toUpperCase() === "DTDC";
   const rawSecret =
-    isShiprocket && data.shiprocketEmail && data.shiprocketPassword
-      ? JSON.stringify({ email: data.shiprocketEmail, password: data.shiprocketPassword })
+    isDtdc && data.dtdcApiKey && data.dtdcCustomerCode && data.dtdcHubCode
+      ? JSON.stringify({ apiKey: data.dtdcApiKey, customerCode: data.dtdcCustomerCode, hubCode: data.dtdcHubCode })
       : data.apiKeyEncrypted;
 
   let newEncryptedKey: string | undefined;
@@ -367,6 +370,17 @@ export async function assignOrderToCourierAction(formData: FormData) {
   // real order-value modeling is a planned next-phase gap (see README).
   const platformFeeAmount = computePlatformFee(commission, order.codAmount);
 
+  // Auto-fill chargedAmount (what we bill the tenant) from the SellRateCard
+  // if it wasn't already set — a manual override upstream (e.g. an admin
+  // typed one in at booking time) always wins, this only fills the gap
+  // when nothing was entered.
+  let chargedAmount = order.chargedAmount;
+  if (chargedAmount == null && order.pickupPincode && order.deliveryPincode) {
+    const zone = determineZone(order.pickupPincode, order.deliveryPincode);
+    const sell = await getSellPrice(order.tenantId, zone, order.weightKg ?? 0);
+    chargedAmount = sell?.price ?? null;
+  }
+
   await prisma.$transaction([
     prisma.order.update({
       where: { id: orderId },
@@ -377,6 +391,7 @@ export async function assignOrderToCourierAction(formData: FormData) {
         selectedProviderCourierId: providerCourierId || null,
         assignmentMethod: OrderAssignmentMethod.MANUAL,
         platformFeeAmount,
+        chargedAmount,
         status: OrderStatus.ASSIGNED,
         statusEvents: {
           create: {
@@ -402,6 +417,14 @@ export type CourierQuoteOption = {
   label?: string;
   platformFee: number | null;
   netCourierPayout: number | null;
+  // What we'd charge for this order (from SellRateCard, distinct from
+  // `price` = what this courier charges us) and the margin that leaves
+  // against this specific option — same sellPrice across all options/
+  // providers for one order, repeated per-option so the UI can show
+  // per-option margin without a second lookup.
+  sellPrice: number | null;
+  margin: number | null;
+  belowMarginFloor: boolean;
 };
 
 // One entry per connected provider (Shiprocket, a directly-onboarded DTDC,
@@ -434,6 +457,9 @@ export async function getProviderQuotesForOrder(orderId: string): Promise<Provid
   const branches = await findServiceableBranches(order.deliveryPincode);
   const weightKg = order.weightKg ?? 0;
   const zone = determineZone(order.pickupPincode ?? "", order.deliveryPincode);
+  // One sell-price lookup per order (not per provider/option) — what we'd
+  // charge doesn't depend on which courier ends up fulfilling it.
+  const sell = await getSellPrice(order.tenantId, zone, weightKg);
 
   return Promise.all(
     branches.map(async (branch) => {
@@ -467,10 +493,15 @@ export async function getProviderQuotesForOrder(orderId: string): Promise<Provid
 
       const options: CourierQuoteOption[] = rawOptions.map((o) => {
         const platformFee = computePlatformFee(commission, o.price);
+        const netCourierPayout = platformFee != null ? Math.round((o.price - platformFee) * 100) / 100 : null;
+        const margin = sell ? Math.round((sell.price - o.price) * 100) / 100 : null;
         return {
           ...o,
           platformFee,
-          netCourierPayout: platformFee != null ? Math.round((o.price - platformFee) * 100) / 100 : null,
+          netCourierPayout,
+          sellPrice: sell?.price ?? null,
+          margin,
+          belowMarginFloor: sell ? isBelowMarginFloor(sell.price, o.price, sell.minMarginPercent) : false,
         };
       });
 

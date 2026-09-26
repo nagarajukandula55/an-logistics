@@ -4,7 +4,10 @@ import { prisma } from "@/lib/prisma";
 import { generateTrackingCode } from "@/lib/tracking-code";
 import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { findServiceableBranches, computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
-import { OrderAssignmentMethod, OrderFulfillmentType, OrderStatus, TenantType } from "@prisma/client";
+import { getSellPrice } from "@/lib/sell-pricing";
+import { determineZone } from "@/lib/zone";
+import { getMarketplaceTenantId } from "@/lib/marketplace-tenant";
+import { OrderAssignmentMethod, OrderFulfillmentType, OrderStatus } from "@prisma/client";
 import { z } from "zod";
 import { pincodeSchema } from "@/lib/validation";
 
@@ -14,11 +17,6 @@ import { pincodeSchema } from "@/lib/validation";
 // public. Own-network-first, then partner fallback both fall out of
 // findServiceableBranches's priority ordering (see courier-queries.ts) —
 // no special-casing here.
-async function getMarketplaceTenantId(): Promise<string> {
-  const tenant = await prisma.tenant.findFirst({ where: { type: TenantType.MARKETPLACE } });
-  if (!tenant) throw new Error("Marketplace tenant is not configured — run the seed script");
-  return tenant.id;
-}
 
 export type PublicQuote = {
   courierPartnerId: string;
@@ -120,7 +118,20 @@ export async function createPublicBookingAction(
   const partner = branch.courierPartner;
 
   const commission = await getEffectiveCommission(partner.id, partner);
-  const platformFeeAmount = computePlatformFee(commission, data.chargedAmount ?? null);
+
+  // A manually-entered "Amount to charge" always wins; otherwise fall back
+  // to the default SellRateCard price (tenantId null — public bookings roll
+  // up to the MARKETPLACE tenant, so there's no commercial/CLIENT override
+  // to prefer here) so a normal booking gets a real price without the
+  // person booking having had to type one in.
+  let chargedAmount: number | undefined = data.chargedAmount;
+  if (chargedAmount == null) {
+    const zone = determineZone(data.pickupPincode, data.deliveryPincode);
+    const sell = await getSellPrice(tenantId, zone, data.weightKg);
+    chargedAmount = sell?.price ?? undefined;
+  }
+
+  const platformFeeAmount = computePlatformFee(commission, chargedAmount ?? null);
 
   const order = await prisma.order.create({
     data: {
@@ -136,7 +147,7 @@ export async function createPublicBookingAction(
       deliveryContactPhone: data.deliveryContactPhone,
       deliveryPincode: data.deliveryPincode,
       weightKg: data.weightKg,
-      chargedAmount: data.chargedAmount,
+      chargedAmount,
       fulfillmentType: OrderFulfillmentType.COURIER_PARTNER,
       assignmentMethod: OrderAssignmentMethod.AUTO,
       courierPartnerId: partner.id,

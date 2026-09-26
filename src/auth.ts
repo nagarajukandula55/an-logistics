@@ -44,6 +44,11 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           // data from one login; CLIENT-tenant users stay scoped to just
           // their own tenant (see requireTenantSession in src/lib/tenant.ts).
           tenantType: user.tenant?.type ?? null,
+          // Set only for role=CUSTOMER users (self-service portal accounts,
+          // see src/lib/actions/customer-signup.ts) — scopes their view to
+          // just their own Customer's orders (src/lib/customer-session.ts),
+          // never the whole tenant's.
+          customerId: user.customerId,
         };
       },
     }),

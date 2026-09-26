@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2, Receipt, LayoutDashboard } from "lucide-react";
+import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2, Receipt, LayoutDashboard, Tag } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutAction } from "@/lib/actions/auth-signout";
 
@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/orders", label: "Orders", icon: Package },
   { href: "/dispatch", label: "Dispatch", icon: Truck },
   { href: "/couriers", label: "Couriers", icon: Handshake },
+  { href: "/pricing", label: "Pricing", icon: Tag },
   { href: "/drivers", label: "Drivers", icon: Users },
   { href: "/vehicles", label: "Vehicles", icon: Truck },
 ];
