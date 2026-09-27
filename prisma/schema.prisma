@@ -37,6 +37,11 @@ model Tenant {
   status                 TenantStatus    @default(ONBOARDING)
   billingEmail           String?
   billingAddress         String?
+  // State name/code as GST expects it (e.g. "Karnataka") — required to sync
+  // this tenant's platform-fee Invoices to AN-accounting, which computes
+  // IGST/CGST+SGST off the customer's state. Not inferred from
+  // billingAddress since that's free-text.
+  billingState           String?
   gstin                  String?
   defaultCommissionType  CommissionType?
   defaultCommissionValue Float?

@@ -6,6 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { InvoiceStatus, OrderStatus, SettlementStatus } from "@prisma/client";
+import { syncInvoiceToAccounting } from "@/lib/accounting-sync";
 
 export type ActionState = { ok: boolean; error?: string };
 
@@ -111,6 +112,12 @@ export async function updateInvoiceStatusAction(formData: FormData) {
   });
   revalidatePath(`/billing/invoices/${invoiceId}`);
   revalidatePath("/billing/invoices");
+
+  if (status === InvoiceStatus.PAID) {
+    // Fire-and-forget: this app's own PAID transition already committed
+    // above, so a sync failure here shouldn't undo it or block the caller.
+    void syncInvoiceToAccounting(invoiceId);
+  }
 }
 
 // ---------- Settlements (us reconciling payouts with a CourierPartner) ----------
