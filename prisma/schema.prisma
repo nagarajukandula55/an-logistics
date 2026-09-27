@@ -357,6 +357,10 @@ model CourierPartner {
   contactName     String
   contactPhone    String
   contactEmail    String?
+  // Required to sync this partner's paid Settlements to AN-accounting as
+  // purchase invoices (expenses) — see src/lib/accounting-sync.ts. A
+  // partner with no GSTIN on file is skipped rather than blocking sync.
+  gstin           String?
   status          CourierPartnerStatus   @default(PENDING)
   integrationType CourierIntegrationType @default(MANUAL)
   commissionType  CommissionType         @default(PERCENT)

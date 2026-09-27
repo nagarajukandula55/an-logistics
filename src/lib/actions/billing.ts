@@ -6,7 +6,7 @@ import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 import { InvoiceStatus, OrderStatus, SettlementStatus } from "@prisma/client";
-import { syncInvoiceToAccounting } from "@/lib/accounting-sync";
+import { syncInvoiceToAccounting, syncSettlementToAccounting } from "@/lib/accounting-sync";
 
 export type ActionState = { ok: boolean; error?: string };
 
@@ -207,4 +207,8 @@ export async function updateSettlementStatusAction(formData: FormData) {
   });
   revalidatePath(`/billing/settlements/${settlementId}`);
   revalidatePath("/billing/settlements");
+
+  if (status === SettlementStatus.PAID) {
+    void syncSettlementToAccounting(settlementId);
+  }
 }
