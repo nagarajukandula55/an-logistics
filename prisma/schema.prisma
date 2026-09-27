@@ -47,6 +47,15 @@ model Tenant {
   defaultCommissionValue Float?
   webhookUrl             String?
   webhookSecret          String?
+  // Default pickup point for this tenant's own shipments booked via
+  // POST /api/v1/shipments (e.g. native/angroup's warehouse) -- exposed
+  // read-only over GET /api/v1/tenant so the calling app never has to
+  // duplicate these in its own env vars/config; edited here on the tenant
+  // detail page instead.
+  pickupAddress          String?
+  pickupPincode          String?
+  pickupContactName      String?
+  pickupContactPhone     String?
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 

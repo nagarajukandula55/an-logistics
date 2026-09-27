@@ -159,6 +159,45 @@ export async function saveTenantWebhookAction(
   return { ok: true, plaintextSecret };
 }
 
+const savePickupDetailsSchema = z.object({
+  tenantId: z.string().min(1),
+  pickupAddress: z.string().trim().optional().or(z.literal("")),
+  pickupPincode: z.string().trim().optional().or(z.literal("")),
+  pickupContactName: z.string().trim().optional().or(z.literal("")),
+  pickupContactPhone: z.string().trim().optional().or(z.literal("")),
+});
+
+export type SavePickupDetailsState = { ok: boolean; error?: string };
+
+// Feeds GET /api/v1/tenant -- the calling app (e.g. angroup) reads this
+// tenant's own pickup point from there instead of duplicating it in its own
+// env vars, so it's edited in exactly one place.
+export async function saveTenantPickupDetailsAction(
+  _prev: SavePickupDetailsState,
+  formData: FormData
+): Promise<SavePickupDetailsState> {
+  await requireAdmin();
+
+  const parsed = savePickupDetailsSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) {
+    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  }
+  const { tenantId, pickupAddress, pickupPincode, pickupContactName, pickupContactPhone } = parsed.data;
+
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: {
+      pickupAddress: pickupAddress || null,
+      pickupPincode: pickupPincode || null,
+      pickupContactName: pickupContactName || null,
+      pickupContactPhone: pickupContactPhone || null,
+    },
+  });
+
+  revalidatePath(`/tenants/${tenantId}`);
+  return { ok: true };
+}
+
 const revokeApiKeySchema = z.object({ apiKeyId: z.string().min(1), tenantId: z.string().min(1) });
 
 export async function revokeTenantApiKeyAction(formData: FormData) {

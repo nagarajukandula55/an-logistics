@@ -8,6 +8,7 @@ import { EmptyState } from "@/components/ui/EmptyState";
 import { StatusControls } from "./StatusControls";
 import { ApiKeyPanel } from "./ApiKeyPanel";
 import { WebhookPanel } from "./WebhookPanel";
+import { PickupDetailsPanel } from "./PickupDetailsPanel";
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -94,6 +95,21 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
             </CardHeader>
             <CardBody>
               <ApiKeyPanel tenantId={tenant.id} apiKeys={tenant.apiKeys} />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="h-section">Pickup details</h2>
+            </CardHeader>
+            <CardBody>
+              <PickupDetailsPanel
+                tenantId={tenant.id}
+                pickupAddress={tenant.pickupAddress}
+                pickupPincode={tenant.pickupPincode}
+                pickupContactName={tenant.pickupContactName}
+                pickupContactPhone={tenant.pickupContactPhone}
+              />
             </CardBody>
           </Card>
 
