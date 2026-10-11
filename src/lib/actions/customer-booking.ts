@@ -61,7 +61,7 @@ export async function createCustomerBookingAction(
   const commission = await getEffectiveCommission(partner.id, partner);
 
   const zone = determineZone(data.pickupPincode, data.deliveryPincode);
-  const sell = await getSellPrice(tenantId, zone, data.weightKg);
+  const sell = await getSellPrice(tenantId, zone, data.weightKg, customerId);
   const chargedAmount = sell?.price ?? undefined;
 
   const platformFeeAmount = computePlatformFee(commission, chargedAmount ?? null);

@@ -8,7 +8,7 @@ import { generateTrackingCode } from "@/lib/tracking-code";
 import { OrderStatus } from "@prisma/client";
 import { optionalPincodeSchema } from "@/lib/validation";
 import { requireTenantSession } from "@/lib/tenant";
-import { notifyTenantOnStatusChange } from "@/lib/webhooks";
+import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
 
 const createOrderSchema = z.object({
   tenantId: z.string().optional(),
@@ -200,6 +200,8 @@ export async function advanceOrderStatusAction(formData: FormData) {
     return [updated, updated.statusEvents[0]] as const;
   });
   notifyTenantOnStatusChange(order, event).catch(() => {});
+  notifyCustomerOnStatusChange(order, event).catch(() => {});
+  notifyOpsOnStatusChange(order, event).catch(() => {});
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
@@ -247,6 +249,8 @@ export async function capturePodAction(formData: FormData) {
     return updated.statusEvents[0];
   });
   notifyTenantOnStatusChange(order, event).catch(() => {});
+  notifyCustomerOnStatusChange(order, event).catch(() => {});
+  notifyOpsOnStatusChange(order, event).catch(() => {});
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");

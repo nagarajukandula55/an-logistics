@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { mapDtdcStatus } from "@/lib/courier-providers/dtdc-status";
-import { notifyTenantOnStatusChange } from "@/lib/webhooks";
+import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
 import { OrderStatus, OrderFulfillmentType } from "@prisma/client";
 
 // Safety-net reconciliation: DTDC's Consignment Status Webhook
@@ -67,6 +67,7 @@ export async function GET(req: Request) {
         include: { statusEvents: { orderBy: { createdAt: "desc" }, take: 1 } },
       });
       notifyTenantOnStatusChange(updatedOrder, updatedOrder.statusEvents[0]).catch(() => {});
+      notifyCustomerOnStatusChange(updatedOrder, updatedOrder.statusEvents[0]).catch(() => {});
       updated++;
     } catch (err) {
       errors.push({ orderId: order.id, message: err instanceof Error ? err.message : "Unknown error" });

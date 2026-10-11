@@ -29,6 +29,9 @@ export const authConfig = {
         // session cookie this callback gates.
         pathname.startsWith("/api/v1") ||
         pathname.startsWith("/api/webhooks") ||
+        // Telegram webhook — authenticated by its own secret-token header
+        // check (see api/telegram/webhook/route.ts), not the session cookie.
+        pathname.startsWith("/api/telegram") ||
         // Scheduled reconciliation, authenticated by its own CRON_SECRET
         // Bearer check (see api/cron/sync-tracking/route.ts) — Vercel's
         // cron invoker has no session cookie to present here.
@@ -55,6 +58,7 @@ export const authConfig = {
         token.tenantId = (user as { tenantId?: string | null }).tenantId ?? null;
         token.tenantType = (user as { tenantType?: string | null }).tenantType ?? null;
         token.customerId = (user as { customerId?: string | null }).customerId ?? null;
+        token.isBusinessOwner = (user as { isBusinessOwner?: boolean }).isBusinessOwner ?? false;
       }
       if (trigger === "update" && session?.user?.mustChangePassword === false) {
         token.mustChangePassword = false;
@@ -69,6 +73,7 @@ export const authConfig = {
         session.user.tenantId = (token.tenantId as string | null) ?? null;
         session.user.tenantType = (token.tenantType as string | null) ?? null;
         session.user.customerId = (token.customerId as string | null) ?? null;
+        session.user.isBusinessOwner = Boolean(token.isBusinessOwner);
       }
       return session;
     },

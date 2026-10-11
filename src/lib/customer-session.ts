@@ -15,5 +15,10 @@ export async function requireCustomerSession() {
     // send them back to their own home instead of erroring.
     redirect("/dashboard");
   }
-  return { session, customerId: session.user.customerId, tenantId: session.user.tenantId };
+  return {
+    session,
+    customerId: session.user.customerId,
+    tenantId: session.user.tenantId,
+    isBusinessOwner: session.user.isBusinessOwner,
+  };
 }

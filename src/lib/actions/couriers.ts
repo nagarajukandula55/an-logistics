@@ -20,6 +20,7 @@ import { findServiceableBranches, computePlatformFee, getEffectiveCommission } f
 import { getSellPrice, isBelowMarginFloor } from "@/lib/sell-pricing";
 import { pincodeSchema } from "@/lib/validation";
 import { encryptApiKey } from "@/lib/crypto";
+import { debitWalletForOrder } from "@/lib/wallet";
 
 export type ActionState = { ok: boolean; error?: string };
 
@@ -377,12 +378,20 @@ export async function assignOrderToCourierAction(formData: FormData) {
   let chargedAmount = order.chargedAmount;
   if (chargedAmount == null && order.pickupPincode && order.deliveryPincode) {
     const zone = determineZone(order.pickupPincode, order.deliveryPincode);
-    const sell = await getSellPrice(order.tenantId, zone, order.weightKg ?? 0);
+    const sell = await getSellPrice(order.tenantId, zone, order.weightKg ?? 0, order.customerId);
     chargedAmount = sell?.price ?? null;
   }
 
-  await prisma.$transaction([
-    prisma.order.update({
+  await prisma.$transaction(async (tx) => {
+    // Wallet is debited here — the moment the order actually ships to a
+    // courier — not at order creation. Throws (aborting the transaction,
+    // so the order stays unassigned) if the Customer's balance can't cover
+    // it; see lib/wallet.ts.
+    if (chargedAmount != null) {
+      await debitWalletForOrder(tx, order.customerId, orderId, chargedAmount);
+    }
+
+    await tx.order.update({
       where: { id: orderId },
       data: {
         fulfillmentType: OrderFulfillmentType.COURIER_PARTNER,
@@ -400,8 +409,8 @@ export async function assignOrderToCourierAction(formData: FormData) {
           },
         },
       },
-    }),
-  ]);
+    });
+  });
 
   revalidatePath(`/orders/${orderId}`);
   revalidatePath("/orders");
@@ -459,7 +468,7 @@ export async function getProviderQuotesForOrder(orderId: string): Promise<Provid
   const zone = determineZone(order.pickupPincode ?? "", order.deliveryPincode);
   // One sell-price lookup per order (not per provider/option) — what we'd
   // charge doesn't depend on which courier ends up fulfilling it.
-  const sell = await getSellPrice(order.tenantId, zone, weightKg);
+  const sell = await getSellPrice(order.tenantId, zone, weightKg, order.customerId);
 
   return Promise.all(
     branches.map(async (branch) => {

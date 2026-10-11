@@ -49,6 +49,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           // just their own Customer's orders (src/lib/customer-session.ts),
           // never the whole tenant's.
           customerId: user.customerId,
+          isBusinessOwner: user.isBusinessOwner,
         };
       },
     }),

@@ -159,6 +159,39 @@ export async function saveTenantWebhookAction(
   return { ok: true, plaintextSecret };
 }
 
+// Tenant.telegramEnabled gates whether notifyTenantOnStatusChange (see
+// webhooks.ts) actually sends to the connected group — toggling off here
+// pauses notifications without un-linking the group, so re-enabling later
+// doesn't require the admin to regenerate/re-send the connect link.
+const toggleTelegramSchema = z.object({
+  tenantId: z.string().min(1),
+  enabled: z.string().transform((v) => v === "true"),
+});
+
+export async function toggleTenantTelegramAction(formData: FormData) {
+  await requireAdmin();
+  const parsed = toggleTelegramSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+
+  await prisma.tenant.update({
+    where: { id: parsed.data.tenantId },
+    data: { telegramEnabled: parsed.data.enabled },
+  });
+  revalidatePath(`/tenants/${parsed.data.tenantId}`);
+}
+
+export async function unlinkTenantTelegramAction(formData: FormData) {
+  await requireAdmin();
+  const tenantId = String(formData.get("tenantId") ?? "");
+  if (!tenantId) throw new Error("Missing tenant id");
+
+  await prisma.tenant.update({
+    where: { id: tenantId },
+    data: { telegramGroupChatId: null, telegramGroupTitle: null, telegramEnabled: false },
+  });
+  revalidatePath(`/tenants/${tenantId}`);
+}
+
 const savePickupDetailsSchema = z.object({
   tenantId: z.string().min(1),
   pickupAddress: z.string().trim().optional().or(z.literal("")),

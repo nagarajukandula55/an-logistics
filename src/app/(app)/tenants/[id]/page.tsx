@@ -9,6 +9,8 @@ import { StatusControls } from "./StatusControls";
 import { ApiKeyPanel } from "./ApiKeyPanel";
 import { WebhookPanel } from "./WebhookPanel";
 import { PickupDetailsPanel } from "./PickupDetailsPanel";
+import { TenantTelegramPanel } from "./TenantTelegramPanel";
+import { buildTenantTelegramConnectLink } from "@/lib/telegram";
 
 export default async function TenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
@@ -122,6 +124,27 @@ export default async function TenantDetailPage({ params }: { params: Promise<{ i
                 tenantId={tenant.id}
                 webhookUrl={tenant.webhookUrl}
                 hasSecret={Boolean(tenant.webhookSecret)}
+              />
+            </CardBody>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <h2 className="h-section">Telegram notifications</h2>
+            </CardHeader>
+            <CardBody>
+              <TenantTelegramPanel
+                tenantId={tenant.id}
+                connectLink={(() => {
+                  try {
+                    return buildTenantTelegramConnectLink(tenant.id);
+                  } catch {
+                    return null;
+                  }
+                })()}
+                groupChatId={tenant.telegramGroupChatId}
+                groupTitle={tenant.telegramGroupTitle}
+                enabled={tenant.telegramEnabled}
               />
             </CardBody>
           </Card>

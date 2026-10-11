@@ -9,6 +9,7 @@ declare module "next-auth" {
       tenantId: string | null;
       tenantType: string | null;
       customerId: string | null;
+      isBusinessOwner: boolean;
     } & DefaultSession["user"];
   }
 
@@ -18,6 +19,7 @@ declare module "next-auth" {
     tenantId?: string | null;
     tenantType?: string | null;
     customerId?: string | null;
+    isBusinessOwner?: boolean;
   }
 }
 
@@ -29,5 +31,6 @@ declare module "next-auth/jwt" {
     tenantId?: string | null;
     tenantType?: string | null;
     customerId?: string | null;
+    isBusinessOwner?: boolean;
   }
 }

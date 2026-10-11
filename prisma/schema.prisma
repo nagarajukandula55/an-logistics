@@ -47,6 +47,15 @@ model Tenant {
   defaultCommissionValue Float?
   webhookUrl             String?
   webhookSecret          String?
+  // Client's own ops Telegram group — opt-in (telegramEnabled), connected
+  // via the same /start deep-link flow as a Customer's TelegramLink (see
+  // buildTenantTelegramConnectLink in lib/telegram.ts), just scoped to the
+  // whole tenant rather than one Customer. Gets the same status-change
+  // stream as webhookUrl, plus /shipments and /documents bot commands
+  // scoped to this tenant's orders once added to their group.
+  telegramGroupChatId    String?
+  telegramGroupTitle     String?
+  telegramEnabled        Boolean         @default(false)
   // Default pickup point for this tenant's own shipments booked via
   // POST /api/v1/shipments (e.g. native/angroup's warehouse) -- exposed
   // read-only over GET /api/v1/tenant so the calling app never has to
@@ -73,6 +82,7 @@ model Tenant {
 
   @@index([type])
   @@index([status])
+  @@index([telegramGroupChatId])
 }
 
 model TenantApiKey {
@@ -109,6 +119,10 @@ model User {
   role               UserRole @default(DISPATCHER)
   isActive           Boolean  @default(true)
   mustChangePassword Boolean  @default(true)
+  // The Customer owner (set on signup/first user of a Customer). Only the
+  // owner can invite/deactivate staff Users under their Customer — see
+  // inviteBusinessStaffAction / setStaffActiveAction.
+  isBusinessOwner    Boolean  @default(false)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
 
@@ -127,22 +141,39 @@ model User {
 // Modeled as a first-class tenant from day one so the same schema
 // supports internal-only usage now and self-service customers later.
 
+// INDIVIDUAL is a single shipper (self-service signup or staff-entered).
+// BUSINESS can additionally invite staff Users under it (capped at
+// maxStaffUsers, enforced in code — see inviteBusinessStaffAction) who all
+// book against the business's own SellRateCard rather than one each.
+enum CustomerKind {
+  INDIVIDUAL
+  BUSINESS
+}
+
 model Customer {
-  id          String   @id @default(cuid())
-  name        String
-  billingName String?
-  phone       String?
-  email       String?
-  address     String?
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id            String       @id @default(cuid())
+  name          String
+  billingName   String?
+  phone         String?
+  email         String?
+  address       String?
+  isActive      Boolean      @default(true)
+  kind          CustomerKind @default(INDIVIDUAL)
+  // Staff seats beyond the owner, BUSINESS only. Enforced in
+  // inviteBusinessStaffAction, not a DB constraint.
+  maxStaffUsers Int          @default(2)
+  createdAt     DateTime     @default(now())
+  updatedAt     DateTime     @updatedAt
 
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
   tenantId String?
 
-  users  User[]
-  orders Order[]
+  users         User[]
+  orders        Order[]
+  sellRateCards SellRateCard[]
+  wallet        Wallet?
+  agreements    Agreement[]
+  telegramLink  TelegramLink?
 
   @@index([name])
   @@index([tenantId])
@@ -488,23 +519,31 @@ model RateCardSlab {
 // since CLIENT already means exactly "a business whose volume we operate
 // under negotiated terms" (see the TenantType doc comment above).
 model SellRateCard {
-  id               String   @id @default(cuid())
+  id               String    @id @default(cuid())
   tenantId         String?
-  tenant           Tenant?  @relation(fields: [tenantId], references: [id])
+  tenant           Tenant?   @relation(fields: [tenantId], references: [id])
+  // Business/individual-specific price list, agreed via Agreement below.
+  // Resolution order (see getSellPrice): a Customer-scoped ACTIVE card
+  // wins over the tenant-wide default (customerId null) — most-specific
+  // wins, same as a business's staff all sharing their Customer's card.
+  customerId       String?
+  customer         Customer? @relation(fields: [customerId], references: [id])
   name             String
-  isActive         Boolean  @default(true)
+  isActive         Boolean   @default(true)
   effectiveFrom    DateTime
   // Floor check, not enforced pricing: if set, a computed sell price that
   // would leave less than this % margin over a given courier's cost is
   // flagged (belowMarginFloor) wherever it's quoted, rather than silently
   // booked at a loss. Null = no floor check for this price list.
   minMarginPercent Float?
-  createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
 
-  slabs SellRateCardSlab[]
+  slabs      SellRateCardSlab[]
+  agreements Agreement[]
 
   @@index([tenantId])
+  @@index([customerId])
 }
 
 model SellRateCardSlab {
@@ -531,6 +570,145 @@ model CourierApiConfig {
   apiKeyEncrypted  String?
   webhookUrl       String?
   isActive         Boolean        @default(false)
+}
+
+// ---------- Wallet (AN Pay, via AN-accounting) ----------
+// One wallet per Customer (business or individual). Debited when an order
+// is actually handed to a courier (assignOrderToCourierAction), not at
+// order creation — see lib/wallet.ts. Balance changes always go through
+// WalletTransaction so the ledger, not just the running total, is the
+// source of truth; `balance` is a cached sum for fast reads.
+
+enum WalletTransactionType {
+  CREDIT
+  DEBIT
+}
+
+model Wallet {
+  id         String   @id @default(cuid())
+  customerId String   @unique
+  customer   Customer @relation(fields: [customerId], references: [id])
+  balance    Float    @default(0)
+  currency   String   @default("INR")
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  transactions WalletTransaction[]
+}
+
+model WalletTransaction {
+  id           String                @id @default(cuid())
+  walletId     String
+  wallet       Wallet                @relation(fields: [walletId], references: [id])
+  type         WalletTransactionType
+  amount       Float
+  balanceAfter Float
+  orderId      String?
+  // ANyPay (AN-accounting) reference for this movement, when the entry was
+  // pushed to/confirmed by the central wallet ledger rather than purely
+  // local (e.g. a manual top-up recorded here before ANyPay confirms it).
+  externalRef  String?
+  note         String?
+  createdAt    DateTime              @default(now())
+
+  @@index([walletId])
+  @@index([orderId])
+}
+
+// ---------- Agreements / e-sign ----------
+// A Customer's agreed commercial terms (B2B for BUSINESS Customers, B2C for
+// INDIVIDUAL) — this is the agreement a customer signs with us to be
+// serviced through the platform (single courier or full aggregation,
+// decided separately per their SellRateCard/routing setup), signed through
+// Zoho Sign (see lib/agreements.ts). Once SIGNED, sellRateCardId is the
+// price list that was actually agreed and should be activated for this
+// Customer. renewalDate drives the reminder cron
+// (api/cron/agreement-renewals) — left unset for agreements with no fixed
+// term.
+
+enum AgreementKind {
+  B2B
+  B2C
+}
+
+enum AgreementStatus {
+  DRAFT
+  SENT
+  SIGNED
+  VOID
+}
+
+model Agreement {
+  id                 String          @id @default(cuid())
+  customerId         String
+  customer           Customer        @relation(fields: [customerId], references: [id])
+  kind               AgreementKind
+  status             AgreementStatus @default(DRAFT)
+  templateVersion    String
+  documentUrl        String?
+  sellRateCardId     String?
+  sellRateCard       SellRateCard?   @relation(fields: [sellRateCardId], references: [id])
+  // Envelope/session id from the central e-sign API, for status polling and
+  // webhook correlation once that integration exists.
+  externalEnvelopeId String?
+  signerName         String?
+  signerEmail        String?
+  sentAt             DateTime?
+  signedAt           DateTime?
+  // When this agreement's terms are up for renewal. Null means open-ended
+  // (no reminder sent). renewalReminderSentAt guards against the daily
+  // cron re-notifying every run once a reminder's gone out.
+  renewalDate            DateTime?
+  renewalReminderSentAt  DateTime?
+  createdAt              DateTime        @default(now())
+  updatedAt              DateTime        @updatedAt
+
+  @@index([customerId])
+  @@index([externalEnvelopeId])
+  @@index([renewalDate])
+}
+
+// ---------- Telegram ----------
+// One link per Customer, covering both an individual's personal DM (chatId)
+// and a business's group (groupChatId) — both populated the same way, via
+// the /start deep-link flow in src/app/api/telegram/webhook/route.ts
+// (same pattern as My-Biz-Flow's TelegramSettings).
+
+model TelegramLink {
+  id             String   @id @default(cuid())
+  customerId     String   @unique
+  customer       Customer @relation(fields: [customerId], references: [id])
+  chatId         String?
+  chatTitle      String?
+  groupChatId    String?
+  groupChatTitle String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@index([chatId])
+  @@index([groupChatId])
+}
+
+// Internal ops notifications — distinct from TelegramLink (which is a
+// per-Customer DM/group for THAT customer's own shipment updates). This is
+// staff's own ops group(s): one Telegram group chat id per event type,
+// configured from Settings -> Telegram notifications. A event with no
+// row configured (or isActive false) is silently skipped wherever it's
+// fired from (see notifyOpsTelegram in lib/telegram.ts).
+enum TelegramNotificationEvent {
+  ORDER_STATUS_CHANGE
+  AGREEMENT_SENT
+  AGREEMENT_SIGNED
+  AGREEMENT_RENEWAL_DUE
+}
+
+model TelegramNotificationChannel {
+  id          String                    @id @default(cuid())
+  event       TelegramNotificationEvent @unique
+  groupChatId String
+  isActive    Boolean                   @default(true)
+  createdAt   DateTime                  @default(now())
+  updatedAt   DateTime                  @updatedAt
 }
 
 // ---------- Billing ----------

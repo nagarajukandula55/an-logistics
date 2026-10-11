@@ -2,7 +2,7 @@ import { prisma } from "@/lib/prisma";
 import { requireTenantSession } from "@/lib/tenant";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardBody } from "@/components/ui/Card";
-import { Prisma, OrderStatus } from "@prisma/client";
+import { Prisma, OrderStatus, AgreementStatus } from "@prisma/client";
 import { orderStatusLabel } from "@/components/ui/Badge";
 import { subDays, startOfDay, format } from "date-fns";
 import {
@@ -11,6 +11,8 @@ import {
   CourierVolumeChart,
   TenantBreakdownChart,
 } from "./charts";
+import { AgreementRenewalsCard } from "./AgreementRenewalsCard";
+import { daysUntil } from "@/lib/date";
 
 const TREND_DAYS = 14;
 
@@ -34,6 +36,7 @@ export default async function DashboardPage() {
     chargedAgg,
     tenants,
     tenantOrderCounts,
+    agreementRenewals,
   ] = await Promise.all([
     prisma.order.count({ where: tenantScope }),
     prisma.order.groupBy({
@@ -62,7 +65,23 @@ export default async function DashboardPage() {
     isStaff
       ? prisma.order.groupBy({ by: ["tenantId"], _count: { _all: true } })
       : Promise.resolve([] as { tenantId: string | null; _count: { _all: number } }[]),
+    // Expired or due-within-30-days agreements — surfaced here so staff can
+    // proactively send a renewal rather than waiting on the nightly
+    // reminder cron (api/cron/agreement-renewals) to flag it by email.
+    prisma.agreement.findMany({
+      where: {
+        status: AgreementStatus.SIGNED,
+        renewalDate: { not: null, lte: subDays(new Date(), -30) },
+      },
+      include: { customer: { select: { name: true } } },
+      orderBy: { renewalDate: "asc" },
+      take: 10,
+    }),
   ]);
+
+  const renewalsWithDaysLeft = agreementRenewals
+    .filter((a): a is typeof a & { renewalDate: Date } => a.renewalDate !== null)
+    .map((a) => ({ ...a, daysLeft: daysUntil(a.renewalDate) }));
 
   const courierIds = courierGrouped.map((c) => c.courierPartnerId).filter((id): id is string => !!id);
   const couriers = courierIds.length
@@ -135,6 +154,13 @@ export default async function DashboardPage() {
         <StatTile label="Revenue charged (delivered)" value={`₹${revenueCharged.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`} />
         <StatTile label="Courier partners used" value={courierData.length.toLocaleString("en-IN")} />
       </div>
+
+      <Card>
+        <CardBody>
+          <h2 className="h-section mb-4">Agreement renewals</h2>
+          <AgreementRenewalsCard agreements={renewalsWithDaysLeft} />
+        </CardBody>
+      </Card>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <Card>

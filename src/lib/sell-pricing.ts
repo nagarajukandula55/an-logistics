@@ -2,28 +2,38 @@ import { prisma } from "@/lib/prisma";
 
 /**
  * What we charge for a shipment, as distinct from what a courier charges us
- * (RateCard) or what we pay them out (CourierApiConfig quotes). Looks up a
- * tenant-specific SellRateCard first (a commercial/negotiated-rate CLIENT
- * tenant), falling back to the default price list (tenantId null) used for
- * ordinary/normal-user bookings. Mirrors the same zone/weight-slab matching
- * manual-provider.ts uses for RateCard, so the two pricing surfaces behave
- * consistently.
+ * (RateCard) or what we pay them out (CourierApiConfig quotes). Resolution
+ * order, most specific wins: the order's Customer's own agreed SellRateCard
+ * (set via an Agreement — a BUSINESS Customer's staff all share this one
+ * card, see Customer.kind), then the tenant-wide card (a commercial/
+ * negotiated-rate CLIENT tenant), then the default price list (tenantId
+ * null) used for ordinary/normal-user bookings. Mirrors the same
+ * zone/weight-slab matching manual-provider.ts uses for RateCard, so the two
+ * pricing surfaces behave consistently.
  */
 export async function getSellPrice(
   tenantId: string | null | undefined,
   zone: string,
-  weightKg: number
+  weightKg: number,
+  customerId?: string | null
 ): Promise<{ price: number; minMarginPercent: number | null; sellRateCardId: string } | null> {
   const card =
+    (customerId
+      ? await prisma.sellRateCard.findFirst({
+          where: { customerId, isActive: true },
+          orderBy: { effectiveFrom: "desc" },
+          include: { slabs: { where: { isActive: true } } },
+        })
+      : null) ??
     (tenantId
       ? await prisma.sellRateCard.findFirst({
-          where: { tenantId, isActive: true },
+          where: { tenantId, customerId: null, isActive: true },
           orderBy: { effectiveFrom: "desc" },
           include: { slabs: { where: { isActive: true } } },
         })
       : null) ??
     (await prisma.sellRateCard.findFirst({
-      where: { tenantId: null, isActive: true },
+      where: { tenantId: null, customerId: null, isActive: true },
       orderBy: { effectiveFrom: "desc" },
       include: { slabs: { where: { isActive: true } } },
     }));

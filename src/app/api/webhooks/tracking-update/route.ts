@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { notifyTenantOnStatusChange } from "@/lib/webhooks";
+import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange } from "@/lib/webhooks";
 import { mapDtdcStatus } from "@/lib/courier-providers/dtdc-status";
 
 // DTDC's "Consignment Status Webhook" (Shipsy platform) pushes status
@@ -58,6 +58,7 @@ export async function POST(req: Request) {
   });
 
   notifyTenantOnStatusChange(updated, updated.statusEvents[0]).catch(() => {});
+  notifyCustomerOnStatusChange(updated, updated.statusEvents[0]).catch(() => {});
 
   return NextResponse.json({ success: true });
 }
