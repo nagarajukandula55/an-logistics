@@ -13,6 +13,7 @@ import {
 } from "./charts";
 import { AgreementRenewalsCard } from "./AgreementRenewalsCard";
 import { daysUntil } from "@/lib/date";
+import Link from "next/link";
 
 const TREND_DAYS = 14;
 
@@ -140,7 +141,10 @@ export default async function DashboardPage() {
         eyebrow="Overview"
         title="Dashboard"
         description={isStaff ? "Cross-tenant view of all orders and fulfillment across AN Group." : "Your orders, fulfillment and revenue at a glance."}
+        actions={isStaff ? <div className="flex flex-wrap gap-2"><Link href="/onboarding" className="rounded-control bg-accent px-3.5 py-2 text-sm font-medium text-white hover:bg-accent-hover">Review onboarding</Link><Link href="/orders/new" className="rounded-control border border-border bg-surface px-3.5 py-2 text-sm font-medium text-ink hover:bg-surface-2">New order</Link></div> : <Link href="/orders/new" className="rounded-control bg-accent px-3.5 py-2 text-sm font-medium text-white hover:bg-accent-hover">Create shipment</Link>}
       />
+
+      {isStaff && <div className="rounded-card border border-accent/20 bg-accent-soft px-5 py-4 text-sm text-ink-2"><strong className="text-ink">Admin workspace.</strong> Use onboarding for new customers and courier allocation, agreements for signing and rates, and orders for day-to-day dispatch.</div>}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <StatTile label="Total orders" value={totalOrders.toLocaleString("en-IN")} />
