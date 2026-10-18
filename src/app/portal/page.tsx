@@ -40,6 +40,8 @@ export default async function PortalOrdersPage() {
                     <Link href={`/track/${order.trackingCode}`} className="text-ink font-medium tabular hover:text-accent">
                       {order.trackingCode}
                     </Link>
+                    {order.providerRef && <p className="text-sm">Courier docket: {order.providerRef}</p>}
+                    {order.bookingState === "RECONCILIATION_REQUIRED" && <p className="text-sm text-warning">Courier confirmation under review. Do not rebook.</p>}
                     <p className="text-xs text-ink-3">
                       {order.deliveryAddress} · {format(order.createdAt, "MMM d, yyyy")}
                     </p>

@@ -32,6 +32,15 @@ export type QuoteOption = {
 };
 
 export type CreateShipmentInput = {
+  pickupAddress?: string;
+  pickupContactName?: string;
+  pickupContactPhone?: string;
+  pickupCity?: string;
+  pickupState?: string;
+  lengthCm?: number;
+  widthCm?: number;
+  heightCm?: number;
+  declaredValue?: number;
   orderId: string;
   pickupPincode: string;
   deliveryAddress: string;

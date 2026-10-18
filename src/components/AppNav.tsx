@@ -18,6 +18,7 @@ const LINKS = [
 ];
 
 const ADMIN_LINKS = [
+  { href: "/onboarding", label: "Onboarding", icon: Handshake },
   { href: "/users", label: "Users", icon: ShieldCheck },
   { href: "/tenants", label: "Tenants", icon: Building2 },
   { href: "/billing/invoices", label: "Billing", icon: Receipt },
@@ -33,7 +34,7 @@ export function AppNav({ userName, role }: { userName: string; role: string }) {
       <div className="mx-auto w-full max-w-6xl px-4 flex items-center justify-between h-14">
         <div className="flex items-center gap-6">
           <span className="font-semibold text-ink">AN Logistics</span>
-          <nav className="flex items-center gap-1">
+          <nav className="flex items-center gap-1 overflow-x-auto max-w-[65vw]">
             {links.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
               return (

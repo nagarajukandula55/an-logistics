@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { requireTenantSession } from "@/lib/tenant";
+import { requireOnboardingAdmin } from "@/lib/onboarding";
 import { AgreementKind, AgreementStatus } from "@prisma/client";
 import { sendAgreementForSignature } from "@/lib/agreements";
 
@@ -19,7 +19,7 @@ const createAgreementSchema = z.object({
 });
 
 export async function createAgreementAction(_prev: { ok: boolean; error?: string }, formData: FormData) {
-  await requireTenantSession();
+  await requireOnboardingAdmin();
 
   const parsed = createAgreementSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -27,6 +27,7 @@ export async function createAgreementAction(_prev: { ok: boolean; error?: string
   }
   const data = parsed.data;
 
+  if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: data.customerId } })) return { ok: false, error: "Rate card must belong to this customer" };
   await prisma.agreement.create({
     data: {
       customerId: data.customerId,
@@ -56,19 +57,9 @@ const updateAgreementSchema = z.object({
   renewalDate: z.string().optional(),
 });
 
-/**
- * Edits an existing agreement's terms — the document, signer details,
- * renewal date, and which SellRateCard it's tied to. The agreed rate isn't
- * fixed at creation: if the agreement is already SIGNED and the rate card
- * selection changes, the newly-selected card is activated for the customer
- * immediately (same supersede logic as markAgreementSigned), so correcting
- * a negotiated rate here takes effect right away rather than waiting for a
- * re-sign. Document/signer/kind fields on a SENT agreement can still be
- * edited, but won't retroactively change what's already out for signature
- * at Zoho — re-send after editing if the in-flight request needs to change.
- */
+// Sent and signed agreements are immutable; prepare a new version for amendments.
 export async function updateAgreementAction(_prev: { ok: boolean; error?: string }, formData: FormData) {
-  await requireTenantSession();
+  await requireOnboardingAdmin();
 
   const parsed = updateAgreementSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
@@ -79,11 +70,15 @@ export async function updateAgreementAction(_prev: { ok: boolean; error?: string
   const existing = await prisma.agreement.findUnique({ where: { id: data.agreementId } });
   if (!existing) return { ok: false, error: "Agreement not found" };
 
+  if (existing.status !== "DRAFT") return { ok: false, error: "Sent and signed agreements are locked. Create a new version." };
+  if (existing.termsSnapshot && (data.sellRateCardId !== existing.sellRateCardId || data.templateVersion !== existing.templateVersion)) return { ok: false, error: "Frozen terms and rates cannot be replaced. Prepare a new draft." };
+  if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: existing.customerId } })) return { ok: false, error: "Rate card must belong to this customer" };
+  if (existing.termsSnapshot && formData.get("documentMatches") !== "on") return {ok:false,error:"Confirm that the PDF contains the reviewed terms and exact rate schedule."};
   const newSellRateCardId = data.sellRateCardId || null;
 
   await prisma.$transaction(async (tx) => {
     await tx.agreement.update({
-      where: { id: data.agreementId },
+      where: { id: data.agreementId, status: "DRAFT" },
       data: {
         kind: data.kind,
         templateVersion: data.templateVersion,
@@ -95,16 +90,7 @@ export async function updateAgreementAction(_prev: { ok: boolean; error?: string
       },
     });
 
-    if (existing.status === AgreementStatus.SIGNED && newSellRateCardId && newSellRateCardId !== existing.sellRateCardId) {
-      await tx.sellRateCard.updateMany({
-        where: { customerId: existing.customerId, id: { not: newSellRateCardId } },
-        data: { isActive: false },
-      });
-      await tx.sellRateCard.update({
-        where: { id: newSellRateCardId },
-        data: { isActive: true },
-      });
-    }
+
   });
 
   revalidatePath("/agreements");
@@ -112,7 +98,7 @@ export async function updateAgreementAction(_prev: { ok: boolean; error?: string
 }
 
 export async function sendAgreementForSignatureAction(formData: FormData) {
-  await requireTenantSession();
+  await requireOnboardingAdmin();
   const agreementId = String(formData.get("agreementId") ?? "");
   if (!agreementId) throw new Error("Missing agreement id");
 
@@ -121,12 +107,12 @@ export async function sendAgreementForSignatureAction(formData: FormData) {
 }
 
 export async function voidAgreementAction(formData: FormData) {
-  await requireTenantSession();
+  await requireOnboardingAdmin();
   const agreementId = String(formData.get("agreementId") ?? "");
   if (!agreementId) throw new Error("Missing agreement id");
 
   await prisma.agreement.update({
-    where: { id: agreementId },
+    where: { id: agreementId, status: "DRAFT" },
     data: { status: AgreementStatus.VOID },
   });
   revalidatePath("/agreements");

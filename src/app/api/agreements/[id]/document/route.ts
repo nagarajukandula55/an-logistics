@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { requireTenantSession } from "@/lib/tenant";
+import { requireOnboardingAdmin } from "@/lib/onboarding";
 import { fetchAgreementPdf } from "@/lib/agreements";
 
 // Staff-only proxy for viewing/downloading an Agreement's PDF from Zoho
@@ -9,7 +9,7 @@ import { fetchAgreementPdf } from "@/lib/agreements";
 // endpoint. We don't store the bytes ourselves; this just streams them
 // through on demand, same no-local-copy approach as providerLabelUrl.
 export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
-  await requireTenantSession();
+  await requireOnboardingAdmin();
   const { id } = await params;
 
   const agreement = await prisma.agreement.findUnique({ where: { id } });

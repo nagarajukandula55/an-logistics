@@ -73,6 +73,7 @@ export function ApiConfigPanel({ courierPartnerId, config }: { courierPartnerId:
           <Field label="DTDC customer code" htmlFor="dtdcCustomerCode" hint="Encrypted at rest, sent with every request.">
             <Input id="dtdcCustomerCode" name="dtdcCustomerCode" type="password" placeholder={config?.apiKeyEncrypted ? "•••••••• (unchanged)" : ""} />
           </Field>
+          <Field label="DTDC service type" htmlFor="dtdcServiceTypeId" hint="Enter the service code issued by DTDC. Re-enter all credentials when updating it."><Input id="dtdcServiceTypeId" name="dtdcServiceTypeId" /></Field>
           <Field label="DTDC hub code" htmlFor="dtdcHubCode" hint="Order Manifestation Hub Code for this pickup point, e.g. VF1808.">
             <Input id="dtdcHubCode" name="dtdcHubCode" placeholder={config?.apiKeyEncrypted ? "unchanged" : "VF1808"} />
           </Field>

@@ -32,8 +32,9 @@ async function getCredentials(partner: CourierPartner): Promise<DtdcCredentials>
   if (!apiConfig?.apiKeyEncrypted || !apiConfig.baseUrl) {
     throw new Error(`DTDC is not fully configured for partner ${partner.name}`);
   }
-  const { apiKey, customerCode, hubCode } = JSON.parse(decryptApiKey(apiConfig.apiKeyEncrypted));
-  return { baseUrl: apiConfig.baseUrl, apiKey, customerCode, hubCode };
+  const { apiKey, customerCode, hubCode, serviceTypeId } = JSON.parse(decryptApiKey(apiConfig.apiKeyEncrypted));
+  if (!serviceTypeId) throw new Error("Configure the DTDC-issued service type before booking.");
+  return { baseUrl: apiConfig.baseUrl, apiKey, customerCode, hubCode, serviceTypeId };
 }
 
 // Serviceability's request body is (near) identical to Softdata Upload's —
@@ -56,7 +57,7 @@ async function buildServiceabilityPayload(
   return {
     customer_code: creds.customerCode,
     hub_code: creds.hubCode,
-    service_type_id: "", // TODO: DTDC-issued service type for this account, e.g. "PREMIUM"
+    service_type_id: creds.serviceTypeId,
     consignment_type: "forward",
     movement_type: "forward",
     action_type: "pickupandelivery",
@@ -128,31 +129,14 @@ export const dtdcProvider: CourierProvider = {
   async createShipment(partner: CourierPartner, input: CreateShipmentInput): Promise<CreateShipmentResult> {
     const creds = await getCredentials(partner);
 
-    // Full field set confirmed against DTDC's Softdata Upload SCHEMA
-    // (2026-09-26). Required (*) fields: customer_code, service_type_id,
-    // origin_details{name,phone,address_line_1,pincode},
-    // destination_details{name,phone,address_line_1,pincode}, pieces_detail[].
-    //
-    // origin_details needs a pickup contact + address + pincode, but
-    // CourierBranch (src/lib/actions/couriers.ts) only stores
-    // name/address/city/contactPhone — no pincode field. Falls back to the
-    // partner's first active branch for name/address/city/phone, and
-    // input.pickupPincode (the order's own pickup pincode) to fill the
-    // required pincode. If a partner has multiple branches, this always
-    // uses the first active one — fine for a single-warehouse setup, but
-    // revisit (pass the actual dispatch branch through) once a partner has
-    // more than one.
-    const branch = await prisma.courierBranch.findFirst({
-      where: { courierPartnerId: partner.id, isActive: true },
-      orderBy: { createdAt: "asc" },
-    });
+    if (!input.pickupAddress || !input.pickupContactName || !input.pickupContactPhone || input.declaredValue == null) throw new Error("Complete sender contact, pickup address and declared value before booking.");
 
     const payload = {
       reference_number: input.orderId,
       customer_code: creds.customerCode,
       customer_reference_number: input.orderId,
       hub_code: creds.hubCode,
-      service_type_id: "", // TODO: DTDC-issued service type for this account, e.g. "PREMIUM"
+      service_type_id: creds.serviceTypeId,
       consignment_type: "forward",
       movement_type: "forward",
       // "pickupandelivery" (not the example's "single_pickup") since a
@@ -165,15 +149,16 @@ export const dtdcProvider: CourierProvider = {
       notes: "",
       cod_amount: String(input.codAmount ?? 0),
       cod_collection_mode: input.codAmount ? "cash" : "",
-      declared_value: String(input.codAmount ?? 0),
-      declared_value_without_tax: String(input.codAmount ?? 0),
+      declared_value: String(input.declaredValue),
+      declared_value_without_tax: String(input.declaredValue),
       weight: String(input.weightKg),
       weight_unit: "kg",
       origin_details: {
-        name: branch?.name || partner.name,
-        phone: branch?.contactPhone || partner.contactPhone,
-        address_line_1: branch?.address || "",
-        city: branch?.city || "",
+        name: input.pickupContactName,
+        phone: input.pickupContactPhone,
+        address_line_1: input.pickupAddress,
+        city: input.pickupCity || "",
+        state: input.pickupState || "",
         pincode: input.pickupPincode,
       },
       destination_details: {
@@ -187,10 +172,14 @@ export const dtdcProvider: CourierProvider = {
       pieces_detail: [
         {
           description: input.packageDescription || "Shipment",
-          declared_value: String(input.codAmount ?? 0),
+          declared_value: String(input.declaredValue),
           cod_amount: String(input.codAmount ?? 0),
           weight: String(input.weightKg),
           weight_unit: "kg",
+          length: String(input.lengthCm || ""),
+          width: String(input.widthCm || ""),
+          height: String(input.heightCm || ""),
+          dimension_unit: "cm",
         },
       ],
     };
@@ -200,7 +189,9 @@ export const dtdcProvider: CourierProvider = {
       body: JSON.stringify(payload),
     });
 
-    const awb = data?.awb_number || data?.reference_number || data?.data?.awb_number;
+    if (data?.success === false || data?.status === "FAILED" || data?.status === "ERROR") throw new Error("DTDC rejected the shipment.");
+    const awb = data?.awb_number || data?.data?.awb_number || data?.reference_number;
+    if (awb === input.orderId) throw new Error("DTDC returned only our reference, not a confirmed docket.");
     if (!awb) throw new Error(JSON.stringify(data));
 
     // Label Generation (Link) — request/response confirmed (2026-09-26):

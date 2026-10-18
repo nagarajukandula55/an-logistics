@@ -57,6 +57,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
         actions={<Badge tone={orderStatusTone(order.status)}>{orderStatusLabel(order.status)}</Badge>}
       />
 
+      {order.shipmentDetails && <section className="bg-surface border border-border rounded-xl p-5 mb-6"><h2 className="h-section">Pickup and package details</h2><p className="text-sm my-2">Courier booking: {order.bookingState} · Docket: {order.providerRef || "Not issued"}</p><dl className="grid sm:grid-cols-3 gap-3 text-sm">{Object.entries(order.shipmentDetails as Record<string,unknown>).map(([key,value])=><div key={key}><dt className="text-ink-2">{key.replace(/([A-Z])/g," $1")}</dt><dd>{String(value)}</dd></div>)}</dl></section>}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <div className="lg:col-span-2 flex flex-col gap-6">
           <Card>

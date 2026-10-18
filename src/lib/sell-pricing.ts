@@ -17,14 +17,11 @@ export async function getSellPrice(
   weightKg: number,
   customerId?: string | null
 ): Promise<{ price: number; minMarginPercent: number | null; sellRateCardId: string } | null> {
+  const managed = customerId ? await prisma.partnerApplication.findUnique({where:{customerId},select:{id:true}}) : null;
+  const customerCard = customerId ? await prisma.sellRateCard.findFirst({where:{customerId,isActive:true,effectiveFrom:{lte:new Date()}},orderBy:{effectiveFrom:"desc"},include:{slabs:{where:{isActive:true}}}}) : null;
+  if(managed && !customerCard) return null;
   const card =
-    (customerId
-      ? await prisma.sellRateCard.findFirst({
-          where: { customerId, isActive: true },
-          orderBy: { effectiveFrom: "desc" },
-          include: { slabs: { where: { isActive: true } } },
-        })
-      : null) ??
+    customerCard ??
     (tenantId
       ? await prisma.sellRateCard.findFirst({
           where: { tenantId, customerId: null, isActive: true },
@@ -39,7 +36,7 @@ export async function getSellPrice(
     }));
   if (!card) return null;
 
-  const slab = card.slabs.find((s) => s.zone === zone && weightKg >= s.minWeightKg && weightKg <= s.maxWeightKg);
+  const slab = card.slabs.find((s) => s.zone === zone && weightKg > s.minWeightKg && weightKg <= s.maxWeightKg);
   if (!slab) return null;
 
   return { price: slab.price, minMarginPercent: card.minMarginPercent, sellRateCardId: card.id };

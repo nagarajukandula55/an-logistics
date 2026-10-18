@@ -1,5 +1,13 @@
 # AN Logistics
 
+## Partner onboarding update
+
+The public homepage, application inbox, versioned agreement templates, approval-gated
+accounts and allocated-courier booking flow are now implemented. Read
+[the onboarding and rollout guide](docs/PARTNER-ONBOARDING.md) for migration,
+configuration, verification and current limitations. The historical scope notes
+below predate this update.
+
 Operations console for AN Logistics, a courier aggregator marketplace: order
 intake, dispatch to either your own fleet (driver + vehicle) or a third-party
 courier partner, delivery tracking, and courier-partner onboarding — plus a

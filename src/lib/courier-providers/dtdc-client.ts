@@ -15,6 +15,7 @@
 // here since it may differ per account/environment (staging vs prod).
 
 export type DtdcCredentials = {
+  serviceTypeId: string;
   baseUrl: string;
   apiKey: string;
   customerCode: string; // DTDC's `customer_code` — required on most request bodies
@@ -28,6 +29,7 @@ export async function dtdcRequest(
 ) {
   const response = await fetch(`${creds.baseUrl}${endpoint}`, {
     ...options,
+    signal: options.signal ?? AbortSignal.timeout(30000),
     headers: {
       "api-key": creds.apiKey,
       "Content-Type": "application/json",

@@ -1,0 +1,14 @@
+export const starterTerms = `DRAFT FOR INDIAN LEGAL REVIEW — complete all bracketed particulars before sending.
+Operator: AN Group, GSTIN 37EOZPK9605G1Z5, 1203, opposite Ice Factory, Bondapalle, Gotalm, Vizianagaram. Notices: connectwithangroup@gmail.com.
+Agreement type: [customer services / reseller / courier partner / NDA / addendum / other].
+1. Parties: AN Group and [counterparty legal name, registered address, GSTIN if applicable]; signatories confirm authority.
+2. Scope: domestic courier booking and coordination for approved services and serviceable pincodes. Record allocated services and delivery commitments in the commercial schedule.
+3. Commercial schedule: attach INR rate bands; specify GST treatment, volumetric divisor, minimum billable weight and rounding, fuel/remote-area surcharges, COD fees, RTO/reverse charges, insurance and pickup fees. State any commission basis, percentage/flat amount and settlement cycle. Amendments require a new accepted schedule.
+4. Payment: [to be agreed during commercial discussions for this party: prepaid/credit limit, invoice frequency, due date, disputed invoice procedure]. COD reconciliation, deductions and remittance: [complete]. Tax invoices and statutory deductions follow applicable law. This schedule may vary by counterparty and must be recorded in the signed version.
+5. Shipper duties: accurate contacts, addresses, contents, dimensions, actual weight, declared value, invoice and e-way bill where applicable. Lawful goods and secure packaging; disclose restricted, fragile and high-value goods. Prohibited goods must not be booked.
+6. Pickup/delivery: [cutoff, pickup window, failed pickup, delivery attempts, proof of delivery, non-delivery escalation, RTO authorisation and charges]. An AWB confirms registration, not physical pickup.
+7. Claims: [notice period, evidence, liability cap, exclusions and insurance election]. Limitations remain subject to mandatory law and consumer rights.
+8. Privacy/confidentiality: use shipment and contact data for services and lawful obligations; share with allocated couriers and signing providers as needed. Specify retention, safeguards, breach handling and grievance contact.
+9. Term: [effective date, duration, renewal, suspension grounds, termination notice/cure]. Address outstanding shipments, COD balances, dues and retained records.
+10. Disputes: Indian law; [escalation contacts, competent jurisdiction and agreed dispute process]. Preserve mandatory consumer remedies.
+11. Execution: accept this document and attached commercial schedule. Determine state stamp duty and the execution/e-sign method with counsel before issue. Retain signed document and audit certificate.`;

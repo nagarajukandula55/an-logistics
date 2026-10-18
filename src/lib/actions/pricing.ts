@@ -55,7 +55,7 @@ export async function createSellRateCardAction(formData: FormData) {
     // deactivates the prior active one for the same scope (same tenantId,
     // including the shared "null" default scope).
     await tx.sellRateCard.updateMany({
-      where: { tenantId: data.tenantId ?? null, isActive: true },
+      where: { tenantId: data.tenantId ?? null, customerId: null, isActive: true },
       data: { isActive: false },
     });
 

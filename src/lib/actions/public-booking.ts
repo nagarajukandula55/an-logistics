@@ -1,13 +1,7 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { generateTrackingCode } from "@/lib/tracking-code";
 import { getCourierProvider } from "@/lib/courier-providers/registry";
-import { findServiceableBranches, computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
-import { getSellPrice } from "@/lib/sell-pricing";
-import { determineZone } from "@/lib/zone";
-import { getMarketplaceTenantId } from "@/lib/marketplace-tenant";
-import { OrderAssignmentMethod, OrderFulfillmentType, OrderStatus } from "@prisma/client";
+import { findServiceableBranches } from "@/lib/courier-queries";
 import { z } from "zod";
 import { pincodeSchema } from "@/lib/validation";
 
@@ -74,89 +68,8 @@ export async function checkPublicServiceabilityAction(
   return { ok: true, quotes: quotes.filter((q): q is PublicQuote => q !== null) };
 }
 
-const bookingSchema = z.object({
-  customerName: z.string().min(1, "Name is required"),
-  customerPhone: z.string().min(1, "Phone is required"),
-  pickupAddress: z.string().min(1, "Pickup address is required"),
-  pickupPincode: pincodeSchema,
-  deliveryAddress: z.string().min(1, "Delivery address is required"),
-  deliveryContactName: z.string().min(1, "Recipient name is required"),
-  deliveryContactPhone: z.string().min(1, "Recipient phone is required"),
-  deliveryPincode: pincodeSchema,
-  weightKg: z.coerce.number().positive(),
-  courierPartnerId: z.string().min(1, "Select a courier"),
-  courierBranchId: z.string().min(1),
-  providerCourierId: z.string().optional(),
-  chargedAmount: z.coerce.number().nonnegative().optional(),
-});
-
 export type CreateBookingState = { ok: boolean; error?: string; trackingCode?: string };
-
-export async function createPublicBookingAction(
-  _prev: CreateBookingState,
-  formData: FormData
-): Promise<CreateBookingState> {
-  const parsed = bookingSchema.safeParse(Object.fromEntries(formData.entries()));
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-  const data = parsed.data;
-
-  const tenantId = await getMarketplaceTenantId();
-
-  const customer =
-    (await prisma.customer.findFirst({ where: { tenantId, phone: data.customerPhone } })) ??
-    (await prisma.customer.create({ data: { tenantId, name: data.customerName, phone: data.customerPhone } }));
-
-  const branch = await prisma.courierBranch.findUnique({
-    where: { id: data.courierBranchId },
-    include: { courierPartner: true },
-  });
-  if (!branch || branch.courierPartnerId !== data.courierPartnerId) {
-    return { ok: false, error: "Selected courier is no longer available — please check rates again" };
-  }
-  const partner = branch.courierPartner;
-
-  const commission = await getEffectiveCommission(partner.id, partner);
-
-  // A manually-entered "Amount to charge" always wins; otherwise fall back
-  // to the default SellRateCard price (tenantId null — public bookings roll
-  // up to the MARKETPLACE tenant, so there's no commercial/CLIENT override
-  // to prefer here) so a normal booking gets a real price without the
-  // person booking having had to type one in.
-  let chargedAmount: number | undefined = data.chargedAmount;
-  if (chargedAmount == null) {
-    const zone = determineZone(data.pickupPincode, data.deliveryPincode);
-    const sell = await getSellPrice(tenantId, zone, data.weightKg);
-    chargedAmount = sell?.price ?? undefined;
-  }
-
-  const platformFeeAmount = computePlatformFee(commission, chargedAmount ?? null);
-
-  const order = await prisma.order.create({
-    data: {
-      trackingCode: generateTrackingCode(),
-      tenantId,
-      customerId: customer.id,
-      pickupAddress: data.pickupAddress,
-      pickupContactName: data.customerName,
-      pickupContactPhone: data.customerPhone,
-      pickupPincode: data.pickupPincode,
-      deliveryAddress: data.deliveryAddress,
-      deliveryContactName: data.deliveryContactName,
-      deliveryContactPhone: data.deliveryContactPhone,
-      deliveryPincode: data.deliveryPincode,
-      weightKg: data.weightKg,
-      chargedAmount,
-      fulfillmentType: OrderFulfillmentType.COURIER_PARTNER,
-      assignmentMethod: OrderAssignmentMethod.AUTO,
-      courierPartnerId: partner.id,
-      courierBranchId: branch.id,
-      platformFeeAmount,
-      status: OrderStatus.CREATED,
-      statusEvents: { create: { status: OrderStatus.CREATED, note: `Booked via public marketplace, routed to ${partner.name}` } },
-    },
-  });
-
-  return { ok: true, trackingCode: order.trackingCode };
+export async function createPublicBookingAction(_prev: CreateBookingState, _formData: FormData): Promise<CreateBookingState> {
+  void _prev; void _formData;
+  return {ok:false,error:"Please apply at /signup. Shipments can be booked after your agreement and account are approved."};
 }

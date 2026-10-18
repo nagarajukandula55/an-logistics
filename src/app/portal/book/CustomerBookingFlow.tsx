@@ -2,10 +2,11 @@
 
 import { useActionState, useState } from "react";
 import {
-  checkPublicServiceabilityAction,
+
   type CheckServiceabilityState,
   type PublicQuote,
 } from "@/lib/actions/public-booking";
+import { checkCustomerServiceabilityAction } from "@/lib/actions/customer-quotes";
 import { createCustomerBookingAction, type CreateCustomerBookingState } from "@/lib/actions/customer-booking";
 import { Field, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
@@ -22,8 +23,9 @@ const bookingInitial: CreateCustomerBookingState = { ok: false };
 // already known from their account, and posts to
 // createCustomerBookingAction instead of the anonymous booking action.
 export function CustomerBookingFlow() {
-  const [quoteState, checkAction, checking] = useActionState(checkPublicServiceabilityAction, serviceabilityInitial);
+  const [quoteState, checkAction, checking] = useActionState(checkCustomerServiceabilityAction, serviceabilityInitial);
   const [bookState, bookAction, booking] = useActionState(createCustomerBookingAction, bookingInitial);
+  const [bookingKey,setBookingKey]=useState("");
   const [selected, setSelected] = useState<PublicQuote | null>(null);
   const [route, setRoute] = useState<{ pickupPincode: string; deliveryPincode: string; weightKg: string } | null>(null);
 
@@ -31,7 +33,9 @@ export function CustomerBookingFlow() {
     return (
       <Card>
         <CardBody className="text-center flex flex-col gap-3">
-          <p className="text-sm text-ink-2">Booked. Your tracking code:</p>
+          <p className="text-sm text-ink-2">{bookState.message}</p>
+          {bookState.providerRef && <p className="font-semibold">Courier docket: {bookState.providerRef}</p>}
+          <p className="text-sm text-ink-2">Your AN Logistics tracking code:</p>
           <p className="h-section tabular">{bookState.trackingCode}</p>
           <Link href={`/track/${bookState.trackingCode}`} className="text-accent text-sm">
             Track this shipment →
@@ -85,7 +89,7 @@ export function CustomerBookingFlow() {
                       </div>
                       <div className="flex items-center gap-3">
                         <p className="tabular text-ink">₹{q.rate.toFixed(2)}</p>
-                        <Button type="button" size="sm" onClick={() => setSelected(q)}>
+                        <Button type="button" size="sm" onClick={() => {setBookingKey(crypto.randomUUID());setSelected(q)}}>
                           Select
                         </Button>
                       </div>
@@ -104,6 +108,7 @@ export function CustomerBookingFlow() {
     <Card>
       <CardBody>
         <form action={bookAction} className="flex flex-col gap-3">
+          <input type="hidden" name="bookingKey" value={bookingKey}/>
           <input type="hidden" name="courierPartnerId" value={selected.courierPartnerId} />
           <input type="hidden" name="courierBranchId" value={selected.courierBranchId} />
           {selected.providerCourierId && <input type="hidden" name="providerCourierId" value={selected.providerCourierId} />}
@@ -129,6 +134,11 @@ export function CustomerBookingFlow() {
             <Input id="deliveryAddress" name="deliveryAddress" required />
           </Field>
 
+          <p className="text-sm text-ink-2">Single-package booking. Contact operations for multi-piece, COD, restricted goods or insurance requirements.</p>
+          {[["pickupContactName","Pickup contact","text"],["pickupContactPhone","Pickup mobile","tel"],["pickupCity","Pickup city","text"],["pickupState","Pickup state","text"],["deliveryCity","Delivery city","text"],["deliveryState","Delivery state","text"],["lengthCm","Length (cm)","number"],["widthCm","Width (cm)","number"],["heightCm","Height (cm)","number"],["declaredValue","Declared goods value (INR)","number"],["packageDescription","Package contents","text"],["pickupDate","Preferred pickup date","date"]].map(([name,label,type])=><Field key={name} label={label} htmlFor={name}><Input id={name} name={name} type={type} required min={type==="number"?"0":undefined} step={type==="number"?"0.01":undefined}/></Field>)}
+          <Field label="Invoice number (if applicable)" htmlFor="invoiceNumber"><Input name="invoiceNumber" id="invoiceNumber"/></Field>
+          <Field label="E-way bill (if applicable)" htmlFor="ewayBill"><Input name="ewayBill" id="ewayBill" maxLength={12}/></Field>
+          <label className="flex gap-2 text-sm"><input type="checkbox" name="goodsConsent" required/>I declare accurate contents and value, suitable packaging, no prohibited goods, and the required transport documents.</label>
           {bookState.error && <p className="text-xs text-danger">{bookState.error}</p>}
           <div className="flex gap-2 mt-1">
             <Button type="button" variant="secondary" onClick={() => setSelected(null)}>

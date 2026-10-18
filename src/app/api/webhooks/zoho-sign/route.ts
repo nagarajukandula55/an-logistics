@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
-import { markAgreementSigned } from "@/lib/agreements";
+import { getZohoAccessToken, markAgreementSigned } from "@/lib/agreements";
 
 /**
  * Zoho Sign completion webhook. Configure the notify URL in Zoho Sign's
@@ -32,6 +32,13 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: true, ignored: true, message: "No matching agreement for this request" });
   }
 
+  if (agreement.status === "SIGNED" || agreement.status === "VOID") return NextResponse.json({ success: true, ignored: true });
+  const token = await getZohoAccessToken();
+  if (!token) return NextResponse.json({error:"Signing verification unavailable"},{status:503});
+  const domain = process.env.ZOHO_SIGN_API_DOMAIN || "sign.zoho.in";
+  const verified = await fetch(`https://${domain}/api/v1/requests/${encodeURIComponent(requestId)}`, {headers:{Authorization:`Zoho-oauthtoken ${token}`},signal:AbortSignal.timeout(20000)});
+  const remote = await verified.json().catch(()=>null);
+  if(!verified.ok || remote?.requests?.request_status !== "completed") return NextResponse.json({error:"Completion not verified"},{status:409});
   await markAgreementSigned(agreement.id);
   return NextResponse.json({ success: true });
 }

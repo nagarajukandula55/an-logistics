@@ -40,100 +40,56 @@ export async function getZohoAccessToken(): Promise<string | null> {
   return cachedAccessToken.token;
 }
 
-/**
- * Sends a DRAFT Agreement to Zoho Sign for signature and marks it SENT
- * with the returned request id (stored as externalEnvelopeId, used to
- * correlate the completion webhook — see api/webhooks/zoho-sign).
- *
- * The caller supplies documentUrl (the filled B2B/B2C template, built from
- * the user's Word-doc format — not generated here); it must be a URL this
- * server can fetch (e.g. stored upload), since Zoho Sign takes the file
- * bytes, not a link.
- */
+// Create, persist the remote ID, then submit. A timed-out upload is never
+// automatically repeated: operations must reconcile it in Zoho first.
 export async function sendAgreementForSignature(agreementId: string): Promise<void> {
   const apiDomain = process.env.ZOHO_SIGN_API_DOMAIN || "sign.zoho.in";
-  const accessToken = await getZohoAccessToken();
-  if (!accessToken) {
-    console.error(`[agreements] Zoho Sign not configured — skipped agreement ${agreementId}`);
-    return;
-  }
-
-  const agreement = await prisma.agreement.findUnique({
-    where: { id: agreementId },
-    include: { customer: true },
-  });
-  if (!agreement) {
-    console.error(`[agreements] Agreement ${agreementId} not found`);
-    return;
-  }
-  if (!agreement.documentUrl) {
-    console.error(`[agreements] Agreement ${agreementId} has no documentUrl set — nothing to send`);
-    return;
-  }
-
-  const signerEmail = agreement.signerEmail ?? agreement.customer.email;
-  if (!signerEmail) {
-    console.error(`[agreements] Agreement ${agreementId} has no signer email — nothing to send`);
-    return;
-  }
-
-  try {
-    const fileResponse = await fetch(agreement.documentUrl);
-    if (!fileResponse.ok) {
-      console.error(`[agreements] Could not fetch documentUrl for agreement ${agreement.id}: ${fileResponse.status}`);
-      return;
-    }
-    const fileBlob = await fileResponse.blob();
-
-    const requestData = {
-      requests: {
-        request_name: `AN Logistics Agreement — ${agreement.customer.name}`,
-        is_quicksend: true,
-        actions: [
-          {
-            action_type: "SIGN",
-            recipient_name: agreement.signerName ?? agreement.customer.name,
-            recipient_email: signerEmail,
-            signing_order: 0,
-          },
-        ],
-      },
-    };
-
+  const token = await getZohoAccessToken();
+  if (!token) throw new Error("Configure Zoho Sign credentials before sending.");
+  const headers = { Authorization: `Zoho-oauthtoken ${token}` };
+  const agreement = await prisma.agreement.findUnique({ where: { id: agreementId }, include: { customer: true } });
+  if (!agreement || !["DRAFT", "SENDING"].includes(agreement.status)) throw new Error("This agreement cannot be sent again.");
+  const signerEmail = agreement.signerEmail || agreement.customer.email;
+  if (!signerEmail) throw new Error("A signer email is required.");
+  let requestId = agreement.externalEnvelopeId;
+  if (!requestId) {
+    if (agreement.status === "SENDING") throw new Error("Upload outcome is uncertain. Reconcile this agreement in Zoho before creating another request.");
+    if (!agreement.documentUrl) throw new Error("Add the reviewed PDF URL, including a Zoho signature text tag, before sending.");
+    const url = new URL(agreement.documentUrl);
+    const hosts = (process.env.AGREEMENT_DOCUMENT_HOSTS || "").split(",").map(s => s.trim());
+    if (url.protocol !== "https:" || !hosts.includes(url.hostname) || url.username || url.password) throw new Error("Use an HTTPS PDF URL on an approved AGREEMENT_DOCUMENT_HOSTS host.");
+    const fileResponse = await fetch(url, { redirect: "error", signal: AbortSignal.timeout(20000) });
+    if (!fileResponse.ok) throw new Error("Unable to retrieve the agreement PDF.");
+    const file = await fileResponse.blob();
+    if (file.size > 10 * 1024 * 1024 || !(await file.slice(0, 5).text()).startsWith("%PDF-")) throw new Error("Document must be a PDF smaller than 10 MB.");
+    const locked = await prisma.agreement.updateMany({ where: { id: agreementId, status: "DRAFT", updatedAt: agreement.updatedAt }, data: { status: "SENDING" } });
+    if (!locked.count) throw new Error("Agreement changed or sending is already in progress. Reload the page.");
     const form = new FormData();
-    form.append("file", fileBlob, "agreement.pdf");
-    form.append("data", JSON.stringify(requestData));
-
-    const response = await fetch(`https://${apiDomain}/api/v1/requests`, {
-      method: "POST",
-      headers: { Authorization: `Zoho-oauthtoken ${accessToken}` },
-      body: form,
-    });
-    if (!response.ok) {
-      const text = await response.text().catch(() => "");
-      console.error(`[agreements] Zoho Sign send failed for agreement ${agreement.id}: ${response.status} ${text}`);
-      return;
-    }
-    const data = (await response.json().catch(() => null)) as {
-      requests?: { request_id?: string };
-    } | null;
-    await prisma.agreement.update({
-      where: { id: agreement.id },
-      data: {
-        status: AgreementStatus.SENT,
-        sentAt: new Date(),
-        externalEnvelopeId: data?.requests?.request_id ?? undefined,
-      },
-    });
-    await notifyOpsTelegram(
-      TelegramNotificationEvent.AGREEMENT_SENT,
-      `Agreement sent for e-sign — <b>${agreement.customer.name}</b> (${agreement.kind}).`,
-    );
-  } catch (error) {
-    console.error(`[agreements] Send request failed for agreement ${agreementId}:`, error);
+    form.append("file", file, "agreement.pdf");
+    form.append("data", JSON.stringify({ requests: { request_name: agreement.title || `AN Logistics — ${agreement.customer.name}`, is_sequential: true, expiration_days: 15 } }));
+    const response = await fetch(`https://${apiDomain}/api/v1/requests`, { method: "POST", headers, body: form, signal: AbortSignal.timeout(30000) });
+    const data = await response.json().catch(() => null);
+    if (!response.ok || data?.status !== "success" || !data?.requests?.request_id) throw new Error("Zoho upload could not be confirmed. Check the envelope in Zoho before retrying.");
+    requestId = String(data.requests.request_id);
+    await prisma.agreement.update({ where: { id: agreementId, status: "SENDING" }, data: { externalEnvelopeId: requestId } });
   }
+  const currentResponse = await fetch(`https://${apiDomain}/api/v1/requests/${encodeURIComponent(requestId)}`, { headers, signal: AbortSignal.timeout(20000) });
+  const current = await currentResponse.json().catch(() => null);
+  if (!currentResponse.ok || !current?.requests) throw new Error("Could not check the Zoho envelope. Retry to resume the same request.");
+  let remoteStatus = current.requests.request_status;
+  if (remoteStatus === "draft") {
+    const form = new FormData();
+    form.append("data", JSON.stringify({ requests: { actions: [{ action_type: "SIGN", recipient_name: agreement.signerName || agreement.customer.name, recipient_email: signerEmail, verify_recipient: true, verification_type: "EMAIL", signing_order: 0 }] } }));
+    const response = await fetch(`https://${apiDomain}/api/v1/requests/${encodeURIComponent(requestId)}/submit`, { method: "POST", headers, body: form, signal: AbortSignal.timeout(30000) });
+    const submitted = await response.json().catch(() => null);
+    if (!response.ok || submitted?.status !== "success") throw new Error("Zoho submission failed. Verify the PDF signature tags in Zoho, then resume this request.");
+    remoteStatus = submitted.requests?.request_status;
+  }
+  if (!["inprogress", "completed"].includes(remoteStatus)) throw new Error("Zoho has not confirmed sending. Check the envelope status.");
+  const changed = await prisma.agreement.updateMany({ where: { id: agreementId, status: "SENDING" }, data: { status: "SENT", sentAt: new Date() } });
+  if (changed.count) await notifyOpsTelegram(TelegramNotificationEvent.AGREEMENT_SENT, `Agreement sent for e-sign: ${agreementId}`);
+  if (remoteStatus === "completed") await markAgreementSigned(agreementId);
 }
-
 /**
  * Fetches the (signed, once complete) PDF for a Zoho Sign request as raw
  * bytes — used both to email a copy out and to stream it back for the
@@ -168,12 +124,16 @@ export async function markAgreementSigned(agreementId: string, signedAt: Date = 
   const agreement = await prisma.agreement.findUnique({ where: { id: agreementId }, include: { customer: true } });
   if (!agreement) throw new Error(`Agreement ${agreementId} not found`);
 
-  await prisma.$transaction(async (tx) => {
+  const applied = await prisma.$transaction(async (tx) => {
+    const locked = await tx.agreement.updateMany({ where: { id: agreementId, status: { in: [AgreementStatus.SENT, AgreementStatus.SENDING] } }, data: { status: AgreementStatus.SIGNED, signedAt } });
+    if (!locked.count) return false;
     await tx.agreement.update({
       where: { id: agreementId },
       data: { status: AgreementStatus.SIGNED, signedAt },
     });
     if (agreement.sellRateCardId) {
+      const card = await tx.sellRateCard.findFirst({ where: { id: agreement.sellRateCardId, customerId: agreement.customerId } });
+      if (!card) throw new Error("Agreement rate card does not belong to the signer.");
       await tx.sellRateCard.updateMany({
         where: { customerId: agreement.customerId, id: { not: agreement.sellRateCardId } },
         data: { isActive: false },
@@ -183,7 +143,9 @@ export async function markAgreementSigned(agreementId: string, signedAt: Date = 
         data: { isActive: true },
       });
     }
+    return true;
   });
+  if (!applied) return;
 
   await notifyOpsTelegram(
     TelegramNotificationEvent.AGREEMENT_SIGNED,

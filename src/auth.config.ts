@@ -15,7 +15,9 @@ export const authConfig = {
       const isLoggedIn = !!auth?.user;
       const { pathname } = request.nextUrl;
 
+      if (pathname === "/portal/signup" || pathname === "/book") return Response.redirect(new URL("/signup", request.nextUrl));
       const isPublic =
+        pathname === "/" || pathname === "/signup" || pathname === "/privacy" ||
         pathname.startsWith("/login") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/track") ||

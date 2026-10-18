@@ -151,19 +151,21 @@ enum CustomerKind {
 }
 
 model Customer {
-  id            String       @id @default(cuid())
-  name          String
-  billingName   String?
-  phone         String?
-  email         String?
-  address       String?
-  isActive      Boolean      @default(true)
-  kind          CustomerKind @default(INDIVIDUAL)
+  onboardingApplication PartnerApplication?
+  allowedCouriers       CustomerCourier[]
+  id                    String              @id @default(cuid())
+  name                  String
+  billingName           String?
+  phone                 String?
+  email                 String?
+  address               String?
+  isActive              Boolean             @default(true)
+  kind                  CustomerKind        @default(INDIVIDUAL)
   // Staff seats beyond the owner, BUSINESS only. Enforced in
   // inviteBusinessStaffAction, not a DB constraint.
-  maxStaffUsers Int          @default(2)
-  createdAt     DateTime     @default(now())
-  updatedAt     DateTime     @updatedAt
+  maxStaffUsers         Int                 @default(2)
+  createdAt             DateTime            @default(now())
+  updatedAt             DateTime            @updatedAt
 
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
   tenantId String?
@@ -275,6 +277,9 @@ enum OrderAssignmentMethod {
 }
 
 model Order {
+  bookingKey String? @unique
+  shipmentDetails Json?
+  bookingState String?
   id           String   @id @default(cuid())
   trackingCode String   @unique
   tenantId     String?
@@ -391,28 +396,29 @@ enum CourierAgreementStatus {
 }
 
 model CourierPartner {
-  id              String                 @id @default(cuid())
-  name            String
-  legalName       String?
-  contactName     String
-  contactPhone    String
-  contactEmail    String?
+  assignedCustomers CustomerCourier[]
+  id                String                 @id @default(cuid())
+  name              String
+  legalName         String?
+  contactName       String
+  contactPhone      String
+  contactEmail      String?
   // Required to sync this partner's paid Settlements to AN-accounting as
   // purchase invoices (expenses) — see src/lib/accounting-sync.ts. A
   // partner with no GSTIN on file is skipped rather than blocking sync.
-  gstin           String?
-  status          CourierPartnerStatus   @default(PENDING)
-  integrationType CourierIntegrationType @default(MANUAL)
-  commissionType  CommissionType         @default(PERCENT)
-  commissionValue Float
+  gstin             String?
+  status            CourierPartnerStatus   @default(PENDING)
+  integrationType   CourierIntegrationType @default(MANUAL)
+  commissionType    CommissionType         @default(PERCENT)
+  commissionValue   Float
   // Routing precedence when multiple partners (including our own self-fleet,
   // which is registered as a partner row too) service a pincode — higher
   // goes first. Lets "check our own network, then fall back to a ranked
   // local partner" be an explicit admin setting rather than alphabetical.
-  priority        Int                    @default(0)
-  notes           String?
-  createdAt       DateTime               @default(now())
-  updatedAt       DateTime               @updatedAt
+  priority          Int                    @default(0)
+  notes             String?
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
 
   // Nullable: most partners are pure fulfillment options with no tenant
   // login/billing identity of their own. Set only when a partner is also
@@ -632,6 +638,7 @@ enum AgreementKind {
 }
 
 enum AgreementStatus {
+  SENDING
   DRAFT
   SENT
   SIGNED
@@ -639,29 +646,33 @@ enum AgreementStatus {
 }
 
 model Agreement {
-  id                 String          @id @default(cuid())
-  customerId         String
-  customer           Customer        @relation(fields: [customerId], references: [id])
-  kind               AgreementKind
-  status             AgreementStatus @default(DRAFT)
-  templateVersion    String
-  documentUrl        String?
-  sellRateCardId     String?
-  sellRateCard       SellRateCard?   @relation(fields: [sellRateCardId], references: [id])
+  title                 String?
+  termsSnapshot         String?
+  rateSnapshot          Json?
+  legalReviewedAt       DateTime?
+  id                    String          @id @default(cuid())
+  customerId            String
+  customer              Customer        @relation(fields: [customerId], references: [id])
+  kind                  AgreementKind
+  status                AgreementStatus @default(DRAFT)
+  templateVersion       String
+  documentUrl           String?
+  sellRateCardId        String?
+  sellRateCard          SellRateCard?   @relation(fields: [sellRateCardId], references: [id])
   // Envelope/session id from the central e-sign API, for status polling and
   // webhook correlation once that integration exists.
-  externalEnvelopeId String?
-  signerName         String?
-  signerEmail        String?
-  sentAt             DateTime?
-  signedAt           DateTime?
+  externalEnvelopeId    String?
+  signerName            String?
+  signerEmail           String?
+  sentAt                DateTime?
+  signedAt              DateTime?
   // When this agreement's terms are up for renewal. Null means open-ended
   // (no reminder sent). renewalReminderSentAt guards against the daily
   // cron re-notifying every run once a reminder's gone out.
-  renewalDate            DateTime?
-  renewalReminderSentAt  DateTime?
-  createdAt              DateTime        @default(now())
-  updatedAt              DateTime        @updatedAt
+  renewalDate           DateTime?
+  renewalReminderSentAt DateTime?
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
 
   @@index([customerId])
   @@index([externalEnvelopeId])
@@ -696,6 +707,7 @@ model TelegramLink {
 // row configured (or isActive false) is silently skipped wherever it's
 // fired from (see notifyOpsTelegram in lib/telegram.ts).
 enum TelegramNotificationEvent {
+  PARTNER_APPLICATION
   ORDER_STATUS_CHANGE
   AGREEMENT_SENT
   AGREEMENT_SIGNED
@@ -804,4 +816,59 @@ model SettlementLineItem {
 
   @@index([settlementId])
   @@index([orderId])
+}
+
+// Public applications do not create login credentials. Existing customers are unaffected.
+enum ApplicationStatus {
+  NEW
+  CONTACTED
+  NEGOTIATING
+  AGREEMENT
+  ACTIVE
+  REJECTED
+}
+
+model PartnerApplication {
+  id             String            @id @default(cuid())
+  email          String            @unique
+  name           String
+  phone          String
+  company        String?
+  accountType    String
+  address        String
+  pincode        String
+  gstin          String?
+  monthlyVolume  Int
+  requirements   String?
+  consentAt      DateTime
+  privacyVersion String            @default("2026-10-18")
+  status         ApplicationStatus @default(NEW)
+  notes          String            @default("")
+  customerId     String?           @unique
+  customer       Customer?         @relation(fields: [customerId], references: [id])
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+
+  @@index([status, createdAt])
+}
+
+model CustomerCourier {
+  id               String         @id @default(cuid())
+  customerId       String
+  customer         Customer       @relation(fields: [customerId], references: [id])
+  courierPartnerId String
+  courierPartner   CourierPartner @relation(fields: [courierPartnerId], references: [id])
+
+  @@unique([customerId, courierPartnerId])
+}
+
+model AgreementTemplate {
+  id        String   @id @default(cuid())
+  name      String
+  category  String
+  version   String
+  terms     String
+  createdAt DateTime @default(now())
+
+  @@unique([name, version])
 }

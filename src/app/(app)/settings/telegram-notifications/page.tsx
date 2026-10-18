@@ -7,6 +7,7 @@ import { TelegramNotificationEvent } from "@prisma/client";
 import { TelegramNotificationsPanel } from "./TelegramNotificationsPanel";
 
 const EVENT_LABELS: Record<TelegramNotificationEvent, string> = {
+  PARTNER_APPLICATION: "New partner application",
   ORDER_STATUS_CHANGE: "Order status change",
   AGREEMENT_SENT: "Agreement sent for e-sign",
   AGREEMENT_SIGNED: "Agreement signed",
@@ -14,6 +15,7 @@ const EVENT_LABELS: Record<TelegramNotificationEvent, string> = {
 };
 
 const EVENT_DESCRIPTIONS: Record<TelegramNotificationEvent, string> = {
+  PARTNER_APPLICATION: "A public signup is ready for your review and follow-up.",
   ORDER_STATUS_CHANGE: "Every time an order's status changes, across all tenants.",
   AGREEMENT_SENT: "A customer agreement goes out to Zoho Sign for signature.",
   AGREEMENT_SIGNED: "A customer agreement comes back fully signed.",

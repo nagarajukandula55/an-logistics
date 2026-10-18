@@ -1,4 +1,5 @@
 import { redirect } from "next/navigation";
+import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
 
 // Guard for the self-service customer portal (src/app/portal/**) — distinct
@@ -15,6 +16,9 @@ export async function requireCustomerSession() {
     // send them back to their own home instead of erroring.
     redirect("/dashboard");
   }
+  const user = await prisma.user.findUnique({ where: { id: session.user.id }, include: { customer: { include: { onboardingApplication: true } } } });
+  if (!user?.isActive || !user.customer?.isActive || (user.customer.onboardingApplication && user.customer.onboardingApplication.status !== "ACTIVE")) redirect("/signup");
+  if (user.mustChangePassword) redirect("/change-password");
   return {
     session,
     customerId: session.user.customerId,

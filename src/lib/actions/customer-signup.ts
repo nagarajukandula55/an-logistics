@@ -4,7 +4,6 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
-import { getMarketplaceTenantId } from "@/lib/marketplace-tenant";
 import { requireCustomerSession } from "@/lib/customer-session";
 import { CustomerKind, UserRole } from "@prisma/client";
 
@@ -20,67 +19,10 @@ import { CustomerKind, UserRole } from "@prisma/client";
 // that tenant's negotiated pricing/settlement rather than the public
 // marketplace bucket.
 
-const signupSchema = z
-  .object({
-    name: z.string().min(1, "Name is required"),
-    email: z.string().email("Enter a valid email"),
-    phone: z.string().min(1, "Phone is required"),
-    password: z.string().min(8, "Password must be at least 8 characters"),
-    confirmPassword: z.string(),
-    // "business" unlocks the staff-invite panel (max 2 seats, see
-    // inviteBusinessStaffAction) and lets a B2B Agreement be attached to
-    // this Customer; anything else stays an ordinary individual shipper.
-    accountType: z.enum(["individual", "business"]).default("individual"),
-  })
-  .refine((data) => data.password === data.confirmPassword, {
-    message: "Passwords don't match",
-    path: ["confirmPassword"],
-  });
-
 export type SignupState = { ok: boolean; error?: string };
-
-export async function signupCustomerAction(_prev: SignupState, formData: FormData): Promise<SignupState> {
-  const parsed = signupSchema.safeParse(Object.fromEntries(formData.entries()));
-  if (!parsed.success) {
-    return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  }
-  const data = parsed.data;
-
-  const existing = await prisma.user.findUnique({ where: { email: data.email } });
-  if (existing) {
-    return { ok: false, error: "An account with this email already exists — try signing in instead." };
-  }
-
-  const tenantId = await getMarketplaceTenantId();
-  const passwordHash = await bcrypt.hash(data.password, 10);
-
-  await prisma.$transaction(async (tx) => {
-    const customer = await tx.customer.create({
-      data: {
-        tenantId,
-        name: data.name,
-        phone: data.phone,
-        email: data.email,
-        kind: data.accountType === "business" ? CustomerKind.BUSINESS : CustomerKind.INDIVIDUAL,
-      },
-    });
-    await tx.user.create({
-      data: {
-        name: data.name,
-        email: data.email,
-        passwordHash,
-        role: UserRole.CUSTOMER,
-        tenantId,
-        customerId: customer.id,
-        isBusinessOwner: true,
-        // They just set their own password — no forced reset, unlike
-        // adminResetPasswordAction's temp-password flow for staff.
-        mustChangePassword: false,
-      },
-    });
-  });
-
-  return { ok: true };
+export async function signupCustomerAction(_prev: SignupState, _formData: FormData): Promise<SignupState> {
+  void _prev; void _formData;
+  return { ok: false, error: "Please apply at /signup. Login access is issued after your agreement is signed and approved." };
 }
 
 // ---------- Business staff ----------

@@ -229,6 +229,7 @@ const apiConfigSchema = z.object({
   dtdcApiKey: z.string().optional(),
   dtdcCustomerCode: z.string().optional(),
   dtdcHubCode: z.string().optional(),
+  dtdcServiceTypeId: z.string().optional(),
   clearApiKey: z.coerce.boolean().default(false),
   webhookUrl: z.string().optional(),
   isActive: z.coerce.boolean().default(false),
@@ -263,7 +264,7 @@ export async function createOrUpdateApiConfigAction(
   const isDtdc = data.provider.toUpperCase() === "DTDC";
   const rawSecret =
     isDtdc && data.dtdcApiKey && data.dtdcCustomerCode && data.dtdcHubCode
-      ? JSON.stringify({ apiKey: data.dtdcApiKey, customerCode: data.dtdcCustomerCode, hubCode: data.dtdcHubCode })
+      ? JSON.stringify({ apiKey: data.dtdcApiKey, customerCode: data.dtdcCustomerCode, hubCode: data.dtdcHubCode, serviceTypeId: data.dtdcServiceTypeId })
       : data.apiKeyEncrypted;
 
   let newEncryptedKey: string | undefined;

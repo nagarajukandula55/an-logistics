@@ -1,5 +1,5 @@
 import { prisma } from "@/lib/prisma";
-import { requireTenantSession } from "@/lib/tenant";
+import { requireOnboardingAdmin } from "@/lib/onboarding";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
 import { AgreementsPanel } from "./AgreementsPanel";
@@ -12,7 +12,7 @@ import { daysUntil } from "@/lib/date";
 // aggregated routing is a separate, courier-side decision) they're served
 // under going forward.
 export default async function AgreementsPage() {
-  await requireTenantSession();
+  await requireOnboardingAdmin();
 
   const [agreementRows, customers] = await Promise.all([
     prisma.agreement.findMany({

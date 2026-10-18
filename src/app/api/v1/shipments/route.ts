@@ -23,6 +23,10 @@ const bodySchema = z.object({
   weightKg: z.coerce.number().positive(),
   packageDescription: z.string().optional(),
   codAmount: z.coerce.number().nonnegative().optional(),
+  declaredValue: z.coerce.number().nonnegative().optional(),
+  lengthCm: z.coerce.number().positive().optional(),
+  widthCm: z.coerce.number().positive().optional(),
+  heightCm: z.coerce.number().positive().optional(),
   // From a prior POST /api/v1/rates response — which courier/branch to
   // book. Omit to create the order unassigned (CREATED), for callers that
   // want to dispatch manually afterward.
@@ -105,6 +109,11 @@ export async function POST(req: Request) {
       const result = await provider.createShipment(partner, {
         orderId: order.id,
         pickupPincode: data.pickupPincode,
+        pickupAddress: data.pickupAddress,
+        pickupContactName: data.pickupContactName,
+        pickupContactPhone: data.pickupContactPhone,
+        declaredValue: data.declaredValue,
+        lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm,
         deliveryAddress: data.deliveryAddress,
         deliveryPincode: data.deliveryPincode,
         deliveryContactName: data.deliveryContactName,

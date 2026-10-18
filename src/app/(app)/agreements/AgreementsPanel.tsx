@@ -40,6 +40,7 @@ type Agreement = {
 
 const STATUS_TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   DRAFT: "neutral",
+  SENDING: "warning",
   SENT: "warning",
   SIGNED: "success",
   VOID: "danger",
@@ -118,6 +119,7 @@ function EditAgreementForm({
           defaultValue={agreement.renewalDate ? format(agreement.renewalDate, "yyyy-MM-dd") : ""}
         />
       </Field>
+      <label className="flex gap-2 text-sm"><input type="checkbox" name="documentMatches" required/>I verified that the PDF includes the complete reviewed terms, exact rate schedule and signature text tag.</label>
       {state.error && <p className="text-xs text-danger">{state.error}</p>}
       <div className="flex gap-2">
         <Button type="submit" size="sm" loading={pending}>
@@ -184,15 +186,16 @@ function AgreementRow({ agreement, customer }: { agreement: Agreement; customer:
 
       {error && <p className="text-xs text-danger">{error}</p>}
 
-      <div className="flex gap-2">
-        {agreement.status !== "VOID" && (
+      <div className="flex flex-wrap gap-2">
+        <a className="text-sm text-accent p-2" href={`/agreements/${agreement.id}/preview`}>Preview terms & rates</a>
+        {agreement.status === "DRAFT" && (
           <Button type="button" size="sm" variant="secondary" onClick={() => setEditing(true)}>
             <Pencil className="size-4" /> Edit
           </Button>
         )}
-        {agreement.status === "DRAFT" && (
+        {(agreement.status === "DRAFT" || agreement.status === "SENDING") && (
           <Button type="button" size="sm" onClick={handleSend} loading={pending}>
-            <Send className="size-4" /> Send for e-sign
+            <Send className="size-4" /> {agreement.status === "SENDING" ? "Resume / check send" : "Send for e-sign"}
           </Button>
         )}
         {agreement.externalEnvelopeId && (
@@ -202,7 +205,7 @@ function AgreementRow({ agreement, customer }: { agreement: Agreement; customer:
             </Button>
           </a>
         )}
-        {(agreement.status === "DRAFT" || agreement.status === "SENT") && (
+        {(agreement.status === "DRAFT") && (
           <Button type="button" size="sm" variant="secondary" onClick={handleVoid} loading={pending}>
             <Ban className="size-4" /> Void
           </Button>
