@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { usePathname } from "next/navigation";
 import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2, Receipt, LayoutDashboard, Tag, FileSignature, Send } from "lucide-react";
 import { cn } from "@/lib/cn";
@@ -33,7 +34,7 @@ export function AppNav({ userName, role }: { userName: string; role: string }) {
     <header className="border-b border-border bg-surface">
       <div className="mx-auto w-full max-w-6xl px-4 flex items-center justify-between h-14">
         <div className="flex items-center gap-6">
-          <span className="font-semibold text-ink">AN Logistics</span>
+          <Link href="/dashboard" aria-label="AN Logistics dashboard" className="shrink-0 rounded-lg bg-white px-2 py-0.5 shadow-sm"><Image src="/an-group-logistics.png" alt="AN Logistics" width={100} height={64} className="h-10 w-auto object-contain" /></Link>
           <nav className="flex items-center gap-1 overflow-x-auto max-w-[65vw]">
             {links.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { requireCustomerSession } from "@/lib/customer-session";
 
 export const dynamic = "force-dynamic";
@@ -13,7 +14,7 @@ export default async function PortalLayout({ children }: { children: React.React
       <header className="border-b border-border bg-surface">
         <div className="mx-auto w-full max-w-3xl px-4 flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
-            <span className="font-semibold text-ink">AN Logistics</span>
+            <Link href="/portal" aria-label="AN Logistics portal" className="shrink-0 rounded-lg bg-white px-2 py-0.5 shadow-sm"><Image src="/an-group-logistics.png" alt="AN Logistics" width={100} height={64} className="h-10 w-auto object-contain" /></Link>
             <nav className="flex items-center gap-1">
               <Link href="/portal" className="flex items-center gap-1.5 rounded-control px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-2">
                 <Package className="size-4" /> My orders
