@@ -19,14 +19,16 @@ const applicationSchema = z.object({
     company: z.string().trim().max(200).optional(), accountType: z.enum(["individual", "business", "reseller"]),
     address: z.string().trim().min(10).max(1000), pincode: z.string().regex(/^[1-9]\d{5}$/),
     gstin: z.string().trim().toUpperCase().regex(/^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "Enter a valid GSTIN or leave blank").optional(),
-    monthlyVolume: z.coerce.number().int().min(0).max(10000000), requirements: z.string().max(2000).optional(),
+    monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), requirements: z.string().max(2000).optional(),
     consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), website: z.string().max(0).optional(),
 });
 export async function applyPartnerAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
     const result = applicationSchema.safeParse(Object.fromEntries(fd));
     if (!result.success)
         return { ok: false, error: result.error.issues[0].message };
-    const { consent, website, ...data } = result.data;
+    const { consent, website, shipmentType, servicePreference, pickupFrequency, ...data } = result.data;
+    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
+    data.requirements = requirements;
     void consent;
     void website;
     try {
