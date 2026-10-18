@@ -1,19 +1,19 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #f6f7f9;
+  --bg: #f7f5ef;
   --surface: #ffffff;
-  --surface-2: #f1f3f6;
-  --surface-3: #e6e9ee;
-  --ink: #111418;
-  --ink-2: #4b5563;
-  --ink-3: #8a93a3;
-  --border: #e2e5ea;
-  --border-strong: #cdd2db;
+  --surface-2: #eef1e8;
+  --surface-3: #e4e9db;
+  --ink: #172d28;
+  --ink-2: #52635b;
+  --ink-3: #758572;
+  --border: #d8ded2;
+  --border-strong: #b9c5b5;
 
-  --accent: #2f5fe0;
-  --accent-hover: #274ec2;
-  --accent-soft: #e8edfc;
+  --accent: #bb582f;
+  --accent-hover: #984421;
+  --accent-soft: #f8e8df;
 
   --success: #15803d;
   --success-soft: #e6f4ea;
@@ -39,9 +39,9 @@
   --border: #262b32;
   --border-strong: #343a42;
 
-  --accent: #5b82ea;
-  --accent-hover: #7796ee;
-  --accent-soft: #1b2740;
+  --accent: #e3784d;
+  --accent-hover: #f08e63;
+  --accent-soft: #3b241b;
 
   --success: #4ade80;
   --success-soft: #16321f;
@@ -65,9 +65,9 @@
     --border: #262b32;
     --border-strong: #343a42;
 
-    --accent: #5b82ea;
-    --accent-hover: #7796ee;
-    --accent-soft: #1b2740;
+    --accent: #e3784d;
+    --accent-hover: #f08e63;
+    --accent-soft: #3b241b;
 
     --success: #4ade80;
     --success-soft: #16321f;
