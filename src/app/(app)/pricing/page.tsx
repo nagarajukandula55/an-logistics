@@ -30,7 +30,10 @@ export default async function PricingPage() {
         eyebrow="Pricing"
         title="What we charge"
         description="Your own sell price to bookers — separate from what a courier charges you (see Couriers → Rate cards). One default list for normal bookings, plus an optional negotiated list per commercial (CLIENT) tenant."
+        actions={<div className="flex flex-wrap gap-2"><Link href="/couriers" className="rounded-control border border-border bg-surface px-3.5 py-2 text-sm font-medium text-ink hover:bg-surface-2">Courier cost cards</Link><Link href="/onboarding" className="rounded-control bg-accent px-3.5 py-2 text-sm font-medium text-white hover:bg-accent-hover">Customer onboarding</Link></div>}
       />
+
+      <div className="rounded-card border border-accent/20 bg-accent-soft px-5 py-4 text-sm text-ink-2"><strong className="text-ink">How pricing works.</strong> Create a default sell card for ordinary users, then create a negotiated card for each client tenant. Link the customer card to their signed agreement; it becomes active only after the agreement is signed.</div>
 
       <Card>
         <CardHeader>
