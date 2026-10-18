@@ -1,6 +1,8 @@
 import Link from "next/link";
 import { BookingFlow } from "./BookingFlow";
 
+export const dynamic = "force-dynamic";
+
 export default function BookPage() {
   return (
     <div className="min-h-screen bg-bg p-4 flex justify-center">

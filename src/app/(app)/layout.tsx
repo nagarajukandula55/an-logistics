@@ -1,5 +1,7 @@
 import { redirect } from "next/navigation";
 import { auth } from "@/auth";
+
+export const dynamic = "force-dynamic";
 import { AppNav } from "@/components/AppNav";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {

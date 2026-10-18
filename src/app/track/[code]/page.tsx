@@ -1,5 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@/lib/prisma";
+
+export const dynamic = "force-dynamic";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Badge, orderStatusTone, orderStatusLabel } from "@/components/ui/Badge";
 import { format } from "date-fns";

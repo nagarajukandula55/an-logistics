@@ -1,5 +1,7 @@
 import Link from "next/link";
 import { requireCustomerSession } from "@/lib/customer-session";
+
+export const dynamic = "force-dynamic";
 import { signOutAction } from "@/lib/actions/auth-signout";
 import { LogOut, Package, Truck } from "lucide-react";
 
