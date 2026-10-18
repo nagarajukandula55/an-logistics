@@ -32,10 +32,10 @@ export function AppNav({ userName, role }: { userName: string; role: string }) {
 
   return (
     <header className="border-b border-border bg-surface">
-      <div className="mx-auto w-full max-w-6xl px-4 flex items-center justify-between h-14">
+      <div className="mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8 flex items-center justify-between min-h-16 gap-4">
         <div className="flex items-center gap-6">
           <Link href="/dashboard" aria-label="AN Logistics dashboard" className="shrink-0 rounded-lg bg-white px-2 py-0.5 shadow-sm"><Image src="/an-group-logistics.png" alt="AN Logistics" width={100} height={64} className="h-10 w-auto object-contain" /></Link>
-          <nav className="flex items-center gap-1 overflow-x-auto max-w-[65vw]">
+          <nav className="flex items-center gap-1 overflow-x-auto max-w-[62vw] py-2">
             {links.map(({ href, label, icon: Icon }) => {
               const active = pathname === href || pathname.startsWith(href + "/");
               return (

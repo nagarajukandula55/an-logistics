@@ -21,7 +21,7 @@ const variantClasses: Record<Variant, string> = {
 const sizeClasses: Record<Size, string> = {
   sm: "text-sm px-2.5 py-1.5 gap-1.5",
   md: "text-sm px-3.5 py-2 gap-2",
-  lg: "text-base px-4.5 py-2.5 gap-2",
+  lg: "text-base px-5 py-3 gap-2",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
