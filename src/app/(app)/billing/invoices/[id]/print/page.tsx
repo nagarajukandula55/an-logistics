@@ -18,7 +18,7 @@ export default async function InvoicePrintPage({ params }: { params: Promise<{ i
     <div className="max-w-2xl mx-auto bg-white text-black p-10 print:p-0">
       <div className="flex items-start justify-between mb-8">
         <div>
-          <h1 className="text-xl font-semibold">AN Logistics</h1>
+          <h1 className="text-xl font-semibold">AN Logistics, a unit of AN Group</h1>
           <p className="text-sm text-gray-600">Invoice {invoice.invoiceNumber}</p>
         </div>
         <div className="text-right text-sm">

@@ -1,7 +1,7 @@
 export const starterTerms = `DRAFT FOR INDIAN LEGAL REVIEW — complete all bracketed particulars before sending.
-Operator: AN Group, GSTIN 37EOZPK9605G1Z5, 1203, opposite Ice Factory, Bondapalle, Gotalm, Vizianagaram. Notices: connectwithangroup@gmail.com.
+Operator / billing name: AN Logistics, a unit of AN Group. Legal entity: AN Group. GSTIN 37EOZPK9605G1Z5, 1203, opposite Ice Factory, Bondapalle, Gotalm, Vizianagaram. Notices: connectwithangroup@gmail.com.
 Agreement type: [customer services / reseller / courier partner / NDA / addendum / other].
-1. Parties: AN Group and [counterparty legal name, registered address, GSTIN if applicable]; signatories confirm authority.
+1. Parties: AN Logistics, a unit of AN Group, and [counterparty legal name, registered address, GSTIN if applicable]; signatories confirm authority. All invoices, quotations and commercial communications will identify the operating brand as AN Logistics, a unit of AN Group, and the legal entity as AN Group.
 2. Scope: domestic courier booking and coordination for approved services and serviceable pincodes. Record allocated services and delivery commitments in the commercial schedule.
 3. Commercial schedule: attach INR rate bands; specify GST treatment, volumetric divisor, minimum billable weight and rounding, fuel/remote-area surcharges, COD fees, RTO/reverse charges, insurance and pickup fees. State any commission basis, percentage/flat amount and settlement cycle. Amendments require a new accepted schedule.
 4. Payment: [to be agreed during commercial discussions for this party: prepaid/credit limit, invoice frequency, due date, disputed invoice procedure]. COD reconciliation, deductions and remittance: [complete]. Tax invoices and statutory deductions follow applicable law. This schedule may vary by counterparty and must be recorded in the signed version.
