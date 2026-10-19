@@ -175,6 +175,7 @@ model Customer {
   sellRateCards SellRateCard[]
   wallet        Wallet?
   agreements    Agreement[]
+  quotations    Quotation[]
   telegramLink  TelegramLink?
 
   @@index([name])
@@ -431,6 +432,7 @@ model CourierPartner {
   apiConfig   CourierApiConfig?
   orders      Order[]
   rateCards   RateCard[]
+  quotations  Quotation[]
   settlements Settlement[]
 
   @@index([status])
@@ -822,6 +824,7 @@ model SettlementLineItem {
 enum ApplicationStatus {
   NEW
   CONTACTED
+  QUOTATION
   NEGOTIATING
   AGREEMENT
   ACTIVE
@@ -846,9 +849,40 @@ model PartnerApplication {
   notes          String            @default("")
   customerId     String?           @unique
   customer       Customer?         @relation(fields: [customerId], references: [id])
+  quotations     Quotation[]
   createdAt      DateTime          @default(now())
   updatedAt      DateTime          @updatedAt
 
+  @@index([status, createdAt])
+}
+
+enum QuotationStatus {
+  DRAFT
+  SENT
+  ACCEPTED
+  REJECTED
+  REVISION_REQUESTED
+  EXPIRED
+}
+
+model Quotation {
+  id              String            @id @default(cuid())
+  quoteNumber     String            @unique
+  applicationId   String?
+  application     PartnerApplication? @relation(fields: [applicationId], references: [id])
+  customerId      String?
+  customer        Customer?         @relation(fields: [customerId], references: [id])
+  courierPartnerId String?
+  courierPartner  CourierPartner?   @relation(fields: [courierPartnerId], references: [id])
+  status          QuotationStatus   @default(DRAFT)
+  title           String
+  validUntil      DateTime?
+  termsSnapshot   String
+  rateSnapshot    Json
+  sentAt          DateTime?
+  acceptedAt      DateTime?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
   @@index([status, createdAt])
 }
 
