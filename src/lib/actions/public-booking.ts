@@ -4,6 +4,7 @@ import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { findServiceableBranches } from "@/lib/courier-queries";
 import { z } from "zod";
 import { pincodeSchema } from "@/lib/validation";
+import { calculateVolumetricWeight } from "@/lib/volumetric-weight";
 
 // Public bookings (no login) roll up under the singleton MARKETPLACE
 // tenant seeded in prisma/seed.ts, so they're billable/reportable like any
@@ -25,6 +26,9 @@ const serviceabilitySchema = z.object({
   pickupPincode: pincodeSchema,
   deliveryPincode: pincodeSchema,
   weightKg: z.coerce.number().positive(),
+  lengthCm: z.coerce.number().positive().max(500).optional().or(z.literal("").transform(() => undefined)),
+  widthCm: z.coerce.number().positive().max(500).optional().or(z.literal("").transform(() => undefined)),
+  heightCm: z.coerce.number().positive().max(500).optional().or(z.literal("").transform(() => undefined)),
 });
 
 export type CheckServiceabilityState = { ok: boolean; error?: string; quotes?: PublicQuote[] };
@@ -37,7 +41,8 @@ export async function checkPublicServiceabilityAction(
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
-  const { pickupPincode, deliveryPincode, weightKg } = parsed.data;
+  const { pickupPincode, deliveryPincode } = parsed.data;
+  const weight = calculateVolumetricWeight({ actualWeightKg: parsed.data.weightKg, lengthCm: parsed.data.lengthCm, widthCm: parsed.data.widthCm, heightCm: parsed.data.heightCm });
 
   const branches = await findServiceableBranches(deliveryPincode);
   if (branches.length === 0) {
@@ -49,7 +54,7 @@ export async function checkPublicServiceabilityAction(
       const partner = branch.courierPartner;
       const provider = await getCourierProvider(partner);
       try {
-        const quote = await provider.getQuote(partner, { pickupPincode, deliveryPincode, weightKg });
+        const quote = await provider.getQuote(partner, { pickupPincode, deliveryPincode, weightKg: weight.chargeableWeightKg });
         if (!quote) return null;
         return {
           courierPartnerId: partner.id,

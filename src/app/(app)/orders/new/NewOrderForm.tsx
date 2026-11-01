@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card, CardBody } from "@/components/ui/Card";
 import { Plus, X } from "lucide-react";
 import { PINCODE_REGEX } from "@/lib/validation";
+import { PackageScanner } from "@/components/PackageScanner";
 
 type CustomerOption = { id: string; name: string; phone: string | null; tenantId: string | null };
 type TenantOption = { id: string; name: string };
@@ -33,6 +34,7 @@ export function NewOrderForm({
   const [newCustomerPhone, setNewCustomerPhone] = useState("");
   const [creatingCustomer, startCreatingCustomer] = useTransition();
   const [customerError, setCustomerError] = useState<string | null>(null);
+  const [dimensions, setDimensions] = useState({ lengthCm: "", widthCm: "", heightCm: "" });
 
   useEffect(() => {
     setSelectedCustomerId((prev) => (customers.some((c) => c.id === prev) ? prev : customers[0]?.id ?? ""));
@@ -223,6 +225,19 @@ export function NewOrderForm({
               <Input id="codAmount" name="codAmount" type="number" step="0.01" min="0" />
             </Field>
           </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            <Field label="Length (cm)" htmlFor="lengthCm" hint="Optional">
+              <Input id="lengthCm" name="lengthCm" type="number" step="0.1" min="0" value={dimensions.lengthCm} onChange={(e) => setDimensions((v) => ({ ...v, lengthCm: e.target.value }))} />
+            </Field>
+            <Field label="Width (cm)" htmlFor="widthCm" hint="Optional">
+              <Input id="widthCm" name="widthCm" type="number" step="0.1" min="0" value={dimensions.widthCm} onChange={(e) => setDimensions((v) => ({ ...v, widthCm: e.target.value }))} />
+            </Field>
+            <Field label="Height (cm)" htmlFor="heightCm" hint="Optional">
+              <Input id="heightCm" name="heightCm" type="number" step="0.1" min="0" value={dimensions.heightCm} onChange={(e) => setDimensions((v) => ({ ...v, heightCm: e.target.value }))} />
+            </Field>
+          </div>
+          <PackageScanner onMeasured={(next) => setDimensions({ lengthCm: String(next.lengthCm), widthCm: String(next.widthCm), heightCm: String(next.heightCm) })} />
+          <p className="text-xs text-ink-3">When all dimensions are entered, billing uses the higher of actual and volumetric weight (divisor 5,000 cm³/kg).</p>
           <Field label="Package description" htmlFor="packageDescription">
             <Textarea id="packageDescription" name="packageDescription" placeholder="e.g. 2 boxes, electronics" />
           </Field>

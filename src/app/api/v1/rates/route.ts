@@ -4,11 +4,15 @@ import { authenticateApiKey } from "@/lib/api-auth";
 import { findServiceableBranches, computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
 import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { determineZone } from "@/lib/zone";
+import { calculateVolumetricWeight } from "@/lib/volumetric-weight";
 
 const bodySchema = z.object({
   pickupPincode: z.string().min(1),
   deliveryPincode: z.string().min(1),
   weightKg: z.coerce.number().positive(),
+  lengthCm: z.coerce.number().positive().max(500).optional(),
+  widthCm: z.coerce.number().positive().max(500).optional(),
+  heightCm: z.coerce.number().positive().max(500).optional(),
   codAmount: z.coerce.number().nonnegative().optional(),
 });
 
@@ -28,7 +32,9 @@ export async function POST(req: Request) {
   if (!parsed.success) {
     return NextResponse.json({ success: false, message: parsed.error.issues[0]?.message }, { status: 400 });
   }
-  const { pickupPincode, deliveryPincode, weightKg, codAmount } = parsed.data;
+  const { pickupPincode, deliveryPincode, codAmount } = parsed.data;
+  const weight = calculateVolumetricWeight({ actualWeightKg: parsed.data.weightKg, lengthCm: parsed.data.lengthCm, widthCm: parsed.data.widthCm, heightCm: parsed.data.heightCm });
+  const weightKg = weight.chargeableWeightKg;
 
   const branches = await findServiceableBranches(deliveryPincode);
   const zone = determineZone(pickupPincode, deliveryPincode);
@@ -67,5 +73,5 @@ export async function POST(req: Request) {
     .filter((q): q is NonNullable<typeof q> => q !== null)
     .sort((a, b) => (b.priority !== a.priority ? b.priority - a.priority : a.rate - b.rate));
 
-  return NextResponse.json({ success: true, data: { quotes: ranked } });
+  return NextResponse.json({ success: true, data: { quotes: ranked, weight: { actualWeightKg: parsed.data.weightKg, ...weight } } });
 }

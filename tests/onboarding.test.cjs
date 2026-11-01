@@ -24,6 +24,7 @@ const common = {
   '@/lib/onboarding': { requireOnboardingAdmin: async () => ({}) },
   '@/lib/marketplace-tenant': { getMarketplaceTenantId: async () => 'market' },
   bcryptjs: { hash: async () => 'hashed' },
+  '@/lib/volumetric-weight': { calculateVolumetricWeight: ({ actualWeightKg, lengthCm, widthCm, heightCm }) => { const volumetricWeightKg = lengthCm && widthCm && heightCm ? (lengthCm * widthCm * heightCm) / 5000 : 0; return { volumetricWeightKg, chargeableWeightKg: Math.max(actualWeightKg, volumetricWeightKg), divisor: 5000, hasDimensions: Boolean(lengthCm && widthCm && heightCm) }; } },
 };
 const application = { name: 'Test Shipper', email: 'TEST@example.com', phone: '9876543210', accountType: 'business', address: '10 Example Street', pincode: '560001', monthlyVolume: 10, consent: 'on' };
 
@@ -80,6 +81,8 @@ function bookingActions(prisma) {
     '@/lib/prisma': { prisma }, '@/lib/customer-session': { requireCustomerSession: async () => ({ customerId: 'customer', tenantId: 'market' }) },
     '@/lib/courier-providers/registry': {}, '@/lib/tracking-code': {}, '@/lib/courier-queries': {}, '@/lib/sell-pricing': {}, '@/lib/zone': {},
     '@/lib/validation': { pincodeSchema: require('zod').z.string().regex(/^[1-9]\d{5}$/) },
+    '@/lib/volumetric-weight': { calculateVolumetricWeight: ({ actualWeightKg, lengthCm, widthCm, heightCm }) => { const volumetricWeightKg = lengthCm && widthCm && heightCm ? (lengthCm * widthCm * heightCm) / 5000 : 0; return { volumetricWeightKg, chargeableWeightKg: Math.max(actualWeightKg, volumetricWeightKg), divisor: 5000, hasDimensions: Boolean(lengthCm && widthCm && heightCm) }; } },
+    '@/lib/webhooks': { notifyTenantOnStatusChange: async () => {}, notifyCustomerOnStatusChange: async () => {}, notifyOpsOnStatusChange: async () => {} },
   });
 }
 test('a forged courier ID is rejected before any provider call or order write', async () => {

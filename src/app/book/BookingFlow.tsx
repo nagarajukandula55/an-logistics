@@ -21,7 +21,7 @@ export function BookingFlow() {
   const [quoteState, checkAction, checking] = useActionState(checkPublicServiceabilityAction, serviceabilityInitial);
   const [bookState, bookAction, booking] = useActionState(createPublicBookingAction, bookingInitial);
   const [selected, setSelected] = useState<PublicQuote | null>(null);
-  const [route, setRoute] = useState<{ pickupPincode: string; deliveryPincode: string; weightKg: string } | null>(null);
+  const [route, setRoute] = useState<{ pickupPincode: string; deliveryPincode: string; weightKg: string; lengthCm: string; widthCm: string; heightCm: string } | null>(null);
 
   if (bookState.ok && bookState.trackingCode) {
     return (
@@ -47,6 +47,7 @@ export function BookingFlow() {
                 pickupPincode: String(fd.get("pickupPincode") || ""),
                 deliveryPincode: String(fd.get("deliveryPincode") || ""),
                 weightKg: String(fd.get("weightKg") || ""),
+                lengthCm: String(fd.get("lengthCm") || ""), widthCm: String(fd.get("widthCm") || ""), heightCm: String(fd.get("heightCm") || ""),
               });
               checkAction(fd);
             }}
@@ -61,6 +62,9 @@ export function BookingFlow() {
             <Field label="Weight (kg)" htmlFor="weightKg" required>
               <Input id="weightKg" name="weightKg" type="number" step="0.1" min="0.1" required />
             </Field>
+            <div className="grid grid-cols-3 gap-2">
+              {([["lengthCm", "Length (cm)"], ["widthCm", "Width (cm)"], ["heightCm", "Height (cm)"]] as const).map(([name, label]) => <Field key={name} label={label} htmlFor={name} required><Input id={name} name={name} type="number" step="0.1" min="0.1" required /></Field>)}
+            </div>
             {quoteState.error && <p className="text-xs text-danger">{quoteState.error}</p>}
             <Button type="submit" loading={checking} className="w-full mt-1">
               Check rates
@@ -106,6 +110,7 @@ export function BookingFlow() {
           <input type="hidden" name="pickupPincode" value={route?.pickupPincode ?? ""} />
           <input type="hidden" name="deliveryPincode" value={route?.deliveryPincode ?? ""} />
           <input type="hidden" name="weightKg" value={route?.weightKg ?? ""} />
+          <input type="hidden" name="lengthCm" value={route?.lengthCm ?? ""} /><input type="hidden" name="widthCm" value={route?.widthCm ?? ""} /><input type="hidden" name="heightCm" value={route?.heightCm ?? ""} />
 
           <div className="rounded-control border border-border bg-surface-2 p-3 flex items-center justify-between text-sm mb-1">
             <span className="text-ink">{selected.courierName}</span>

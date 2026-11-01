@@ -9,6 +9,7 @@ import { OrderStatus } from "@prisma/client";
 import { optionalPincodeSchema } from "@/lib/validation";
 import { requireTenantSession } from "@/lib/tenant";
 import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
+import { calculateVolumetricWeight } from "@/lib/volumetric-weight";
 
 const createOrderSchema = z.object({
   tenantId: z.string().optional(),
@@ -22,6 +23,9 @@ const createOrderSchema = z.object({
   deliveryContactPhone: z.string().min(1, "Delivery contact phone is required"),
   deliveryPincode: optionalPincodeSchema,
   weightKg: z.coerce.number().positive().optional().or(z.literal("").transform(() => undefined)),
+  lengthCm: z.coerce.number().positive().max(500).optional().or(z.literal("").transform(() => undefined)),
+  widthCm: z.coerce.number().positive().max(500).optional().or(z.literal("").transform(() => undefined)),
+  heightCm: z.coerce.number().positive().max(500).optional().or(z.literal("").transform(() => undefined)),
   packageDescription: z.string().optional(),
   codAmount: z.coerce.number().nonnegative().optional().or(z.literal("").transform(() => undefined)),
 });
@@ -43,6 +47,7 @@ export async function createOrderAction(_prev: CreateOrderState, formData: FormD
   }
 
   const data = parsed.data;
+  const weight = data.weightKg ? calculateVolumetricWeight({ actualWeightKg: data.weightKg, lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm }) : null;
   // Staff (INTERNAL-tenant) users pick which tenant a new order belongs to;
   // a CLIENT-tenant user's orders always go under their own tenant.
   const effectiveTenantId = isStaff && data.tenantId ? data.tenantId : tenantId;
@@ -61,6 +66,7 @@ export async function createOrderAction(_prev: CreateOrderState, formData: FormD
       deliveryContactPhone: data.deliveryContactPhone,
       deliveryPincode: data.deliveryPincode || null,
       weightKg: data.weightKg,
+      shipmentDetails: weight ? { lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm, actualWeightKg: data.weightKg, volumetricWeightKg: weight.volumetricWeightKg, chargeableWeightKg: weight.chargeableWeightKg, volumetricDivisor: weight.divisor } : undefined,
       packageDescription: data.packageDescription || null,
       codAmount: data.codAmount,
       status: OrderStatus.CREATED,

@@ -92,6 +92,14 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                 <p className="text-ink tabular">{order.weightKg ? `${order.weightKg} kg` : "—"}</p>
               </div>
               <div>
+                <p className="text-ink-3">Volumetric weight</p>
+                <p className="text-ink tabular">{typeof (order.shipmentDetails as Record<string, unknown> | null)?.volumetricWeightKg === "number" ? `${(order.shipmentDetails as Record<string, number>).volumetricWeightKg} kg` : "—"}</p>
+              </div>
+              <div>
+                <p className="text-ink-3">Chargeable weight</p>
+                <p className="text-ink tabular">{typeof (order.shipmentDetails as Record<string, unknown> | null)?.chargeableWeightKg === "number" ? `${(order.shipmentDetails as Record<string, number>).chargeableWeightKg} kg` : order.weightKg ? `${order.weightKg} kg` : "—"}</p>
+              </div>
+              <div>
                 <p className="text-ink-3">COD amount</p>
                 <p className="text-ink tabular">{order.codAmount ? `₹${order.codAmount.toFixed(2)}` : "—"}</p>
               </div>

@@ -15,7 +15,7 @@ public no-auth tracking page for a shipment's tracking code.
 
 ## Stack
 
-- Next.js 15 (App Router, TypeScript, Tailwind v4)
+- Next.js 16 (App Router, TypeScript, Tailwind v4)
 - PostgreSQL via Prisma 6
 - Auth.js v5 (Credentials provider, JWT sessions, Prisma adapter)
 - Server Actions for all writes (no separate REST layer)
@@ -50,8 +50,8 @@ public no-auth tracking page for a shipment's tracking code.
    npx prisma db seed
    ```
 
-   This creates `admin@an-logistics.com` / `ChangeMe123!` unless you set
-   `SEED_ADMIN_EMAIL` / `SEED_ADMIN_PASSWORD` in your environment first. Sign
+   This creates `admin` / `ChangeMe123!` unless you set
+   `SEED_ADMIN_USERNAME` / `SEED_ADMIN_PASSWORD` in your environment first. Sign
    in and change that password via `/change-password`, or reset it as an
    admin from `/users`.
 

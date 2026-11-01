@@ -7,7 +7,7 @@ import {
   findTenantIdByChatId,
   parseStartPayload,
   parseTenantStartPayload,
-  sendRawTelegramMessage,
+  sendRawTelegramMessage, sendTelegramDocument,
 } from "@/lib/telegram";
 
 /**
@@ -134,7 +134,7 @@ export async function POST(request: Request) {
     } else if (!order.providerLabelUrl) {
       await sendRawTelegramMessage(chatId, `No document available yet for ${trackingCode} (status: ${order.status}).`);
     } else {
-      await sendRawTelegramMessage(chatId, `${trackingCode}: ${order.providerLabelUrl}`);
+      await sendTelegramDocument(chatId, order.providerLabelUrl, `<b>${trackingCode}</b> shipping document`);
     }
     return NextResponse.json({ ok: true });
   }

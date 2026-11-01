@@ -6,6 +6,8 @@ import { generateTrackingCode } from "@/lib/tracking-code";
 import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
 import { OrderAssignmentMethod, OrderFulfillmentType, OrderStatus } from "@prisma/client";
+import { calculateVolumetricWeight } from "@/lib/volumetric-weight";
+import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
 
 const bodySchema = z.object({
   externalOrderId: z.string().optional(),
@@ -52,6 +54,7 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: parsed.error.issues[0]?.message }, { status: 400 });
   }
   const data = parsed.data;
+  const weight = calculateVolumetricWeight({ actualWeightKg: data.weightKg, lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm });
 
   // Customer has no natural unique key today besides id, so look up by
   // phone within the tenant rather than creating a duplicate row per call.
@@ -75,12 +78,19 @@ export async function POST(req: Request) {
       deliveryContactPhone: data.deliveryContactPhone,
       deliveryPincode: data.deliveryPincode,
       weightKg: data.weightKg,
+      shipmentDetails: { lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm, actualWeightKg: data.weightKg, volumetricWeightKg: weight.volumetricWeightKg, chargeableWeightKg: weight.chargeableWeightKg, volumetricDivisor: weight.divisor },
       packageDescription: data.packageDescription,
       codAmount: data.codAmount,
       status: OrderStatus.CREATED,
       statusEvents: { create: { status: OrderStatus.CREATED, note: `Created via API by ${auth.tenant.name}` } },
     },
   });
+  const createdEvent = await prisma.orderStatusEvent.findFirst({ where: { orderId: order.id }, orderBy: { createdAt: "desc" } });
+  if (createdEvent) {
+    notifyTenantOnStatusChange(order, createdEvent).catch(() => {});
+    notifyCustomerOnStatusChange(order, createdEvent).catch(() => {});
+    notifyOpsOnStatusChange(order, createdEvent).catch(() => {});
+  }
 
   if (!data.courierPartnerId || !data.courierBranchId) {
     return NextResponse.json({ success: true, data: { trackingCode: order.trackingCode, status: order.status } });
@@ -118,7 +128,7 @@ export async function POST(req: Request) {
         deliveryPincode: data.deliveryPincode,
         deliveryContactName: data.deliveryContactName,
         deliveryContactPhone: data.deliveryContactPhone,
-        weightKg: data.weightKg,
+        weightKg: weight.chargeableWeightKg,
         packageDescription: data.packageDescription,
         codAmount: data.codAmount,
         providerCourierId: data.providerCourierId,
@@ -154,6 +164,12 @@ export async function POST(req: Request) {
       statusEvents: { create: { status: OrderStatus.ASSIGNED, note: `Routed to ${partner.name} via API` } },
     },
   });
+  const assignedEvent = await prisma.orderStatusEvent.findFirst({ where: { orderId: updated.id }, orderBy: { createdAt: "desc" } });
+  if (assignedEvent) {
+    notifyTenantOnStatusChange(updated, assignedEvent).catch(() => {});
+    notifyCustomerOnStatusChange(updated, assignedEvent).catch(() => {});
+    notifyOpsOnStatusChange(updated, assignedEvent).catch(() => {});
+  }
 
   return NextResponse.json({
     success: true,

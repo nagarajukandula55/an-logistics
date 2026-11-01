@@ -10,6 +10,8 @@ import { determineZone } from "@/lib/zone";
 import { OrderAssignmentMethod, OrderFulfillmentType, OrderStatus } from "@prisma/client";
 import { z } from "zod";
 import { pincodeSchema } from "@/lib/validation";
+import { calculateVolumetricWeight } from "@/lib/volumetric-weight";
+import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
 // Logged-in counterpart to src/lib/actions/public-booking.ts's
 // createPublicBookingAction. Quoting reuses checkPublicServiceabilityAction
 // as-is (it's already anonymous/stateless — no reason to duplicate it), but
@@ -60,6 +62,7 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
         return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
     }
     const data = parsed.data;
+    const weight = calculateVolumetricWeight({ actualWeightKg: data.weightKg, lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm });
     const today = new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Kolkata",year:"numeric",month:"2-digit",day:"2-digit"}).format(new Date());
     if(data.pickupDate < today) return {ok:false,error:"Choose today or a future pickup date."};
     const customer = await prisma.customer.findUnique({ where: { id: customerId }, include: { onboardingApplication: true, allowedCouriers: true } });
@@ -80,7 +83,7 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
     const partner = branch.courierPartner;
     const commission = await getEffectiveCommission(partner.id, partner);
     const zone = determineZone(data.pickupPincode, data.deliveryPincode);
-    const sell = await getSellPrice(tenantId, zone, data.weightKg, customerId);
+    const sell = await getSellPrice(tenantId, zone, weight.chargeableWeightKg, customerId);
     if (!sell)
         return { ok: false, error: "No agreed rate covers this shipment. Please contact your account manager." };
     const chargedAmount = sell.price;
@@ -102,7 +105,7 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
             data: {
                 bookingKey: data.bookingKey,
                 bookingState: provider.createShipment ? "SUBMITTING" : "MANUAL_REVIEW",
-                shipmentDetails: { pickupCity: data.pickupCity, pickupState: data.pickupState, deliveryCity: data.deliveryCity, deliveryState: data.deliveryState, lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm, declaredValue: data.declaredValue, invoiceNumber: data.invoiceNumber, ewayBill: data.ewayBill, pickupDate: data.pickupDate, goodsConsentAt: new Date().toISOString() },
+                shipmentDetails: { pickupCity: data.pickupCity, pickupState: data.pickupState, deliveryCity: data.deliveryCity, deliveryState: data.deliveryState, lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm, actualWeightKg: data.weightKg, volumetricWeightKg: weight.volumetricWeightKg, chargeableWeightKg: weight.chargeableWeightKg, volumetricDivisor: weight.divisor, declaredValue: data.declaredValue, invoiceNumber: data.invoiceNumber, ewayBill: data.ewayBill, pickupDate: data.pickupDate, goodsConsentAt: new Date().toISOString() },
                 packageDescription: data.packageDescription,
                 trackingCode: generateTrackingCode(),
                 tenantId,
@@ -135,9 +138,15 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
             return { ok: false, error: "This request is already being processed. Check your orders before submitting again." };
         throw e;
     }
+    const createdEvent = await prisma.orderStatusEvent.findFirst({ where: { orderId: order.id }, orderBy: { createdAt: "desc" } });
+    if (createdEvent) {
+        notifyTenantOnStatusChange(order, createdEvent).catch(() => {});
+        notifyCustomerOnStatusChange(order, createdEvent).catch(() => {});
+        notifyOpsOnStatusChange(order, createdEvent).catch(() => {});
+    }
     if (provider.createShipment) {
         try {
-            const result = await provider.createShipment(partner, { ...data, orderId: order.id });
+            const result = await provider.createShipment(partner, { ...data, weightKg: weight.chargeableWeightKg, orderId: order.id });
             await prisma.order.update({ where: { id: order.id }, data: { providerRef: result.providerRef, providerLabelUrl: result.labelUrl, bookingState: "CONFIRMED", statusEvents: { create: { status: "CREATED", note: "Courier docket issued: " + result.providerRef } } } });
             return { ok: true, trackingCode: order.trackingCode, providerRef: result.providerRef, message: "Docket issued. Pickup timing is subject to courier confirmation." };
         }

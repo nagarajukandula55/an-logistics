@@ -113,6 +113,21 @@ export async function sendRawTelegramMessage(chatId: string, text: string): Prom
   }
 }
 
+export async function sendTelegramDocument(chatId: string, documentUrl: string, caption?: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  try {
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ chat_id: chatId, document: documentUrl, caption, parse_mode: "HTML" }),
+    });
+    if (!response.ok) console.error(`[telegram] sendDocument failed for chat ${chatId}: ${response.status}`);
+  } catch (error) {
+    console.error(`[telegram] sendDocument request failed for chat ${chatId}:`, error);
+  }
+}
+
 /**
  * Notifies a Customer's linked chat(s) — personal DM and/or group, both if
  * both are linked — of a shipment update. Called from wherever OrderStatus
