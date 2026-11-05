@@ -12,6 +12,7 @@ const EVENT_LABELS: Record<TelegramNotificationEvent, string> = {
   AGREEMENT_SENT: "Agreement sent for e-sign",
   AGREEMENT_SIGNED: "Agreement signed",
   AGREEMENT_RENEWAL_DUE: "Agreement renewal due",
+  AGENT_ALERT: "Operations agent alert",
 };
 
 const EVENT_DESCRIPTIONS: Record<TelegramNotificationEvent, string> = {
@@ -20,6 +21,7 @@ const EVENT_DESCRIPTIONS: Record<TelegramNotificationEvent, string> = {
   AGREEMENT_SENT: "A customer agreement goes out to Zoho Sign for signature.",
   AGREEMENT_SIGNED: "A customer agreement comes back fully signed.",
   AGREEMENT_RENEWAL_DUE: "A signed agreement's renewal date is within 30 days (or past).",
+  AGENT_ALERT: "A deterministic operations agent found a warning or action requiring review.",
 };
 
 // Internal ops notifications — our own Telegram group(s), one per event

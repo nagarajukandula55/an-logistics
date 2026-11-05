@@ -150,6 +150,14 @@ enum CustomerKind {
   BUSINESS
 }
 
+// Commercial account classification used for onboarding, pricing and wallet
+// statements. CLIENT ships its own goods; RESELLER purchases shipping capacity
+// and may resell it to its customers.
+enum CustomerAccountType {
+  CLIENT
+  RESELLER
+}
+
 model Customer {
   onboardingApplication PartnerApplication?
   allowedCouriers       CustomerCourier[]
@@ -161,6 +169,10 @@ model Customer {
   address               String?
   isActive              Boolean             @default(true)
   kind                  CustomerKind        @default(INDIVIDUAL)
+  accountType           CustomerAccountType @default(CLIENT)
+  taxRatePercent        Float               @default(18)
+  resellerMarginType    CommissionType      @default(PERCENT)
+  resellerMarginValue   Float               @default(0)
   // Staff seats beyond the owner, BUSINESS only. Enforced in
   // inviteBusinessStaffAction, not a DB constraint.
   maxStaffUsers         Int                 @default(2)
@@ -176,6 +188,7 @@ model Customer {
   wallet        Wallet?
   agreements    Agreement[]
   quotations    Quotation[]
+  invoices      Invoice[]
   telegramLink  TelegramLink?
 
   @@index([name])
@@ -324,6 +337,11 @@ model Order {
   providerRef               String?
   providerLabelUrl          String?
   chargedAmount             Float?
+  agreedPriceAmount         Float?
+  marginAmount              Float?
+  taxAmount                 Float?
+  totalChargedAmount        Float?
+  walletDebitAmount         Float?
   // Which specific option within the assigned provider was picked at
   // dispatch time (e.g. one of Shiprocket's several bundled couriers) —
   // set by assignOrderToCourierAction, read by provider.createShipment
@@ -592,6 +610,26 @@ enum WalletTransactionType {
   DEBIT
 }
 
+enum AgentRunStatus {
+  RUNNING
+  SUCCEEDED
+  FAILED
+}
+
+model AgentRun {
+  id          String         @id @default(cuid())
+  agent       String
+  status      AgentRunStatus @default(RUNNING)
+  input       Json?
+  output      Json?
+  error       String?
+  startedAt   DateTime       @default(now())
+  completedAt DateTime?
+
+  @@index([agent, startedAt])
+  @@index([status, startedAt])
+}
+
 model Wallet {
   id         String   @id @default(cuid())
   customerId String   @unique
@@ -714,6 +752,7 @@ enum TelegramNotificationEvent {
   AGREEMENT_SENT
   AGREEMENT_SIGNED
   AGREEMENT_RENEWAL_DUE
+  AGENT_ALERT
 }
 
 model TelegramNotificationChannel {
@@ -750,6 +789,8 @@ model Invoice {
   invoiceNumber String        @unique
   tenantId      String
   tenant        Tenant        @relation("InvoiceForTenant", fields: [tenantId], references: [id])
+  customerId    String?
+  customer      Customer?     @relation(fields: [customerId], references: [id])
   periodStart   DateTime
   periodEnd     DateTime
   status        InvoiceStatus @default(DRAFT)
