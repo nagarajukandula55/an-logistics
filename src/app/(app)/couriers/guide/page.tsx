@@ -90,7 +90,7 @@ export default function CourierGuidePage() {
               being tracked down — see Setup/Integration Logs/AppLink), so delivery/tracking status
               updates flow back automatically. Until that&apos;s confirmed, a scheduled fallback (
               <code>/api/cron/sync-tracking</code>, see <code>vercel.json</code>) polls DTDC&apos;s
-              tracking endpoint directly every 15 minutes as a safety net.
+              tracking endpoint directly when an external scheduler is configured as a safety net.
             </li>
           </ol>
         </CardBody>

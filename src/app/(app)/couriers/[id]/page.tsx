@@ -9,6 +9,8 @@ import { AgreementPanel } from "./AgreementPanel";
 import { ApiConfigPanel } from "./ApiConfigPanel";
 import { BranchesPanel } from "./BranchesPanel";
 import { RateCardsPanel } from "./RateCardsPanel";
+import Link from "next/link";
+import { Button } from "@/components/ui/Button";
 
 export default async function CourierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -25,13 +27,15 @@ export default async function CourierDetailPage({ params }: { params: Promise<{ 
 
   if (!partner) notFound();
 
+  const isDtdc = partner.name.toLowerCase().includes("dtdc") || partner.apiConfig?.provider?.toLowerCase() === "dtdc";
+
   return (
     <div>
       <PageHeader
         eyebrow="Courier partner"
         title={partner.name}
         description={partner.legalName ?? undefined}
-        actions={<Badge tone={courierPartnerStatusTone(partner.status)}>{enumLabel(partner.status)}</Badge>}
+        actions={<div className="flex flex-wrap items-center gap-2">{isDtdc && <Link href={`/couriers/${partner.id}/documents`}><Button variant="secondary">DTDC documents</Button></Link>}<Badge tone={courierPartnerStatusTone(partner.status)}>{enumLabel(partner.status)}</Badge></div>}
       />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
