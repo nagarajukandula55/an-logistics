@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import crypto from "crypto";
 import { prisma } from "@/lib/prisma";
 import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
 import { mapDtdcStatus } from "@/lib/courier-providers/dtdc-status";
@@ -24,6 +25,12 @@ import { mapDtdcStatus } from "@/lib/courier-providers/dtdc-status";
 // a status transition on an order already tied to a known AWB, which is
 // the same acceptable tradeoff the Shiprocket version of this route made.
 export async function POST(req: Request) {
+  const configuredSecret = process.env.DTDC_WEBHOOK_SECRET;
+  const suppliedSecret = req.headers.get("x-api-key") ?? req.headers.get("x-webhook-secret");
+  if (!configuredSecret) return NextResponse.json({ success: false, message: "Webhook authentication is not configured" }, { status: 503 });
+  if (!suppliedSecret || suppliedSecret.length !== configuredSecret.length || !crypto.timingSafeEqual(Buffer.from(suppliedSecret), Buffer.from(configuredSecret))) {
+    return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+  }
   const payload = await req.json().catch(() => null);
   const awb: string | undefined = payload?.courier_partner_reference_number || payload?.reference_number;
   const rawStatus: string | undefined = payload?.type;

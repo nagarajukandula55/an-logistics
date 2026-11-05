@@ -8,6 +8,7 @@ import { Badge } from "@/components/ui/Badge";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { Tabs } from "../Tabs";
 import { NewInvoiceForm } from "./NewInvoiceForm";
+import { NewCustomerInvoiceForm } from "./NewCustomerInvoiceForm";
 
 const STATUS_TONE: Record<string, "success" | "warning" | "danger" | "neutral"> = {
   DRAFT: "neutral",
@@ -22,9 +23,10 @@ export default async function InvoicesPage() {
   if (!session?.user) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/orders");
 
-  const [invoices, tenants] = await Promise.all([
-    prisma.invoice.findMany({ include: { tenant: true }, orderBy: { createdAt: "desc" } }),
+  const [invoices, tenants, customers] = await Promise.all([
+    prisma.invoice.findMany({ include: { tenant: true, customer: true }, orderBy: { createdAt: "desc" } }),
     prisma.tenant.findMany({ orderBy: { name: "asc" } }),
+    prisma.customer.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true, accountType: true } }),
   ]);
 
   return (
@@ -43,7 +45,7 @@ export default async function InvoicesPage() {
                   <thead>
                     <tr className="border-b border-border text-left text-ink-3">
                       <th className="px-4 py-3 font-medium">Invoice</th>
-                      <th className="px-4 py-3 font-medium">Tenant</th>
+                      <th className="px-4 py-3 font-medium">Account</th>
                       <th className="px-4 py-3 font-medium">Period</th>
                       <th className="px-4 py-3 font-medium text-right">Total</th>
                       <th className="px-4 py-3 font-medium">Status</th>
@@ -57,7 +59,7 @@ export default async function InvoicesPage() {
                             {inv.invoiceNumber}
                           </Link>
                         </td>
-                        <td className="px-4 py-3 text-ink">{inv.tenant.name}</td>
+                        <td className="px-4 py-3 text-ink">{inv.customer?.name ?? inv.tenant.name}</td>
                         <td className="px-4 py-3 text-ink-2 text-xs">
                           {inv.periodStart.toLocaleDateString()} – {inv.periodEnd.toLocaleDateString()}
                         </td>
@@ -74,7 +76,10 @@ export default async function InvoicesPage() {
           )}
         </div>
 
-        <NewInvoiceForm tenants={tenants.map((t) => ({ id: t.id, name: t.name }))} />
+        <div className="space-y-6">
+          <NewInvoiceForm tenants={tenants.map((t) => ({ id: t.id, name: t.name }))} />
+          <NewCustomerInvoiceForm customers={customers.map((c) => ({ id: c.id, name: `${c.name} (${c.accountType === "RESELLER" ? "Reseller" : "Client"})` }))} />
+        </div>
       </div>
     </div>
   );

@@ -7,6 +7,7 @@ import { AppNav } from "@/components/AppNav";
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const session = await auth();
   if (!session?.user) redirect("/login");
+  if (session.user.role === "CUSTOMER") redirect("/portal");
 
   return (
     <div className="min-h-screen bg-bg flex flex-col lg:flex-row">

@@ -58,7 +58,7 @@ export async function reviewApplicationAction(_: OnboardingState, fd: FormData):
         const a = await tx.partnerApplication.findUnique({ where: { id: parsed.data.id } });
         if (!a || a.status === "ACTIVE")
             throw new Error("Application is unavailable or already active");
-        const customerId = a.customerId ?? (await tx.customer.create({ data: { name: a.company || a.name, email: a.email, phone: a.phone, address: a.address, kind: a.accountType === "individual" ? "INDIVIDUAL" : "BUSINESS", tenantId, isActive: false } })).id;
+        const customerId = a.customerId ?? (await tx.customer.create({ data: { name: a.company || a.name, email: a.email, phone: a.phone, address: a.address, kind: a.accountType === "individual" ? "INDIVIDUAL" : "BUSINESS", accountType: a.accountType === "reseller" ? "RESELLER" : "CLIENT", tenantId, isActive: false } })).id;
         await tx.partnerApplication.update({ where: { id: a.id }, data: { customerId, status: parsed.data.status, notes: parsed.data.notes } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     revalidatePath("/onboarding");
@@ -115,6 +115,9 @@ export async function activatePartnerAction(_: OnboardingState, fd: FormData): P
     await requireOnboardingAdmin();
     const id = String(fd.get("id") || "");
     const courierIds = fd.getAll("courierIds").map(String);
+    const marginType = fd.get("marginType") === "FLAT" ? "FLAT" : "PERCENT";
+    const marginValue = Math.max(0, Number(fd.get("marginValue") || 0));
+    if (!Number.isFinite(marginValue) || (marginType === "PERCENT" && marginValue > 100)) return { ok: false, error: "Enter a valid reseller margin." };
     if (!courierIds.length)
         return { ok: false, error: "Allocate at least one active courier." };
     const password = randomBytes(18).toString("base64url");
@@ -132,7 +135,7 @@ export async function activatePartnerAction(_: OnboardingState, fd: FormData): P
                 throw new Error("An account with this email already exists; resolve it before activation.");
             await tx.customerCourier.createMany({ data: [...new Set(courierIds)].map(courierPartnerId => ({ customerId: a.customerId!, courierPartnerId })), skipDuplicates: true });
             await tx.user.create({ data: { name: a.name, email: a.email, passwordHash, role: "CUSTOMER", tenantId: a.customer.tenantId, customerId: a.customerId, isBusinessOwner: true, mustChangePassword: true } });
-            await tx.customer.update({ where: { id: a.customerId! }, data: { isActive: true } });
+            await tx.customer.update({ where: { id: a.customerId! }, data: { isActive: true, resellerMarginType: marginType, resellerMarginValue: a.accountType === "reseller" ? marginValue : 0 } });
             await tx.partnerApplication.update({ where: { id }, data: { status: "ACTIVE" } });
         }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     }

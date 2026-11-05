@@ -11,7 +11,7 @@ import { signOutAction } from "@/lib/actions/auth-signout";
 const LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/orders", label: "Orders", icon: Package },
   { href: "/dispatch", label: "Dispatch", icon: Truck }, { href: "/couriers", label: "Couriers", icon: Handshake },
-  { href: "/agreements", label: "Agreements", icon: FileSignature }, { href: "/pricing", label: "Pricing", icon: Tag },
+  { href: "/agreements", label: "Agreements", icon: FileSignature }, { href: "/agreements/letterhead", label: "Documents", icon: FileSignature }, { href: "/pricing", label: "Pricing", icon: Tag },
   { href: "/drivers", label: "Drivers", icon: Users }, { href: "/vehicles", label: "Vehicles", icon: Truck },
 ];
 const ADMIN_LINKS = [

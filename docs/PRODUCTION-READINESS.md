@@ -35,7 +35,7 @@
 
 ## Operational safeguards
 
-- Keep cron endpoints protected by `CRON_SECRET`.
+- Keep the optional cron endpoints protected by `CRON_SECRET` if you connect an external scheduler; no Vercel cron schedule is enabled by default.
 - Confirm courier webhook authentication and provider-specific AWB mapping with the courier account owner.
 - Monitor application logs for failed Telegram, email, Zoho, and courier calls.
 - Reconcile failed or uncertain courier bookings before retrying to prevent duplicate shipments.

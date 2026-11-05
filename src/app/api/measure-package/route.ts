@@ -10,6 +10,11 @@ export async function POST(request: Request) {
   const incoming = await request.formData();
   const images = incoming.getAll("images").filter((value): value is File => value instanceof File);
   if (images.length === 0 || images.length > 8) return NextResponse.json({ message: "Capture between one and eight package images." }, { status: 400 });
+  const maxImageBytes = 5 * 1024 * 1024;
+  const totalImageBytes = images.reduce((total, image) => total + image.size, 0);
+  if (images.some((image) => image.size > maxImageBytes) || totalImageBytes > 20 * 1024 * 1024) {
+    return NextResponse.json({ message: "Images must be 5 MB or smaller each and 20 MB total." }, { status: 413 });
+  }
 
   const upstream = new FormData();
   images.forEach((image) => upstream.append("images", image, image.name));

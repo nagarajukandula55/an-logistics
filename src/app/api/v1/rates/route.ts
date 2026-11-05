@@ -39,8 +39,21 @@ export async function POST(req: Request) {
   const branches = await findServiceableBranches(deliveryPincode);
   const zone = determineZone(pickupPincode, deliveryPincode);
 
-  const quotes = await Promise.all(
-    branches.map(async (branch) => {
+  const quotes: Array<{
+    courierPartnerId: string;
+    courierBranchId: string;
+    courierName: string;
+    priority: number;
+    zone: string;
+    rate: number;
+    etaDays: number | null;
+    platformFee: number | null;
+    providerCourierId: string | null;
+  } | null> = [];
+  // Keep provider work bounded. A public rate request must not fan out to an
+  // unbounded number of partner APIs at once, which spikes CPU and outbound
+  // connections as the courier network grows.
+  for (const branch of branches.slice(0, 12)) {
       const partner = branch.courierPartner;
       const provider = await getCourierProvider(partner);
 
@@ -50,12 +63,15 @@ export async function POST(req: Request) {
       } catch {
         quote = null;
       }
-      if (!quote) return null;
+      if (!quote) {
+        quotes.push(null);
+        continue;
+      }
 
       const commission = await getEffectiveCommission(partner.id, partner);
       const platformFee = computePlatformFee(commission, codAmount ?? quote.price);
 
-      return {
+      quotes.push({
         courierPartnerId: partner.id,
         courierBranchId: branch.id,
         courierName: partner.name,
@@ -65,9 +81,8 @@ export async function POST(req: Request) {
         etaDays: quote.etaDays ?? null,
         platformFee,
         providerCourierId: quote.providerCourierId ?? null,
-      };
-    })
-  );
+      });
+  }
 
   const ranked = quotes
     .filter((q): q is NonNullable<typeof q> => q !== null)

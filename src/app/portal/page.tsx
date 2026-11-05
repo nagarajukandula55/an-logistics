@@ -10,17 +10,18 @@ import { format } from "date-fns";
 export default async function PortalOrdersPage() {
   const { customerId } = await requireCustomerSession();
 
-  const orders = await prisma.order.findMany({
+  const [orders, customer] = await Promise.all([prisma.order.findMany({
     where: { customerId },
     orderBy: { createdAt: "desc" },
     take: 50,
-  });
+  }), prisma.customer.findUnique({ where: { id: customerId }, select: { accountType: true, resellerMarginType: true, resellerMarginValue: true } })]);
 
   return (
     <div className="flex flex-col gap-6">
       <PageHeader
         eyebrow="Portal"
-        title="My orders"
+        title={customer?.accountType === "RESELLER" ? "Reseller workspace" : "Client workspace"}
+        description={customer?.accountType === "RESELLER" ? `Your customer prices include a ${customer.resellerMarginType === "PERCENT" ? `${customer.resellerMarginValue}%` : `₹${customer.resellerMarginValue.toFixed(2)}`} agreed margin.` : "Book and track shipments using your agreed customer rate card."}
         actions={
           <Link href="/portal/book" className="text-sm text-accent">
             Book a shipment →

@@ -1,5 +1,11 @@
 # AN Logistics
 
+## Current status
+
+See [the project status report](docs/PROJECT-STATUS.md), reviewed on 5 November
+2026, for the current feature inventory, verification results and release gaps.
+The scope notes below are historical and do not describe all implemented features.
+
 ## Partner onboarding update
 
 The public homepage, application inbox, versioned agreement templates, approval-gated

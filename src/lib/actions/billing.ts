@@ -94,6 +94,34 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
   return { ok: true };
 }
 
+const generateCustomerInvoiceSchema = z.object({
+  customerId: z.string().min(1),
+  periodStart: z.string().min(1),
+  periodEnd: z.string().min(1),
+});
+
+/** Creates the invoice the customer/reseller sees. For resellers this uses
+ * customerPrice (the agreed wholesale price plus their configured margin);
+ * our wallet settlement remains recorded separately at agreedPriceAmount. */
+export async function generateCustomerInvoiceAction(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  await requireAdmin();
+  const parsed = generateCustomerInvoiceSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
+  const from = new Date(parsed.data.periodStart);
+  const to = new Date(parsed.data.periodEnd);
+  const customer = await prisma.customer.findUnique({ where: { id: parsed.data.customerId }, select: { tenantId: true, name: true } });
+  if (!customer?.tenantId) return { ok: false, error: "Customer is not attached to a tenant" };
+  const invoiced = (await prisma.invoiceLineItem.findMany({ where: { order: { customerId: parsed.data.customerId }, invoice: { customerId: parsed.data.customerId } }, select: { orderId: true } })).map((line) => line.orderId).filter(Boolean) as string[];
+  const orders = await prisma.order.findMany({ where: { customerId: parsed.data.customerId, status: OrderStatus.DELIVERED, createdAt: { gte: from, lte: to }, chargedAmount: { not: null }, id: { notIn: invoiced } }, orderBy: { createdAt: "asc" } });
+  if (!orders.length) return { ok: false, error: "No unbilled delivered orders for this account" };
+  const subtotal = orders.reduce((sum, order) => sum + (order.chargedAmount ?? 0), 0);
+  const taxAmount = orders.reduce((sum, order) => sum + (order.taxAmount ?? 0), 0);
+  const count = await prisma.invoice.count({ where: { customerId: parsed.data.customerId } });
+  await prisma.invoice.create({ data: { invoiceNumber: periodInvoiceNumber("CINV", count), tenantId: customer.tenantId, customerId: parsed.data.customerId, periodStart: from, periodEnd: to, status: InvoiceStatus.DRAFT, subtotal, taxAmount, totalAmount: subtotal + taxAmount, notes: "Customer price invoice; reseller margin included where applicable.", lineItems: { create: orders.map((order) => ({ orderId: order.id, description: `Shipment ${order.trackingCode}`, quantity: 1, unitPrice: order.chargedAmount!, amount: order.chargedAmount! })) } } });
+  revalidatePath("/billing/invoices");
+  return { ok: true };
+}
+
 const invoiceStatusSchema = z.object({ invoiceId: z.string().min(1), status: z.nativeEnum(InvoiceStatus) });
 
 export async function updateInvoiceStatusAction(formData: FormData) {

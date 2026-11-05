@@ -57,7 +57,7 @@ export function CourierAssignPanel({
   if (groups.length === 0) {
     return (
       <p className="text-sm text-ink-3">
-        No connected courier — ours or a partner's — services pincode <span className="tabular">{deliveryPincode}</span>.
+        No connected courier — ours or a partner&apos;s — services pincode <span className="tabular">{deliveryPincode}</span>.
       </p>
     );
   }

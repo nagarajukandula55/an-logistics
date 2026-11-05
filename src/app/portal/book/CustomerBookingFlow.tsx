@@ -70,7 +70,7 @@ export function CustomerBookingFlow() {
             <Field label="Weight (kg)" htmlFor="weightKg" required>
               <Input id="weightKg" name="weightKg" type="number" step="0.1" min="0.1" required />
             </Field>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
               {([["lengthCm", "Length (cm)"], ["widthCm", "Width (cm)"], ["heightCm", "Height (cm)"]] as const).map(([name, label]) => <Field key={name} label={label} htmlFor={name} required><Input id={name} name={name} type="number" step="0.1" min="0.1" required /></Field>)}
             </div>
             {quoteState.error && <p className="text-xs text-danger">{quoteState.error}</p>}

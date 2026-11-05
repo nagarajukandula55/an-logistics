@@ -9,6 +9,15 @@ DATABASE_URL=
 AUTH_SECRET=
 ENCRYPTION_KEY=
 CRON_SECRET=
+AGENT_API_KEY=
+DTDC_WEBHOOK_SECRET=
+AN_BRAND_NAME=AN Logistics
+AN_LEGAL_NAME=AN Group
+AN_GSTIN=37EOZPK9605G1Z5
+AN_REGISTERED_ADDRESS=1203, opp:ice factory, Bondapalle, Gotlam, Vizianagaram, 535003
+AN_CONTACT_EMAIL=contact@angroup.in
+AN_CONTACT_PHONE=+918985229693
+AN_WEBSITE=logistics.angroup.in
 ```
 
 `CRON_SECRET` protects tracking reconciliation and agreement-renewal jobs. Do not leave it unset in production.

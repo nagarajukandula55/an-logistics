@@ -86,7 +86,18 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
     const sell = await getSellPrice(tenantId, zone, weight.chargeableWeightKg, customerId);
     if (!sell)
         return { ok: false, error: "No agreed rate covers this shipment. Please contact your account manager." };
-    const chargedAmount = sell.price;
+    const agreedPriceAmount = sell.price;
+    const marginAmount = customer.accountType === "RESELLER"
+        ? customer.resellerMarginType === "PERCENT"
+            ? Math.round(agreedPriceAmount * (customer.resellerMarginValue / 100) * 100) / 100
+            : Math.round(customer.resellerMarginValue * 100) / 100
+        : 0;
+    const chargedAmount = Math.round((agreedPriceAmount + marginAmount) * 100) / 100;
+    const taxRatePercent = Number.isFinite(customer.taxRatePercent) ? Math.max(0, customer.taxRatePercent) : 18;
+    const taxAmount = Math.round(chargedAmount * (taxRatePercent / 100) * 100) / 100;
+    const totalChargedAmount = Math.round((chargedAmount + taxAmount) * 100) / 100;
+    const agreedTaxAmount = Math.round(agreedPriceAmount * (taxRatePercent / 100) * 100) / 100;
+    const walletDebitAmount = Math.round((agreedPriceAmount + agreedTaxAmount) * 100) / 100;
     const provider = await getCourierProvider(partner);
     if (partner.integrationType === "API" && !provider.createShipment)
         return { ok: false, error: "Courier booking is not configured yet. Please contact support." };
@@ -98,10 +109,19 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
     catch {
         return { ok: false, error: "Unable to confirm serviceability. Please try later." };
     }
-    const platformFeeAmount = computePlatformFee(commission, chargedAmount ?? null);
+    const platformFeeAmount = computePlatformFee(commission, agreedPriceAmount);
     let order;
     try {
-        order = await prisma.order.create({
+        order = await prisma.$transaction(async (tx) => {
+            const wallet = await tx.wallet.upsert({
+                where: { customerId: customer.id },
+                create: { customerId: customer.id },
+                update: {},
+            });
+            if (wallet.balance < walletDebitAmount) {
+                throw new Error(`Insufficient wallet balance (₹${wallet.balance.toFixed(2)} available, ₹${walletDebitAmount.toFixed(2)} required). Please top up before booking.`);
+            }
+            const created = await tx.order.create({
             data: {
                 bookingKey: data.bookingKey,
                 bookingState: provider.createShipment ? "SUBMITTING" : "MANUAL_REVIEW",
@@ -120,20 +140,43 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
                 deliveryPincode: data.deliveryPincode,
                 weightKg: data.weightKg,
                 chargedAmount,
+                agreedPriceAmount,
+                marginAmount,
                 fulfillmentType: OrderFulfillmentType.COURIER_PARTNER,
                 assignmentMethod: OrderAssignmentMethod.AUTO,
                 courierPartnerId: partner.id,
                 courierBranchId: branch.id,
                 selectedProviderCourierId: data.providerCourierId || null,
                 platformFeeAmount,
+                taxAmount,
+                totalChargedAmount,
+                walletDebitAmount,
                 status: OrderStatus.CREATED,
                 statusEvents: {
                     create: { status: OrderStatus.CREATED, note: `Booked via customer portal, routed to ${partner.name}` },
                 },
             },
-        });
+            });
+            const balanceAfter = Math.round((wallet.balance - walletDebitAmount) * 100) / 100;
+            await tx.wallet.update({ where: { customerId: customer.id }, data: { balance: balanceAfter } });
+            await tx.walletTransaction.create({
+                data: {
+                    walletId: wallet.id,
+                    type: "DEBIT",
+                    amount: walletDebitAmount,
+                    balanceAfter,
+                    orderId: created.id,
+                    note: `${customer.accountType} wholesale purchase: ₹${agreedPriceAmount.toFixed(2)}${marginAmount ? ` + reseller margin ₹${marginAmount.toFixed(2)}` : ""}; wallet debit ₹${walletDebitAmount.toFixed(2)} including GST`,
+                },
+            });
+            return created;
+        }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     }
     catch (e) {
+        if (e instanceof Error && e.message.startsWith("Insufficient wallet balance"))
+            return { ok: false, error: e.message };
+        if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2034")
+            return { ok: false, error: "Another wallet transaction is being processed. Please try this booking again." };
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
             return { ok: false, error: "This request is already being processed. Check your orders before submitting again." };
         throw e;

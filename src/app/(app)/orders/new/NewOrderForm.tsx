@@ -37,6 +37,8 @@ export function NewOrderForm({
   const [dimensions, setDimensions] = useState({ lengthCm: "", widthCm: "", heightCm: "" });
 
   useEffect(() => {
+    // The selected customer must be reset when staff switch tenant context.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setSelectedCustomerId((prev) => (customers.some((c) => c.id === prev) ? prev : customers[0]?.id ?? ""));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedTenantId]);
