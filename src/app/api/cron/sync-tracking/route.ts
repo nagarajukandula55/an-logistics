@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { mapDtdcStatus } from "@/lib/courier-providers/dtdc-status";
-import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
+import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange } from "@/lib/webhooks";
 import { OrderStatus, OrderFulfillmentType } from "@prisma/client";
 
 // Safety-net reconciliation: DTDC's Consignment Status Webhook
@@ -26,17 +26,19 @@ export async function GET(req: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
+  const staleBefore = new Date(Date.now() - 30 * 60 * 1000);
   const orders = await prisma.order.findMany({
     where: {
       fulfillmentType: OrderFulfillmentType.COURIER_PARTNER,
       providerRef: { not: null },
       courierPartnerId: { not: null },
       status: { notIn: TERMINAL_STATUSES },
+      updatedAt: { lt: staleBefore },
     },
     include: { courierPartner: true },
     // Bounded per run so one invocation can't run long enough to hit a
     // serverless timeout — the next scheduled run picks up whatever's left.
-    take: 100,
+    take: 25,
   });
 
   let checked = 0;
