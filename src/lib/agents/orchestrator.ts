@@ -16,5 +16,7 @@ export async function executeAgent(agent: AgentName, trigger: "api" | "cron" = "
 }
 
 export async function executeAllAgents(trigger: "api" | "cron" = "api"): Promise<AgentResult[]> {
-  return Promise.all(AGENT_NAMES.map((agent) => executeAgent(agent, trigger)));
+  const results: AgentResult[] = [];
+  for (const agent of AGENT_NAMES) results.push(await executeAgent(agent, trigger));
+  return results;
 }

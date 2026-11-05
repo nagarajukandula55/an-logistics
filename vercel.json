@@ -1,7 +1,6 @@
 {
   "crons": [
     { "path": "/api/cron/sync-tracking", "schedule": "*/15 * * * *" },
-    { "path": "/api/cron/agreement-renewals", "schedule": "0 4 * * *" },
-    { "path": "/api/cron/agents", "schedule": "*/15 * * * *" }
+    { "path": "/api/cron/agreement-renewals", "schedule": "0 4 * * *" }
   ]
 }
