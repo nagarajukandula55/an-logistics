@@ -60,6 +60,18 @@ export function NewAgreementForm({ customers }: { customers: Customer[] }) {
               ))}
             </Select>
           </Field>
+          <Field label="Agreement party" htmlFor="partyType" hint="Choose the commercial relationship">
+            <Select id="partyType" name="partyType" defaultValue="CLIENT">
+              <option value="CLIENT">Client agreement</option>
+              <option value="AGENT">Agent / reseller agreement</option>
+            </Select>
+          </Field>
+          <Field label="Document style" htmlFor="templateSource" hint="Courier style is available for DTDC-connected agreements">
+            <Select id="templateSource" name="templateSource" defaultValue="AN_LOGISTICS">
+              <option value="AN_LOGISTICS">AN Logistics branded</option>
+              <option value="COURIER">Courier-branded (DTDC)</option>
+            </Select>
+          </Field>
           <Field label="Kind" htmlFor="kind" required>
             <Select id="kind" name="kind" defaultValue="B2C" required>
               <option value="B2B">B2B — business customer</option>

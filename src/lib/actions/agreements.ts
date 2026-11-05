@@ -10,6 +10,8 @@ import { sendAgreementForSignature } from "@/lib/agreements";
 const createAgreementSchema = z.object({
   customerId: z.string().min(1, "Select a customer"),
   kind: z.nativeEnum(AgreementKind),
+  templateSource: z.enum(["AN_LOGISTICS", "COURIER"]),
+  partyType: z.enum(["CLIENT", "AGENT"]),
   templateVersion: z.string().min(1, "Template version is required"),
   documentUrl: z.string().url("Enter a valid document URL"),
   signerName: z.string().optional(),
@@ -32,6 +34,8 @@ export async function createAgreementAction(_prev: { ok: boolean; error?: string
     data: {
       customerId: data.customerId,
       kind: data.kind,
+      templateSource: data.templateSource,
+      partyType: data.partyType,
       templateVersion: data.templateVersion,
       documentUrl: data.documentUrl,
       signerName: data.signerName || null,
@@ -49,6 +53,8 @@ export async function createAgreementAction(_prev: { ok: boolean; error?: string
 const updateAgreementSchema = z.object({
   agreementId: z.string().min(1),
   kind: z.nativeEnum(AgreementKind),
+  templateSource: z.enum(["AN_LOGISTICS", "COURIER"]),
+  partyType: z.enum(["CLIENT", "AGENT"]),
   templateVersion: z.string().min(1, "Template version is required"),
   documentUrl: z.string().url("Enter a valid document URL"),
   signerName: z.string().optional(),
@@ -81,6 +87,8 @@ export async function updateAgreementAction(_prev: { ok: boolean; error?: string
       where: { id: data.agreementId, status: "DRAFT" },
       data: {
         kind: data.kind,
+        templateSource: data.templateSource,
+        partyType: data.partyType,
         templateVersion: data.templateVersion,
         documentUrl: data.documentUrl,
         signerName: data.signerName || null,

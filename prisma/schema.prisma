@@ -687,6 +687,8 @@ enum AgreementStatus {
 
 model Agreement {
   title                 String?
+  templateSource        String          @default("AN_LOGISTICS")
+  partyType             String          @default("CLIENT")
   termsSnapshot         String?
   rateSnapshot          Json?
   legalReviewedAt       DateTime?
@@ -917,6 +919,7 @@ model Quotation {
   courierPartner  CourierPartner?   @relation(fields: [courierPartnerId], references: [id])
   status          QuotationStatus   @default(DRAFT)
   title           String
+  templateSource  String          @default("AN_LOGISTICS")
   validUntil      DateTime?
   termsSnapshot   String
   rateSnapshot    Json
