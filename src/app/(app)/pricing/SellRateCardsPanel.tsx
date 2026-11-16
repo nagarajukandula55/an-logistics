@@ -35,7 +35,7 @@ function emptyDraftSlab(): DraftSlab {
 // tenantId undefined/null = the default price list (normal/marketplace
 // bookings); set it to scope this panel to one commercial CLIENT tenant's
 // own negotiated rates instead.
-export function SellRateCardsPanel({ tenantId, cards }: { tenantId?: string | null; cards: SellRateCard[] }) {
+export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, tenantId, customerId, cards }: { audience?: "DEFAULT" | "STAFF" | "COLLABORATOR" | "CLIENT"; courierPartnerId?: string | null; tenantId?: string | null; customerId?: string | null; cards: SellRateCard[] }) {
   const [showForm, setShowForm] = useState(cards.length === 0);
   const [name, setName] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState("");
@@ -70,7 +70,10 @@ export function SellRateCardsPanel({ tenantId, cards }: { tenantId?: string | nu
     }
 
     const fd = new FormData();
+    fd.set("audience", audience);
+    if (courierPartnerId) fd.set("courierPartnerId", courierPartnerId);
     if (tenantId) fd.set("tenantId", tenantId);
+    if (customerId) fd.set("customerId", customerId);
     fd.set("name", name.trim());
     fd.set("effectiveFrom", effectiveFrom);
     if (minMarginPercent.trim()) fd.set("minMarginPercent", minMarginPercent.trim());

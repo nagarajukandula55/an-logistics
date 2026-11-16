@@ -33,6 +33,14 @@ async function requireSession() {
   return { session, isStaff };
 }
 
+async function requireCourierCostManager() {
+  const context = await requireSession();
+  if (context.session.user.role === "ADMIN") return context;
+  const user = await prisma.user.findUnique({ where: { id: context.session.user.id }, select: { canManageCourierCosts: true } });
+  if (!user?.canManageCourierCosts) throw new Error("You do not have permission to manage courier cost cards");
+  return context;
+}
+
 // ---------- Courier partner ----------
 
 const createCourierPartnerSchema = z.object({
@@ -350,6 +358,10 @@ export async function assignOrderToCourierAction(formData: FormData) {
   }
 
   const partner = branch.courierPartner;
+  if (session.user.role === "STAFF" || session.user.role === "COLLABORATOR") {
+    const allowed = await prisma.userCourierAssignment.findUnique({ where: { userId_courierPartnerId: { userId: session.user.id, courierPartnerId: partner.id } }, select: { userId: true } });
+    if (!allowed) throw new Error("This courier is not assigned to your account");
+  }
 
   // Confirm serviceability through the pluggable provider adapter rather
   // than querying ServiceArea directly, so MANUAL vs. future API partners
@@ -379,7 +391,7 @@ export async function assignOrderToCourierAction(formData: FormData) {
   let chargedAmount = order.chargedAmount;
   if (chargedAmount == null && order.pickupPincode && order.deliveryPincode) {
     const zone = determineZone(order.pickupPincode, order.deliveryPincode);
-    const sell = await getSellPrice(order.tenantId, zone, order.weightKg ?? 0, order.customerId);
+    const sell = await getSellPrice(order.tenantId, zone, order.weightKg ?? 0, order.customerId, session.user.role, partner.id);
     chargedAmount = sell?.price ?? null;
   }
 
@@ -460,20 +472,25 @@ export type ProviderQuoteGroup = {
  * silently vanishing.
  */
 export async function getProviderQuotesForOrder(orderId: string): Promise<ProviderQuoteGroup[]> {
+  const { session } = await requireSession();
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order) throw new Error("Order not found");
   if (!order.deliveryPincode) return [];
 
-  const branches = await findServiceableBranches(order.deliveryPincode);
+  let branches = await findServiceableBranches(order.deliveryPincode);
+  if (session.user.role === "STAFF" || session.user.role === "COLLABORATOR") {
+    const assignments = await prisma.userCourierAssignment.findMany({ where: { userId: session.user.id }, select: { courierPartnerId: true } });
+    const allowed = new Set(assignments.map((a) => a.courierPartnerId));
+    branches = branches.filter((branch) => allowed.has(branch.courierPartnerId));
+  }
   const weightKg = order.weightKg ?? 0;
   const zone = determineZone(order.pickupPincode ?? "", order.deliveryPincode);
   // One sell-price lookup per order (not per provider/option) — what we'd
   // charge doesn't depend on which courier ends up fulfilling it.
-  const sell = await getSellPrice(order.tenantId, zone, weightKg, order.customerId);
-
   return Promise.all(
     branches.map(async (branch) => {
       const partner = branch.courierPartner;
+      const sell = await getSellPrice(order.tenantId, zone, weightKg, order.customerId, session.user.role, partner.id);
       const provider = await getCourierProvider(partner);
       const commission = await getEffectiveCommission(partner.id, partner);
 
@@ -550,7 +567,7 @@ const createRateCardSchema = z.object({
  * auto-deactivates the partner's prior active one.
  */
 export async function createRateCardAction(formData: FormData) {
-  await requireSession();
+  await requireCourierCostManager();
 
   let slabs: unknown;
   try {

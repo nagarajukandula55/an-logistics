@@ -83,7 +83,7 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
     const partner = branch.courierPartner;
     const commission = await getEffectiveCommission(partner.id, partner);
     const zone = determineZone(data.pickupPincode, data.deliveryPincode);
-    const sell = await getSellPrice(tenantId, zone, weight.chargeableWeightKg, customerId);
+    const sell = await getSellPrice(tenantId, zone, weight.chargeableWeightKg, customerId, null, partner.id);
     if (!sell)
         return { ok: false, error: "No agreed rate covers this shipment. Please contact your account manager." };
     const agreedPriceAmount = sell.price;

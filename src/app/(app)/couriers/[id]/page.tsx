@@ -11,9 +11,11 @@ import { BranchesPanel } from "./BranchesPanel";
 import { RateCardsPanel } from "./RateCardsPanel";
 import Link from "next/link";
 import { Button } from "@/components/ui/Button";
+import { requireTenantSession } from "@/lib/tenant";
 
 export default async function CourierDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
+  const { session } = await requireTenantSession();
 
   const partner = await prisma.courierPartner.findUnique({
     where: { id },
@@ -26,6 +28,9 @@ export default async function CourierDetailPage({ params }: { params: Promise<{ 
   });
 
   if (!partner) notFound();
+
+  const currentUser = session.user.role === "ADMIN" ? null : await prisma.user.findUnique({ where: { id: session.user.id }, select: { canManageCourierCosts: true } });
+  const canManageCourierCosts = session.user.role === "ADMIN" || Boolean(currentUser?.canManageCourierCosts);
 
   const isDtdc = partner.name.toLowerCase().includes("dtdc") || partner.apiConfig?.provider?.toLowerCase() === "dtdc";
 
@@ -97,7 +102,7 @@ export default async function CourierDetailPage({ params }: { params: Promise<{ 
               <h2 className="h-section">Rate cards</h2>
             </CardHeader>
             <CardBody>
-              <RateCardsPanel courierPartnerId={partner.id} rateCards={partner.rateCards} />
+              {canManageCourierCosts ? <RateCardsPanel courierPartnerId={partner.id} rateCards={partner.rateCards} /> : <p className="text-sm text-ink-3">Courier cost cards are restricted to authorized administrators.</p>}
             </CardBody>
           </Card>
         </div>

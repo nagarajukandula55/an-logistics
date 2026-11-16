@@ -39,6 +39,7 @@ export const { handlers, auth, signIn, signOut, unstable_update } = NextAuth({
           email: user.email,
           role: user.role,
           mustChangePassword: user.mustChangePassword,
+          canManageCourierCosts: user.canManageCourierCosts,
           tenantId: user.tenantId,
           // Staff belonging to an INTERNAL-type tenant manage every tenant's
           // data from one login; CLIENT-tenant users stay scoped to just

@@ -1,4 +1,5 @@
 import { prisma } from "@/lib/prisma";
+import type { UserRole } from "@prisma/client";
 
 /**
  * What we charge for a shipment, as distinct from what a courier charges us
@@ -15,25 +16,29 @@ export async function getSellPrice(
   tenantId: string | null | undefined,
   zone: string,
   weightKg: number,
-  customerId?: string | null
+  customerId?: string | null,
+  userRole?: UserRole | string | null,
+  courierPartnerId?: string | null
 ): Promise<{ price: number; minMarginPercent: number | null; sellRateCardId: string } | null> {
-  const managed = customerId ? await prisma.partnerApplication.findUnique({where:{customerId},select:{id:true}}) : null;
-  const customerCard = customerId ? await prisma.sellRateCard.findFirst({where:{customerId,isActive:true,effectiveFrom:{lte:new Date()}},orderBy:{effectiveFrom:"desc"},include:{slabs:{where:{isActive:true}}}}) : null;
+  const now = new Date();
+  const customerCard = customerId
+    ? (courierPartnerId ? await prisma.sellRateCard.findFirst({ where: { customerId, courierPartnerId, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } }) : null) ??
+      await prisma.sellRateCard.findFirst({ where: { customerId, courierPartnerId: null, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } })
+    : null;
+  const managed = customerId ? await prisma.partnerApplication.findUnique({ where: { customerId }, select: { id: true } }) : null;
   if(managed && !customerCard) return null;
   const card =
     customerCard ??
-    (tenantId
-      ? await prisma.sellRateCard.findFirst({
-          where: { tenantId, customerId: null, isActive: true },
-          orderBy: { effectiveFrom: "desc" },
-          include: { slabs: { where: { isActive: true } } },
-        })
+    (userRole === "STAFF" || userRole === "COLLABORATOR"
+      ? (courierPartnerId ? await prisma.sellRateCard.findFirst({ where: { audience: userRole, courierPartnerId, tenantId: null, customerId: null, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } }) : null) ??
+        await prisma.sellRateCard.findFirst({ where: { audience: userRole, courierPartnerId: null, tenantId: null, customerId: null, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } })
       : null) ??
-    (await prisma.sellRateCard.findFirst({
-      where: { tenantId: null, customerId: null, isActive: true },
-      orderBy: { effectiveFrom: "desc" },
-      include: { slabs: { where: { isActive: true } } },
-    }));
+    (tenantId
+      ? (courierPartnerId ? await prisma.sellRateCard.findFirst({ where: { audience: "CLIENT", courierPartnerId, tenantId, customerId: null, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } }) : null) ??
+        await prisma.sellRateCard.findFirst({ where: { audience: "CLIENT", courierPartnerId: null, tenantId, customerId: null, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } })
+      : null) ??
+    (courierPartnerId ? await prisma.sellRateCard.findFirst({ where: { audience: "DEFAULT", courierPartnerId, tenantId: null, customerId: null, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } }) : null) ??
+    (await prisma.sellRateCard.findFirst({ where: { audience: "DEFAULT", courierPartnerId: null, tenantId: null, customerId: null, isActive: true, effectiveFrom: { lte: now } }, orderBy: { effectiveFrom: "desc" }, include: { slabs: { where: { isActive: true } } } }));
   if (!card) return null;
 
   const slab = card.slabs.find((s) => s.zone === zone && weightKg > s.minWeightKg && weightKg <= s.maxWeightKg);

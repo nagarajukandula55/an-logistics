@@ -5,6 +5,7 @@ import { PageHeader } from "@/components/ui/PageHeader";
 import { Card } from "@/components/ui/Card";
 import { EmptyState } from "@/components/ui/EmptyState";
 import { UserRow } from "./UserRow";
+import { CreateUserForm } from "./CreateUserForm";
 
 export default async function UsersPage() {
   const { session, tenantId, isStaff } = await requireTenantSession();
@@ -12,9 +13,11 @@ export default async function UsersPage() {
 
   const users = await prisma.user.findMany({
     where: isStaff ? {} : { tenantId },
-    include: { tenant: true },
+    include: { tenant: true, courierAssignments: { select: { courierPartnerId: true } } },
     orderBy: { createdAt: "desc" },
   });
+  const tenants = isStaff ? await prisma.tenant.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } }) : [];
+  const couriers = await prisma.courierPartner.findMany({ select: { id: true, name: true }, orderBy: { name: "asc" } });
 
   return (
     <div>
@@ -23,6 +26,8 @@ export default async function UsersPage() {
         title="Users"
         description="Accounts that can sign in to AN Logistics. Reset a password to force a temporary one on next login."
       />
+
+      <CreateUserForm tenants={tenants} />
 
       {users.length === 0 ? (
         <EmptyState kind="empty" title="No users yet" />
@@ -47,6 +52,8 @@ export default async function UsersPage() {
                     user={u}
                     currentUserId={session.user.id}
                     tenantName={isStaff ? u.tenant?.name ?? "—" : undefined}
+                    couriers={couriers}
+                    assignedCourierIds={u.courierAssignments.map((a) => a.courierPartnerId)}
                   />
                 ))}
               </tbody>

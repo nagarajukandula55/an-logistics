@@ -67,16 +67,19 @@ const updateAgreementSchema = z.object({
 export async function updateAgreementAction(_prev: { ok: boolean; error?: string }, formData: FormData) {
   await requireOnboardingAdmin();
 
+  const agreementId = String(formData.get("agreementId") ?? "");
+  const existing = agreementId ? await prisma.agreement.findUnique({ where: { id: agreementId } }) : null;
+  if (!existing) return { ok: false, error: "Agreement not found" };
+  // Check immutability before validating editable fields so a malformed
+  // request can never obscure the more important locked-state response.
+  if (existing.status !== "DRAFT") return { ok: false, error: "Sent and signed agreements are locked. Create a new version." };
+
   const parsed = updateAgreementSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) {
     return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
   }
   const data = parsed.data;
 
-  const existing = await prisma.agreement.findUnique({ where: { id: data.agreementId } });
-  if (!existing) return { ok: false, error: "Agreement not found" };
-
-  if (existing.status !== "DRAFT") return { ok: false, error: "Sent and signed agreements are locked. Create a new version." };
   if (existing.termsSnapshot && (data.sellRateCardId !== existing.sellRateCardId || data.templateVersion !== existing.templateVersion)) return { ok: false, error: "Frozen terms and rates cannot be replaced. Prepare a new draft." };
   if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: existing.customerId } })) return { ok: false, error: "Rate card must belong to this customer" };
   if (existing.termsSnapshot && formData.get("documentMatches") !== "on") return {ok:false,error:"Confirm that the PDF contains the reviewed terms and exact rate schedule."};

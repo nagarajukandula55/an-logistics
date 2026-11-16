@@ -6,6 +6,7 @@ declare module "next-auth" {
       id: string;
       role: string;
       mustChangePassword: boolean;
+      canManageCourierCosts: boolean;
       tenantId: string | null;
       tenantType: string | null;
       customerId: string | null;
@@ -16,6 +17,7 @@ declare module "next-auth" {
   interface User {
     role?: string;
     mustChangePassword?: boolean;
+    canManageCourierCosts?: boolean;
     tenantId?: string | null;
     tenantType?: string | null;
     customerId?: string | null;
@@ -28,6 +30,7 @@ declare module "next-auth/jwt" {
     id?: string;
     role?: string;
     mustChangePassword?: boolean;
+    canManageCourierCosts?: boolean;
     tenantId?: string | null;
     tenantType?: string | null;
     customerId?: string | null;

@@ -105,26 +105,36 @@ model TenantApiKey {
 
 enum UserRole {
   ADMIN
+  STAFF
+  COLLABORATOR
   DISPATCHER
   DRIVER
   WAREHOUSE
   CUSTOMER
 }
 
+enum SellRateCardAudience {
+  DEFAULT
+  STAFF
+  COLLABORATOR
+  CLIENT
+}
+
 model User {
-  id                 String   @id @default(cuid())
-  name               String
-  email              String   @unique
-  passwordHash       String
-  role               UserRole @default(DISPATCHER)
-  isActive           Boolean  @default(true)
-  mustChangePassword Boolean  @default(true)
+  id                    String   @id @default(cuid())
+  name                  String
+  email                 String   @unique
+  passwordHash          String
+  role                  UserRole @default(DISPATCHER)
+  isActive              Boolean  @default(true)
+  mustChangePassword    Boolean  @default(true)
+  canManageCourierCosts Boolean  @default(false)
   // The Customer owner (set on signup/first user of a Customer). Only the
   // owner can invite/deactivate staff Users under their Customer — see
   // inviteBusinessStaffAction / setStaffActiveAction.
-  isBusinessOwner    Boolean  @default(false)
-  createdAt          DateTime @default(now())
-  updatedAt          DateTime @updatedAt
+  isBusinessOwner       Boolean  @default(false)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
   tenantId String?
@@ -132,6 +142,8 @@ model User {
   driverProfile Driver?
   customer      Customer? @relation(fields: [customerId], references: [id])
   customerId    String?
+
+  courierAssignments UserCourierAssignment[]
 
   @@index([customerId])
   @@index([tenantId])
@@ -291,15 +303,15 @@ enum OrderAssignmentMethod {
 }
 
 model Order {
-  bookingKey String? @unique
+  bookingKey      String?  @unique
   shipmentDetails Json?
-  bookingState String?
-  id           String   @id @default(cuid())
-  trackingCode String   @unique
-  tenantId     String?
-  tenant       Tenant?  @relation(fields: [tenantId], references: [id])
-  customerId   String
-  customer     Customer @relation(fields: [customerId], references: [id])
+  bookingState    String?
+  id              String   @id @default(cuid())
+  trackingCode    String   @unique
+  tenantId        String?
+  tenant          Tenant?  @relation(fields: [tenantId], references: [id])
+  customerId      String
+  customer        Customer @relation(fields: [customerId], references: [id])
 
   pickupAddress      String
   pickupContactName  String
@@ -445,13 +457,15 @@ model CourierPartner {
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
   tenantId String? @unique
 
-  branches    CourierBranch[]
-  agreements  CourierAgreement[]
-  apiConfig   CourierApiConfig?
-  orders      Order[]
-  rateCards   RateCard[]
-  quotations  Quotation[]
-  settlements Settlement[]
+  branches        CourierBranch[]
+  agreements      CourierAgreement[]
+  apiConfig       CourierApiConfig?
+  orders          Order[]
+  rateCards       RateCard[]
+  sellRateCards   SellRateCard[]
+  userAssignments UserCourierAssignment[]
+  quotations      Quotation[]
+  settlements     Settlement[]
 
   @@index([status])
 }
@@ -545,31 +559,49 @@ model RateCardSlab {
 // since CLIENT already means exactly "a business whose volume we operate
 // under negotiated terms" (see the TenantType doc comment above).
 model SellRateCard {
-  id               String    @id @default(cuid())
+  id               String               @id @default(cuid())
+  audience         SellRateCardAudience @default(DEFAULT)
+  courierPartnerId String?
+  courierPartner   CourierPartner?      @relation(fields: [courierPartnerId], references: [id])
   tenantId         String?
-  tenant           Tenant?   @relation(fields: [tenantId], references: [id])
+  tenant           Tenant?              @relation(fields: [tenantId], references: [id])
   // Business/individual-specific price list, agreed via Agreement below.
   // Resolution order (see getSellPrice): a Customer-scoped ACTIVE card
   // wins over the tenant-wide default (customerId null) — most-specific
   // wins, same as a business's staff all sharing their Customer's card.
   customerId       String?
-  customer         Customer? @relation(fields: [customerId], references: [id])
+  customer         Customer?            @relation(fields: [customerId], references: [id])
   name             String
-  isActive         Boolean   @default(true)
+  isActive         Boolean              @default(true)
   effectiveFrom    DateTime
   // Floor check, not enforced pricing: if set, a computed sell price that
   // would leave less than this % margin over a given courier's cost is
   // flagged (belowMarginFloor) wherever it's quoted, rather than silently
   // booked at a loss. Null = no floor check for this price list.
   minMarginPercent Float?
-  createdAt        DateTime  @default(now())
-  updatedAt        DateTime  @updatedAt
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
 
   slabs      SellRateCardSlab[]
   agreements Agreement[]
 
   @@index([tenantId])
   @@index([customerId])
+  @@index([courierPartnerId])
+  @@index([audience, courierPartnerId, tenantId, customerId, isActive])
+}
+
+// Staff/collaborator accounts can be limited to selected courier partners.
+// Admin accounts remain unrestricted.
+model UserCourierAssignment {
+  userId           String
+  user             User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  courierPartnerId String
+  courierPartner   CourierPartner @relation(fields: [courierPartnerId], references: [id], onDelete: Cascade)
+  createdAt        DateTime       @default(now())
+
+  @@id([userId, courierPartnerId])
+  @@index([courierPartnerId])
 }
 
 model SellRateCardSlab {
@@ -909,24 +941,25 @@ enum QuotationStatus {
 }
 
 model Quotation {
-  id              String            @id @default(cuid())
-  quoteNumber     String            @unique
-  applicationId   String?
-  application     PartnerApplication? @relation(fields: [applicationId], references: [id])
-  customerId      String?
-  customer        Customer?         @relation(fields: [customerId], references: [id])
+  id               String              @id @default(cuid())
+  quoteNumber      String              @unique
+  applicationId    String?
+  application      PartnerApplication? @relation(fields: [applicationId], references: [id])
+  customerId       String?
+  customer         Customer?           @relation(fields: [customerId], references: [id])
   courierPartnerId String?
-  courierPartner  CourierPartner?   @relation(fields: [courierPartnerId], references: [id])
-  status          QuotationStatus   @default(DRAFT)
-  title           String
-  templateSource  String          @default("AN_LOGISTICS")
-  validUntil      DateTime?
-  termsSnapshot   String
-  rateSnapshot    Json
-  sentAt          DateTime?
-  acceptedAt      DateTime?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
+  courierPartner   CourierPartner?     @relation(fields: [courierPartnerId], references: [id])
+  status           QuotationStatus     @default(DRAFT)
+  title            String
+  templateSource   String              @default("AN_LOGISTICS")
+  validUntil       DateTime?
+  termsSnapshot    String
+  rateSnapshot     Json
+  sentAt           DateTime?
+  acceptedAt       DateTime?
+  createdAt        DateTime            @default(now())
+  updatedAt        DateTime            @updatedAt
+
   @@index([status, createdAt])
 }
 
