@@ -1,5 +1,6 @@
 import { PrismaClient, TenantType, TenantStatus, UserRole } from "@prisma/client";
 import bcrypt from "bcryptjs";
+import { DTDC_AGREEMENT_TEMPLATE, DTDC_QUOTATION_TEMPLATE, DTDC_REFERENCE_TERMS } from "@/lib/dtdc-template-presets";
 
 const prisma = new PrismaClient();
 
@@ -75,9 +76,35 @@ async function seedDemoData() {
   console.log(`Seeded demo DTDC cost card ${card.id} and customer ${customer.email}. Marketplace tenant: ${marketplace.id}`);
 }
 
+async function seedDtdcReferenceTemplates() {
+  const courier = (await prisma.courierPartner.findMany({ orderBy: { createdAt: "asc" } })).find((partner) =>
+    partner.name.toLowerCase().includes("dtdc") || partner.legalName?.toLowerCase().includes("dtdc")
+  );
+
+  if (!courier) {
+    console.log("DTDC reference templates skipped: create the DTDC courier partner first.");
+    return;
+  }
+
+  await prisma.documentTemplate.upsert({
+    where: { name_version_kind_courierPartnerId: { name: "DTDC commercial quotation", version: "2026-09", kind: "QUOTATION", courierPartnerId: courier.id } },
+    update: { html: DTDC_QUOTATION_TEMPLATE, isActive: true },
+    create: { name: "DTDC commercial quotation", version: "2026-09", kind: "QUOTATION", courierPartnerId: courier.id, html: DTDC_QUOTATION_TEMPLATE },
+  });
+
+  await prisma.documentTemplate.upsert({
+    where: { name_version_kind_courierPartnerId: { name: "DTDC service agreement", version: "2026-09", kind: "AGREEMENT", courierPartnerId: courier.id } },
+    update: { html: DTDC_AGREEMENT_TEMPLATE, isActive: true },
+    create: { name: "DTDC service agreement", version: "2026-09", kind: "AGREEMENT", courierPartnerId: courier.id, html: DTDC_AGREEMENT_TEMPLATE },
+  });
+
+  console.log(`Seeded DTDC quotation/agreement formats. Terms reference: ${DTDC_REFERENCE_TERMS.length} characters.`);
+}
+
 async function main() {
   await seedTenantsAndBackfill();
   await seedAdmin();
+  await seedDtdcReferenceTemplates();
   await seedDemoData();
 }
 

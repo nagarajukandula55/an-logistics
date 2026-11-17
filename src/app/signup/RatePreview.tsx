@@ -1,0 +1,14 @@
+"use client";
+
+import { useState, useTransition } from "react";
+import { previewSignupRates } from "@/lib/actions/public-pricing";
+import { Button } from "@/components/ui/Button";
+
+type Preview = Awaited<ReturnType<typeof previewSignupRates>>;
+
+export function RatePreview({ getValues }: { getValues: () => { businessModel: string; baseCity: string; pickupCity: string; monthlyVolume: number } }) {
+  const [pending, startTransition] = useTransition();
+  const [preview, setPreview] = useState<Preview | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  return <div className="sm:col-span-2 rounded-card border border-accent/20 bg-accent-soft p-4"><div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between"><div><p className="font-medium text-ink">See indicative rates before applying</p><p className="text-xs text-ink-2">These are default discussion rates. Final client rates are agreed separately.</p></div><Button type="button" variant="secondary" loading={pending} onClick={() => { setError(null); startTransition(async () => { try { setPreview(await previewSignupRates(getValues())); } catch (e) { setError(e instanceof Error ? e.message : "Could not calculate rates"); } }); }}>{pending ? "Calculating..." : "Show indicative rates"}</Button></div>{error && <p className="mt-3 text-sm text-danger">{error}</p>}{preview && <div className="mt-4 overflow-x-auto rounded-control border border-border bg-surface"><div className="border-b border-border px-3 py-2 text-xs text-ink-2">Pricing basis: <strong>{preview.source}</strong> · default Staff/Collaborator rate = 2× cost</div>{preview.rates.length ? <table className="w-full text-left text-xs"><thead><tr className="border-b border-border text-ink-3"><th className="px-3 py-2">Courier</th><th className="px-3 py-2">Service</th><th className="px-3 py-2">Lane</th><th className="px-3 py-2">Weight</th><th className="px-3 py-2">Indicative rate</th></tr></thead><tbody>{preview.rates.slice(0, 12).map((rate, i) => <tr key={`${rate.courierName}-${rate.serviceCode}-${rate.lane}-${i}`} className="border-b border-border/70"><td className="px-3 py-2">{rate.courierName}</td><td className="px-3 py-2">{rate.serviceCode}</td><td className="px-3 py-2">{rate.lane}</td><td className="px-3 py-2">{rate.minWeightKg}–{rate.maxWeightKg} kg</td><td className="px-3 py-2 font-medium">₹{rate.defaultSellRate.toFixed(2)}</td></tr>)}</tbody></table> : <p className="p-4 text-sm text-ink-2">The detailed schedule is being prepared. Submit your application and our team will send the quotation after confirming courier availability.</p>}</div>}{preview && <label className="mt-3 flex items-start gap-2 text-sm text-ink-2"><input type="checkbox" name="requestQuotation" value="on" className="mt-1" />Email me this indicative quotation for discussion</label>}</div>;
+}

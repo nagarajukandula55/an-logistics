@@ -13,7 +13,7 @@ type Customer = {
   sellRateCards: { id: string; name: string }[];
 };
 
-export function NewAgreementForm({ customers }: { customers: Customer[] }) {
+export function NewAgreementForm({ customers, documentTemplates }: { customers: Customer[]; documentTemplates: { id: string; name: string; version: string; courierPartnerId: string | null }[] }) {
   const formRef = useRef<HTMLFormElement>(null);
   const [customerId, setCustomerId] = useState("");
   const [pending, startTransition] = useTransition();
@@ -83,6 +83,9 @@ export function NewAgreementForm({ customers }: { customers: Customer[] }) {
           </Field>
           <Field label="Document URL" htmlFor="documentUrl" required hint="Filled agreement PDF, fetchable by the server">
             <Input id="documentUrl" name="documentUrl" type="url" required />
+          </Field>
+          <Field label="HTML agreement format" htmlFor="documentTemplateId" hint="Select a saved global or courier-specific format">
+            <Select id="documentTemplateId" name="documentTemplateId" defaultValue=""><option value="">Built-in / uploaded PDF only</option>{documentTemplates.map(t => <option key={t.id} value={t.id}>{t.name} / {t.version}{t.courierPartnerId ? " (courier)" : " (global)"}</option>)}</Select>
           </Field>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <Field label="Signer name" htmlFor="signerName" hint="Defaults to customer name">

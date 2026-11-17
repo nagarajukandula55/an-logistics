@@ -24,6 +24,7 @@ type SellRateCard = {
   effectiveFrom: Date;
   minMarginPercent: number | null;
   slabs: Slab[];
+  courierPartnerId?: string | null;
 };
 
 type DraftSlab = { zone: string; minWeightKg: string; maxWeightKg: string; price: string };
@@ -35,12 +36,13 @@ function emptyDraftSlab(): DraftSlab {
 // tenantId undefined/null = the default price list (normal/marketplace
 // bookings); set it to scope this panel to one commercial CLIENT tenant's
 // own negotiated rates instead.
-export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, tenantId, customerId, cards }: { audience?: "DEFAULT" | "STAFF" | "COLLABORATOR" | "CLIENT"; courierPartnerId?: string | null; tenantId?: string | null; customerId?: string | null; cards: SellRateCard[] }) {
+export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, tenantId, customerId, cards, couriers = [], showCourierSelector = false }: { audience?: "DEFAULT" | "STAFF" | "COLLABORATOR" | "CLIENT"; courierPartnerId?: string | null; tenantId?: string | null; customerId?: string | null; cards: SellRateCard[]; couriers?: { id: string; name: string }[]; showCourierSelector?: boolean }) {
   const [showForm, setShowForm] = useState(cards.length === 0);
   const [name, setName] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState("");
   const [minMarginPercent, setMinMarginPercent] = useState("");
   const [slabs, setSlabs] = useState<DraftSlab[]>([emptyDraftSlab()]);
+  const [selectedCourierId, setSelectedCourierId] = useState(courierPartnerId ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
 
@@ -71,7 +73,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
 
     const fd = new FormData();
     fd.set("audience", audience);
-    if (courierPartnerId) fd.set("courierPartnerId", courierPartnerId);
+    if (selectedCourierId) fd.set("courierPartnerId", selectedCourierId);
     if (tenantId) fd.set("tenantId", tenantId);
     if (customerId) fd.set("customerId", customerId);
     fd.set("name", name.trim());
@@ -103,11 +105,21 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
     });
   }
 
+  const visibleCards = showCourierSelector ? cards.filter((card) => (card.courierPartnerId ?? "") === selectedCourierId) : cards;
+
   return (
     <div className="flex flex-col gap-4">
-      {cards.length > 0 && (
+      {showCourierSelector && (
+        <Field label="Courier" htmlFor="src-courier">
+          <select id="src-courier" value={selectedCourierId} onChange={(e) => setSelectedCourierId(e.target.value)} className="h-10 w-full rounded-control border border-border bg-surface px-3 text-sm text-ink">
+            <option value="">Global / all couriers fallback</option>
+            {couriers.map((courier) => <option key={courier.id} value={courier.id}>{courier.name}</option>)}
+          </select>
+        </Field>
+      )}
+      {visibleCards.length > 0 && (
         <ul className="flex flex-col gap-3">
-          {cards.map((card) => (
+          {visibleCards.map((card) => (
             <li key={card.id} className="rounded-control border border-border p-3 text-sm">
               <div className="flex items-center justify-between">
                 <div>
@@ -212,7 +224,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
             <Button type="button" size="sm" loading={pending} onClick={handleSubmit}>
               Save rate card
             </Button>
-            {cards.length > 0 && (
+            {visibleCards.length > 0 && (
               <Button type="button" size="sm" variant="secondary" onClick={() => setShowForm(false)}>
                 Cancel
               </Button>

@@ -63,22 +63,27 @@ model Tenant {
   // detail page instead.
   pickupAddress          String?
   pickupPincode          String?
+  baseOfficeCity         String?
+  baseOfficePincode      String?
   pickupContactName      String?
   pickupContactPhone     String?
   createdAt              DateTime        @default(now())
   updatedAt              DateTime        @updatedAt
 
-  users          User[]
-  orders         Order[]
-  vehicles       Vehicle[]
-  drivers        Driver[]
-  warehouses     Warehouse[]
-  customers      Customer[]
-  courierPartner CourierPartner?
-  apiKeys        TenantApiKey[]
-  invoices       Invoice[]       @relation("InvoiceForTenant")
-  settlements    Settlement[]    @relation("SettlementForTenant")
-  sellRateCards  SellRateCard[]
+  users                 User[]
+  orders                Order[]
+  vehicles              Vehicle[]
+  drivers               Driver[]
+  warehouses            Warehouse[]
+  customers             Customer[]
+  courierPartner        CourierPartner?
+  apiKeys               TenantApiKey[]
+  invoices              Invoice[]                      @relation("InvoiceForTenant")
+  settlements           Settlement[]                   @relation("SettlementForTenant")
+  sellRateCards         SellRateCard[]
+  sellPricingStrategies SellPricingStrategy[]
+  courierNelAssignments CustomerCourierNelAssignment[]
+  courierRevenueMonths  CustomerCourierRevenueMonth[]
 
   @@index([type])
   @@index([status])
@@ -179,6 +184,9 @@ model Customer {
   phone                 String?
   email                 String?
   address               String?
+  businessModel         String?
+  baseCity              String?
+  basePincode           String?
   isActive              Boolean             @default(true)
   kind                  CustomerKind        @default(INDIVIDUAL)
   accountType           CustomerAccountType @default(CLIENT)
@@ -194,14 +202,17 @@ model Customer {
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
   tenantId String?
 
-  users         User[]
-  orders        Order[]
-  sellRateCards SellRateCard[]
-  wallet        Wallet?
-  agreements    Agreement[]
-  quotations    Quotation[]
-  invoices      Invoice[]
-  telegramLink  TelegramLink?
+  users                         User[]
+  orders                        Order[]
+  sellRateCards                 SellRateCard[]
+  sellPricingStrategies         SellPricingStrategy[]
+  wallet                        Wallet?
+  agreements                    Agreement[]
+  quotations                    Quotation[]
+  invoices                      Invoice[]
+  telegramLink                  TelegramLink?
+  customerCourierNelAssignments CustomerCourierNelAssignment[]
+  customerCourierRevenueMonths  CustomerCourierRevenueMonth[]
 
   @@index([name])
   @@index([tenantId])
@@ -457,15 +468,20 @@ model CourierPartner {
   tenant   Tenant? @relation(fields: [tenantId], references: [id])
   tenantId String? @unique
 
-  branches        CourierBranch[]
-  agreements      CourierAgreement[]
-  apiConfig       CourierApiConfig?
-  orders          Order[]
-  rateCards       RateCard[]
-  sellRateCards   SellRateCard[]
-  userAssignments UserCourierAssignment[]
-  quotations      Quotation[]
-  settlements     Settlement[]
+  branches              CourierBranch[]
+  agreements            CourierAgreement[]
+  apiConfig             CourierApiConfig?
+  orders                Order[]
+  rateCards             RateCard[]
+  sellRateCards         SellRateCard[]
+  userAssignments       UserCourierAssignment[]
+  documentTemplates     DocumentTemplate[]
+  quotations            Quotation[]
+  settlements           Settlement[]
+  costRateMatrices      CourierCostRateMatrix[]
+  sellPricingStrategies SellPricingStrategy[]
+  nelAssignments        CustomerCourierNelAssignment[]
+  revenueMonths         CustomerCourierRevenueMonth[]
 
   @@index([status])
 }
@@ -559,28 +575,32 @@ model RateCardSlab {
 // since CLIENT already means exactly "a business whose volume we operate
 // under negotiated terms" (see the TenantType doc comment above).
 model SellRateCard {
-  id               String               @id @default(cuid())
-  audience         SellRateCardAudience @default(DEFAULT)
-  courierPartnerId String?
-  courierPartner   CourierPartner?      @relation(fields: [courierPartnerId], references: [id])
-  tenantId         String?
-  tenant           Tenant?              @relation(fields: [tenantId], references: [id])
+  id                String                 @id @default(cuid())
+  audience          SellRateCardAudience   @default(DEFAULT)
+  courierPartnerId  String?
+  courierPartner    CourierPartner?        @relation(fields: [courierPartnerId], references: [id])
+  tenantId          String?
+  tenant            Tenant?                @relation(fields: [tenantId], references: [id])
   // Business/individual-specific price list, agreed via Agreement below.
   // Resolution order (see getSellPrice): a Customer-scoped ACTIVE card
   // wins over the tenant-wide default (customerId null) — most-specific
   // wins, same as a business's staff all sharing their Customer's card.
-  customerId       String?
-  customer         Customer?            @relation(fields: [customerId], references: [id])
-  name             String
-  isActive         Boolean              @default(true)
-  effectiveFrom    DateTime
+  customerId        String?
+  customer          Customer?              @relation(fields: [customerId], references: [id])
+  name              String
+  isActive          Boolean                @default(true)
+  effectiveFrom     DateTime
   // Floor check, not enforced pricing: if set, a computed sell price that
   // would leave less than this % margin over a given courier's cost is
   // flagged (belowMarginFloor) wherever it's quoted, rather than silently
   // booked at a loss. Null = no floor check for this price list.
-  minMarginPercent Float?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
+  minMarginPercent  Float?
+  costMatrixId      String?
+  costMatrix        CourierCostRateMatrix? @relation("SellRateCardCostMatrix", fields: [costMatrixId], references: [id])
+  pricingStrategyId String?
+  pricingStrategy   SellPricingStrategy?   @relation("SellRateCardPricingStrategy", fields: [pricingStrategyId], references: [id])
+  createdAt         DateTime               @default(now())
+  updatedAt         DateTime               @updatedAt
 
   slabs      SellRateCardSlab[]
   agreements Agreement[]
@@ -589,6 +609,8 @@ model SellRateCard {
   @@index([customerId])
   @@index([courierPartnerId])
   @@index([audience, courierPartnerId, tenantId, customerId, isActive])
+  @@index([costMatrixId])
+  @@index([pricingStrategyId])
 }
 
 // Staff/collaborator accounts can be limited to selected courier partners.
@@ -615,6 +637,140 @@ model SellRateCardSlab {
   isActive       Boolean      @default(true)
 
   @@index([sellRateCardId])
+}
+
+// Normalized courier cost schedules imported from source workbooks such as
+// DTDC CPDP NEL tables and the MLB blue-table schedules. These are never
+// exposed as customer sell prices directly.
+model CourierCostRateMatrix {
+  id                    String         @id @default(cuid())
+  courierPartnerId      String
+  courierPartner        CourierPartner @relation(fields: [courierPartnerId], references: [id], onDelete: Cascade)
+  name                  String
+  matrixType            String // CPDP_ECOM, MLB_REVERSE, AGREEMENT_REFERENCE
+  serviceCode           String // 7V, 7X, 7D, 7G, EXPRESS, AIR_CARGO, SURFACE_CARGO
+  levelCode             String? // NEL0..NEL6 where applicable
+  customerSegment       String         @default("ALL") // ECOM, NON_ECOM, ALL
+  requiresBaseLocation  Boolean        @default(false)
+  baseLocationCode      String?
+  sourceFile            String?
+  sourceSheet           String?
+  effectiveFrom         DateTime
+  effectiveTo           DateTime?
+  gstPercent            Float          @default(18)
+  fuelSurchargePercent  Float?
+  includesFuelSurcharge Boolean        @default(false)
+  includesBookCost      Boolean        @default(false)
+  costAdjustmentPercent Float          @default(0)
+  bookCost              Float?
+  pickupChargePerKg     Float?
+  pickupMinimumCharge   Float?
+  rtoPercent            Float?
+  codFixedCharge        Float?
+  codPercent            Float?
+  insurancePercent      Float?
+  isActive              Boolean        @default(true)
+  notes                 String?
+  createdAt             DateTime       @default(now())
+  updatedAt             DateTime       @updatedAt
+
+  rows          CourierCostRateRow[]
+  sellRateCards SellRateCard[]       @relation("SellRateCardCostMatrix")
+
+  @@index([courierPartnerId, matrixType, serviceCode, levelCode, isActive])
+  @@index([effectiveFrom, effectiveTo])
+}
+
+model CourierCostRateRow {
+  id               String                @id @default(cuid())
+  matrixId         String
+  matrix           CourierCostRateMatrix @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  lane             String // CITY, REGION, ZONE, METRO, ROI_A, ROI_B, SPECIAL_DESTINATION
+  minWeightKg      Float
+  maxWeightKg      Float
+  weightBasis      String // FLAT, ADDITIONAL_500G, PER_KG, UP_TO_BAND
+  costPrice        Float
+  surchargePercent Float?
+  fixedCharge      Float?
+  sourceRow        String?
+  metadata         Json?
+  sourceCostPrice  Float?
+  isActive         Boolean               @default(true)
+
+  @@index([matrixId, lane, minWeightKg, maxWeightKg])
+}
+
+// The NEL level that is currently assigned to a customer for a courier. The
+// assignment is effective-dated so quotation history can always be explained.
+model CustomerCourierNelAssignment {
+  id               String         @id @default(cuid())
+  customerId       String
+  customer         Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  courierPartnerId String
+  courierPartner   CourierPartner @relation(fields: [courierPartnerId], references: [id], onDelete: Cascade)
+  levelCode        String // NEL0..NEL6
+  assignedFrom     DateTime
+  assignedTo       DateTime?
+  reason           String?
+  createdAt        DateTime       @default(now())
+  tenant           Tenant?        @relation(fields: [tenantId], references: [id])
+  tenantId         String?
+
+  @@index([customerId, courierPartnerId, assignedFrom])
+  @@index([courierPartnerId, levelCode, assignedFrom])
+}
+
+// Completed monthly business used to qualify the next NEL level. Revenue is
+// stored separately from the assignment so the rule can be audited.
+model CustomerCourierRevenueMonth {
+  id                 String         @id @default(cuid())
+  customerId         String
+  customer           Customer       @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  courierPartnerId   String
+  courierPartner     CourierPartner @relation(fields: [courierPartnerId], references: [id], onDelete: Cascade)
+  monthStart         DateTime
+  monthlyRevenue     Float
+  qualifiedLevelCode String?
+  appliedLevelCode   String?
+  lockedUntil        DateTime?
+  createdAt          DateTime       @default(now())
+  tenant             Tenant?        @relation(fields: [tenantId], references: [id])
+  tenantId           String?
+
+  @@unique([customerId, courierPartnerId, monthStart])
+  @@index([courierPartnerId, monthStart])
+}
+
+// Commercial strategy applied on top of a courier cost matrix. It supports
+// higher sell rates for low-volume partners while keeping the cost source and
+// the customer-facing sell card separate and auditable.
+model SellPricingStrategy {
+  id                   String               @id @default(cuid())
+  courierPartnerId     String
+  courierPartner       CourierPartner       @relation(fields: [courierPartnerId], references: [id], onDelete: Cascade)
+  audience             SellRateCardAudience @default(DEFAULT)
+  tenantId             String?
+  tenant               Tenant?              @relation(fields: [tenantId], references: [id])
+  customerId           String?
+  customer             Customer?            @relation(fields: [customerId], references: [id])
+  name                 String
+  volumeMinMonthly     Float?
+  volumeMaxMonthly     Float?
+  markupPercent        Float                @default(0)
+  minimumMarginPercent Float?
+  handlingFee          Float                @default(0)
+  roundingUnit         Float                @default(1)
+  isActive             Boolean              @default(true)
+  effectiveFrom        DateTime
+  effectiveTo          DateTime?
+  notes                String?
+  createdAt            DateTime             @default(now())
+  updatedAt            DateTime             @updatedAt
+
+  sellRateCards SellRateCard[] @relation("SellRateCardPricingStrategy")
+
+  @@index([courierPartnerId, audience, tenantId, customerId, isActive])
+  @@index([volumeMinMonthly, volumeMaxMonthly])
 }
 
 model CourierApiConfig {
@@ -719,20 +875,22 @@ enum AgreementStatus {
 
 model Agreement {
   title                 String?
-  templateSource        String          @default("AN_LOGISTICS")
-  partyType             String          @default("CLIENT")
+  templateSource        String            @default("AN_LOGISTICS")
+  partyType             String            @default("CLIENT")
   termsSnapshot         String?
   rateSnapshot          Json?
   legalReviewedAt       DateTime?
-  id                    String          @id @default(cuid())
+  id                    String            @id @default(cuid())
   customerId            String
-  customer              Customer        @relation(fields: [customerId], references: [id])
+  customer              Customer          @relation(fields: [customerId], references: [id])
   kind                  AgreementKind
-  status                AgreementStatus @default(DRAFT)
+  status                AgreementStatus   @default(DRAFT)
   templateVersion       String
   documentUrl           String?
   sellRateCardId        String?
-  sellRateCard          SellRateCard?   @relation(fields: [sellRateCardId], references: [id])
+  sellRateCard          SellRateCard?     @relation(fields: [sellRateCardId], references: [id])
+  documentTemplateId    String?
+  documentTemplate      DocumentTemplate? @relation(fields: [documentTemplateId], references: [id])
   // Envelope/session id from the central e-sign API, for status polling and
   // webhook correlation once that integration exists.
   externalEnvelopeId    String?
@@ -745,8 +903,8 @@ model Agreement {
   // cron re-notifying every run once a reminder's gone out.
   renewalDate           DateTime?
   renewalReminderSentAt DateTime?
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt             DateTime          @default(now())
+  updatedAt             DateTime          @updatedAt
 
   @@index([customerId])
   @@index([externalEnvelopeId])
@@ -913,8 +1071,12 @@ model PartnerApplication {
   phone          String
   company        String?
   accountType    String
+  businessModel  String?
   address        String
   pincode        String
+  baseCity       String?
+  basePincode    String?
+  pickupCity     String?
   gstin          String?
   monthlyVolume  Int
   requirements   String?
@@ -931,6 +1093,64 @@ model PartnerApplication {
   @@index([status, createdAt])
 }
 
+model TatMatrix {
+  id            String       @id @default(cuid())
+  name          String
+  sourceFile    String?
+  effectiveFrom DateTime
+  effectiveTo   DateTime?
+  isActive      Boolean      @default(true)
+  uploadedAt    DateTime     @default(now())
+  rows          TatRateRow[]
+
+  @@index([isActive, effectiveFrom])
+}
+
+model TatRateRow {
+  id                 String    @id @default(cuid())
+  matrixId           String
+  matrix             TatMatrix @relation(fields: [matrixId], references: [id], onDelete: Cascade)
+  originPincode      String?
+  destinationPincode String
+  originCity         String?
+  destinationCity    String?
+  serviceCode        String?
+  tatDays            Int
+  workingDays        Boolean   @default(true)
+  cutoffTime         String?
+  notes              String?
+  metadata           Json?
+
+  @@index([destinationPincode, originPincode, serviceCode])
+  @@index([matrixId])
+}
+
+enum DocumentTemplateKind {
+  QUOTATION
+  AGREEMENT
+}
+
+// Editable HTML document formats. A null courierPartnerId is the global
+// fallback; a courier-specific template takes priority for that courier.
+model DocumentTemplate {
+  id               String               @id @default(cuid())
+  name             String
+  version          String
+  kind             DocumentTemplateKind
+  courierPartnerId String?
+  courierPartner   CourierPartner?      @relation(fields: [courierPartnerId], references: [id])
+  html             String               @db.Text
+  isActive         Boolean              @default(true)
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+
+  quotations Quotation[]
+  agreements Agreement[]
+
+  @@unique([name, version, kind, courierPartnerId])
+  @@index([kind, courierPartnerId, isActive])
+}
+
 enum QuotationStatus {
   DRAFT
   SENT
@@ -941,24 +1161,26 @@ enum QuotationStatus {
 }
 
 model Quotation {
-  id               String              @id @default(cuid())
-  quoteNumber      String              @unique
-  applicationId    String?
-  application      PartnerApplication? @relation(fields: [applicationId], references: [id])
-  customerId       String?
-  customer         Customer?           @relation(fields: [customerId], references: [id])
-  courierPartnerId String?
-  courierPartner   CourierPartner?     @relation(fields: [courierPartnerId], references: [id])
-  status           QuotationStatus     @default(DRAFT)
-  title            String
-  templateSource   String              @default("AN_LOGISTICS")
-  validUntil       DateTime?
-  termsSnapshot    String
-  rateSnapshot     Json
-  sentAt           DateTime?
-  acceptedAt       DateTime?
-  createdAt        DateTime            @default(now())
-  updatedAt        DateTime            @updatedAt
+  id                 String              @id @default(cuid())
+  quoteNumber        String              @unique
+  applicationId      String?
+  application        PartnerApplication? @relation(fields: [applicationId], references: [id])
+  customerId         String?
+  customer           Customer?           @relation(fields: [customerId], references: [id])
+  courierPartnerId   String?
+  courierPartner     CourierPartner?     @relation(fields: [courierPartnerId], references: [id])
+  status             QuotationStatus     @default(DRAFT)
+  title              String
+  templateSource     String              @default("AN_LOGISTICS")
+  documentTemplateId String?
+  documentTemplate   DocumentTemplate?   @relation(fields: [documentTemplateId], references: [id])
+  validUntil         DateTime?
+  termsSnapshot      String
+  rateSnapshot       Json
+  sentAt             DateTime?
+  acceptedAt         DateTime?
+  createdAt          DateTime            @default(now())
+  updatedAt          DateTime            @updatedAt
 
   @@index([status, createdAt])
 }

@@ -14,7 +14,7 @@ import { daysUntil } from "@/lib/date";
 export default async function AgreementsPage() {
   await requireOnboardingAdmin();
 
-  const [agreementRows, customers] = await Promise.all([
+  const [agreementRows, customers, documentTemplates] = await Promise.all([
     prisma.agreement.findMany({
       include: { customer: true, sellRateCard: true },
       orderBy: { createdAt: "desc" },
@@ -24,6 +24,7 @@ export default async function AgreementsPage() {
       orderBy: { name: "asc" },
       include: { sellRateCards: { orderBy: { effectiveFrom: "desc" } } },
     }),
+    prisma.documentTemplate.findMany({ where: { kind: "AGREEMENT", isActive: true }, select: { id: true, name: true, version: true, courierPartnerId: true }, orderBy: { updatedAt: "desc" } }),
   ]);
 
   const agreements = agreementRows.map((a) => ({
@@ -51,7 +52,7 @@ export default async function AgreementsPage() {
           </Card>
         </div>
         <div>
-          <NewAgreementForm customers={customers} />
+          <NewAgreementForm customers={customers} documentTemplates={documentTemplates} />
         </div>
       </div>
     </div>

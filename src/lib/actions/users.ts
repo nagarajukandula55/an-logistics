@@ -171,6 +171,19 @@ export async function toggleCourierCostPermissionAction(userId: string): Promise
   const target = await prisma.user.findUnique({ where: { id: userId }, select: { tenantId: true, role: true, canManageCourierCosts: true } });
   if (!target || (!guard.isStaff && target.tenantId !== guard.tenantId)) return { ok: false, error: "User not found" };
   if (target.role === "CUSTOMER") return { ok: false, error: "Customer accounts cannot manage courier costs" };
+  if (!target.canManageCourierCosts) {
+    const existingAuthorized = await prisma.user.findFirst({
+      where: {
+        canManageCourierCosts: true,
+        id: { not: guard.session.user.id },
+        ...(guard.isStaff ? {} : { tenantId: guard.tenantId }),
+      },
+      select: { id: true, name: true },
+    });
+    if (existingAuthorized) {
+      return { ok: false, error: `Cost-card access is already assigned to ${existingAuthorized.name}. Remove that access first.` };
+    }
+  }
   await prisma.user.update({ where: { id: userId }, data: { canManageCourierCosts: !target.canManageCourierCosts } });
   revalidatePath("/users");
   return { ok: true };

@@ -17,6 +17,7 @@ const createAgreementSchema = z.object({
   signerName: z.string().optional(),
   signerEmail: z.string().email().optional().or(z.literal("")),
   sellRateCardId: z.string().optional(),
+  documentTemplateId: z.string().optional(),
   renewalDate: z.string().optional(),
 });
 
@@ -30,6 +31,8 @@ export async function createAgreementAction(_prev: { ok: boolean; error?: string
   const data = parsed.data;
 
   if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: data.customerId } })) return { ok: false, error: "Rate card must belong to this customer" };
+  if (data.documentTemplateId && !await prisma.documentTemplate.findFirst({ where: { id: data.documentTemplateId, kind: "AGREEMENT", isActive: true } })) return { ok: false, error: "Agreement format was not found" };
+  const rateCard = data.sellRateCardId ? await prisma.sellRateCard.findUnique({ where: { id: data.sellRateCardId }, include: { slabs: true } }) : null;
   await prisma.agreement.create({
     data: {
       customerId: data.customerId,
@@ -41,6 +44,8 @@ export async function createAgreementAction(_prev: { ok: boolean; error?: string
       signerName: data.signerName || null,
       signerEmail: data.signerEmail || null,
       sellRateCardId: data.sellRateCardId || null,
+      documentTemplateId: data.documentTemplateId || null,
+      rateSnapshot: rateCard?.slabs ?? undefined,
       renewalDate: data.renewalDate ? new Date(data.renewalDate) : null,
       status: AgreementStatus.DRAFT,
     },
@@ -60,6 +65,7 @@ const updateAgreementSchema = z.object({
   signerName: z.string().optional(),
   signerEmail: z.string().email().optional().or(z.literal("")),
   sellRateCardId: z.string().optional(),
+  documentTemplateId: z.string().optional(),
   renewalDate: z.string().optional(),
 });
 
@@ -82,6 +88,8 @@ export async function updateAgreementAction(_prev: { ok: boolean; error?: string
 
   if (existing.termsSnapshot && (data.sellRateCardId !== existing.sellRateCardId || data.templateVersion !== existing.templateVersion)) return { ok: false, error: "Frozen terms and rates cannot be replaced. Prepare a new draft." };
   if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: existing.customerId } })) return { ok: false, error: "Rate card must belong to this customer" };
+  if (data.documentTemplateId && !await prisma.documentTemplate.findFirst({ where: { id: data.documentTemplateId, kind: "AGREEMENT", isActive: true } })) return { ok: false, error: "Agreement format was not found" };
+  const rateCard = data.sellRateCardId ? await prisma.sellRateCard.findUnique({ where: { id: data.sellRateCardId }, include: { slabs: true } }) : null;
   if (existing.termsSnapshot && formData.get("documentMatches") !== "on") return {ok:false,error:"Confirm that the PDF contains the reviewed terms and exact rate schedule."};
   const newSellRateCardId = data.sellRateCardId || null;
 
@@ -97,6 +105,8 @@ export async function updateAgreementAction(_prev: { ok: boolean; error?: string
         signerName: data.signerName || null,
         signerEmail: data.signerEmail || null,
         sellRateCardId: newSellRateCardId,
+        documentTemplateId: data.documentTemplateId !== undefined ? data.documentTemplateId || null : existing.documentTemplateId,
+        rateSnapshot: rateCard?.slabs ?? undefined,
         renewalDate: data.renewalDate ? new Date(data.renewalDate) : null,
       },
     });

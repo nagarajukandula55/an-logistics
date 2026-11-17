@@ -24,7 +24,7 @@ export default async function UsersPage() {
       <PageHeader
         eyebrow="Administration"
         title="Users"
-        description="Accounts that can sign in to AN Logistics. Reset a password to force a temporary one on next login."
+        description="Accounts that can sign in to AN Logistics. You can authorize only one additional person to view courier cost cards; all other roles use sell-rate cards."
       />
 
       <CreateUserForm tenants={tenants} />

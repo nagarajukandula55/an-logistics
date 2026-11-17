@@ -8,6 +8,8 @@ import { getMarketplaceTenantId } from "@/lib/marketplace-tenant";
 import { notifyOpsTelegram } from "@/lib/telegram";
 import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
+import { getIndicativeRates } from "@/lib/indicative-pricing";
+import { sendEmail } from "@/lib/email";
 export type OnboardingState = {
     ok: boolean;
     error?: string;
@@ -17,20 +19,23 @@ const applicationSchema = z.object({
     name: z.string().trim().min(2).max(100), email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
     phone: z.string().trim().regex(/^(?:\+91[ -]?)?[6-9]\d{9}$/, "Enter a valid Indian mobile number"),
     company: z.string().trim().max(200).optional(), accountType: z.enum(["individual", "business", "reseller"]),
+    businessModel: z.enum(["B2B", "B2C", "ECOM", "MIXED", "OTHER"]),
     address: z.string().trim().min(10).max(1000), pincode: z.string().regex(/^[1-9]\d{5}$/),
+    baseCity: z.string().trim().min(2).max(100), basePincode: z.string().regex(/^[1-9]\d{5}$/), pickupCity: z.string().trim().min(2).max(100),
     gstin: z.string().trim().toUpperCase().regex(/^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "Enter a valid GSTIN or leave blank").optional(),
     monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), requirements: z.string().max(2000).optional(),
-    consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), website: z.string().max(0).optional(),
+    consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), requestQuotation: z.string().optional(), website: z.string().max(0).optional(),
 });
 export async function applyPartnerAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
     const result = applicationSchema.safeParse(Object.fromEntries(fd));
     if (!result.success)
         return { ok: false, error: result.error.issues[0].message };
-    const { consent, website, shipmentType, servicePreference, pickupFrequency, ...data } = result.data;
+    const { consent, website, requestQuotation, shipmentType, servicePreference, pickupFrequency, ...data } = result.data;
     const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
     data.requirements = requirements;
     void consent;
     void website;
+    const escape = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
     try {
         await prisma.partnerApplication.create({ data: { ...data, consentAt: new Date() } });
     }
@@ -39,7 +44,15 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
             return { ok: true, message: "Your application is already with our team. We will contact you." };
         throw e;
     }
-    const escape = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
+    if (requestQuotation === "on") {
+        try {
+            const preview = await getIndicativeRates({ businessModel: data.businessModel, baseCity: data.baseCity, pickupCity: data.pickupCity, monthlyVolume: data.monthlyVolume });
+            const rows = preview.rates.slice(0, 24).map((rate) => `<tr><td>${rate.courierName}</td><td>${rate.serviceCode}</td><td>${rate.lane}</td><td>${rate.minWeightKg}-${rate.maxWeightKg} kg</td><td>₹${rate.defaultSellRate.toFixed(2)}</td></tr>`).join("");
+            await sendEmail({ to: data.email, subject: "AN Logistics indicative quotation", html: `<h2>Indicative quotation for ${escape(data.company || data.name)}</h2><p>Pricing basis: ${escape(preview.source)}. These are discussion rates and become final only after commercial confirmation and agreement.</p>${rows ? `<table border="1" cellpadding="6" cellspacing="0"><tr><th>Courier</th><th>Service</th><th>Lane</th><th>Weight</th><th>Indicative sell rate</th></tr>${rows}</table>` : "<p>Our team will prepare the detailed rate table from the applicable courier schedule and contact you.</p>"}` });
+        } catch {
+            console.error("Application saved; indicative quotation email failed.");
+        }
+    }
     try {
         await notifyOpsTelegram("PARTNER_APPLICATION", `New application: <b>${escape(data.name)}</b>\n${escape(data.company || data.accountType)}\n${escape(data.email)} · ${escape(data.phone)}\nReview in Admin → Onboarding.`);
     }
@@ -58,7 +71,8 @@ export async function reviewApplicationAction(_: OnboardingState, fd: FormData):
         const a = await tx.partnerApplication.findUnique({ where: { id: parsed.data.id } });
         if (!a || a.status === "ACTIVE")
             throw new Error("Application is unavailable or already active");
-        const customerId = a.customerId ?? (await tx.customer.create({ data: { name: a.company || a.name, email: a.email, phone: a.phone, address: a.address, kind: a.accountType === "individual" ? "INDIVIDUAL" : "BUSINESS", accountType: a.accountType === "reseller" ? "RESELLER" : "CLIENT", tenantId, isActive: false } })).id;
+        const customerId = a.customerId ?? (await tx.customer.create({ data: { name: a.company || a.name, email: a.email, phone: a.phone, address: a.address, businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode, kind: a.accountType === "individual" ? "INDIVIDUAL" : "BUSINESS", accountType: a.accountType === "reseller" ? "RESELLER" : "CLIENT", tenantId, isActive: false } })).id;
+        await tx.customer.update({ where: { id: customerId }, data: { businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode } });
         await tx.partnerApplication.update({ where: { id: a.id }, data: { customerId, status: parsed.data.status, notes: parsed.data.notes } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     revalidatePath("/onboarding");

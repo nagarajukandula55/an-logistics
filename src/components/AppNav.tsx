@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2, Receipt, LayoutDashboard, Tag, FileSignature, Send, PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { Truck, Package, Users, LogOut, Handshake, ShieldCheck, Building2, Receipt, LayoutDashboard, Tag, FileSignature, Send, PanelLeftClose, PanelLeftOpen, FileChartColumn, Files, Clock3 } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { signOutAction } from "@/lib/actions/auth-signout";
 
@@ -12,10 +12,11 @@ const LINKS = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/orders", label: "Orders", icon: Package },
   { href: "/dispatch", label: "Dispatch", icon: Truck }, { href: "/couriers", label: "Couriers", icon: Handshake },
   { href: "/pricing", label: "Pricing", icon: Tag },
+  { href: "/tat", label: "TAT Planner", icon: Clock3 },
   { href: "/drivers", label: "Drivers", icon: Users }, { href: "/vehicles", label: "Vehicles", icon: Truck },
 ];
 const ADMIN_LINKS = [
-  { href: "/onboarding", label: "Onboarding", icon: Handshake }, { href: "/agreements", label: "Agreements", icon: FileSignature }, { href: "/users", label: "Users", icon: ShieldCheck },
+  { href: "/onboarding", label: "Onboarding", icon: Handshake }, { href: "/documents", label: "Documents", icon: Files }, { href: "/quotations", label: "Quotations", icon: FileChartColumn }, { href: "/agreements", label: "Agreements", icon: FileSignature }, { href: "/users", label: "Users", icon: ShieldCheck },
   { href: "/tenants", label: "Tenants", icon: Building2 }, { href: "/billing/invoices", label: "Billing", icon: Receipt },
   { href: "/settings/telegram-notifications", label: "Telegram", icon: Send },
 ];
