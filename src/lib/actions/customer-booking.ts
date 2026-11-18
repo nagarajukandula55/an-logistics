@@ -55,6 +55,24 @@ export type CreateCustomerBookingState = {
     providerRef?: string;
     message?: string;
 };
+
+async function createBookingInvoice(orderId: string, customerId: string, tenantId: string | null, chargedAmount: number, taxAmount: number, totalAmount: number, trackingCode: string, providerRef?: string) {
+    const customer = await prisma.customer.findUnique({ where: { id: customerId }, select: { billingCycle: true, paymentTermsDays: true } });
+    if (!tenantId || customer?.billingCycle !== "PER_SHIPMENT" || await prisma.invoiceLineItem.findFirst({ where: { orderId } })) return;
+    const count = await prisma.invoice.count({ where: { customerId } });
+    const issuedAt = new Date();
+    const dueAt = new Date(issuedAt);
+    dueAt.setDate(dueAt.getDate() + (customer.paymentTermsDays || 0));
+    await prisma.invoice.create({
+        data: {
+            invoiceNumber: `CINV-${issuedAt.getFullYear()}-${String(count + 1).padStart(6, "0")}`,
+            tenantId, customerId, periodStart: issuedAt, periodEnd: issuedAt, status: "SENT",
+            subtotal: chargedAmount, taxAmount, totalAmount, issuedAt, dueAt,
+            notes: providerRef ? `DTDC docket ${providerRef}` : "Shipment booking invoice",
+            lineItems: { create: { orderId, description: `AN Logistics shipment ${trackingCode}`, quantity: 1, unitPrice: chargedAmount, amount: chargedAmount } },
+        },
+    });
+}
 export async function createCustomerBookingAction(_prev: CreateCustomerBookingState, formData: FormData): Promise<CreateCustomerBookingState> {
     const { customerId, tenantId } = await requireCustomerSession();
     const parsed = bookingSchema.safeParse(Object.fromEntries(formData.entries()));
@@ -191,6 +209,7 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
         try {
             const result = await provider.createShipment(partner, { ...data, weightKg: weight.chargeableWeightKg, orderId: order.id });
             await prisma.order.update({ where: { id: order.id }, data: { providerRef: result.providerRef, providerLabelUrl: result.labelUrl, bookingState: "CONFIRMED", statusEvents: { create: { status: "CREATED", note: "Courier docket issued: " + result.providerRef } } } });
+            try { await createBookingInvoice(order.id, customer.id, tenantId, chargedAmount, taxAmount, totalChargedAmount, order.trackingCode, result.providerRef); } catch (error) { console.error("Booking succeeded but invoice creation failed", error); }
             return { ok: true, trackingCode: order.trackingCode, providerRef: result.providerRef, message: "Docket issued. Pickup timing is subject to courier confirmation." };
         }
         catch {
@@ -198,5 +217,6 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
             return { ok: true, trackingCode: order.trackingCode, message: "Request saved; courier confirmation needs review. Do not submit again. Our operations team will reconcile it." };
         }
     }
+    try { await createBookingInvoice(order.id, customer.id, tenantId, chargedAmount, taxAmount, totalChargedAmount, order.trackingCode); } catch (error) { console.error("Booking succeeded but invoice creation failed", error); }
     return { ok: true, trackingCode: order.trackingCode, message: "Request saved for manual courier coordination. A docket has not yet been issued." };
 }

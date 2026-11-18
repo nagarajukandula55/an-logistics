@@ -23,15 +23,16 @@ export default async function InvoicesPage() {
   if (!session?.user) redirect("/login");
   if (session.user.role !== "ADMIN") redirect("/orders");
 
-  const [invoices, tenants, customers] = await Promise.all([
+  const [invoices, tenants, customers, unbilledOrders] = await Promise.all([
     prisma.invoice.findMany({ include: { tenant: true, customer: true }, orderBy: { createdAt: "desc" } }),
     prisma.tenant.findMany({ orderBy: { name: "asc" } }),
     prisma.customer.findMany({ where: { isActive: true }, orderBy: { name: "asc" }, select: { id: true, name: true, accountType: true } }),
+    prisma.order.findMany({ where: { status: "DELIVERED", chargedAmount: { not: null }, invoiceLineItems: { none: {} } }, orderBy: { createdAt: "desc" }, take: 500, select: { id: true, customerId: true, trackingCode: true, createdAt: true, chargedAmount: true } }),
   ]);
 
   return (
     <div>
-      <PageHeader eyebrow="Billing" title="Invoices" description="What client tenants owe us for platform usage." />
+      <PageHeader eyebrow="Billing" title="Invoices" description="AN Logistics B2B customer invoices and platform billing records." />
       <Tabs active="invoices" />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mt-6">
@@ -78,7 +79,7 @@ export default async function InvoicesPage() {
 
         <div className="space-y-6">
           <NewInvoiceForm tenants={tenants.map((t) => ({ id: t.id, name: t.name }))} />
-          <NewCustomerInvoiceForm customers={customers.map((c) => ({ id: c.id, name: `${c.name} (${c.accountType === "RESELLER" ? "Reseller" : "Client"})` }))} />
+          <NewCustomerInvoiceForm customers={customers.map((c) => ({ id: c.id, name: `${c.name} (${c.accountType === "RESELLER" ? "Reseller" : "Client"})` }))} orders={unbilledOrders} />
         </div>
       </div>
     </div>

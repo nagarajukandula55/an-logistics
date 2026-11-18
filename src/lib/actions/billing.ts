@@ -26,8 +26,8 @@ function periodInvoiceNumber(prefix: string, existingCount: number) {
 
 const generateInvoiceSchema = z.object({
   tenantId: z.string().min(1),
-  periodStart: z.string().min(1),
-  periodEnd: z.string().min(1),
+  periodStart: z.string().optional().default(""),
+  periodEnd: z.string().optional().default(""),
 });
 
 /**
@@ -98,6 +98,8 @@ const generateCustomerInvoiceSchema = z.object({
   customerId: z.string().min(1),
   periodStart: z.string().min(1),
   periodEnd: z.string().min(1),
+  billingMode: z.enum(["PER_SHIPMENT", "FORTNIGHTLY", "MONTHLY"]).default("MONTHLY"),
+  orderId: z.string().optional(),
 });
 
 /** Creates the invoice the customer/reseller sees. For resellers this uses
@@ -107,17 +109,25 @@ export async function generateCustomerInvoiceAction(_prev: ActionState, formData
   await requireAdmin();
   const parsed = generateCustomerInvoiceSchema.safeParse(Object.fromEntries(formData.entries()));
   if (!parsed.success) return { ok: false, error: parsed.error.issues[0]?.message ?? "Invalid input" };
-  const from = new Date(parsed.data.periodStart);
-  const to = new Date(parsed.data.periodEnd);
-  const customer = await prisma.customer.findUnique({ where: { id: parsed.data.customerId }, select: { tenantId: true, name: true } });
+  if (parsed.data.billingMode !== "PER_SHIPMENT" && (!parsed.data.periodStart || !parsed.data.periodEnd)) return { ok: false, error: "Choose the billing period" };
+  const from = new Date(parsed.data.periodStart || new Date().toISOString());
+  const to = new Date(parsed.data.periodEnd || from);
+  const customer = await prisma.customer.findUnique({ where: { id: parsed.data.customerId }, select: { tenantId: true, name: true, paymentTermsDays: true, billingCycle: true } });
   if (!customer?.tenantId) return { ok: false, error: "Customer is not attached to a tenant" };
   const invoiced = (await prisma.invoiceLineItem.findMany({ where: { order: { customerId: parsed.data.customerId }, invoice: { customerId: parsed.data.customerId } }, select: { orderId: true } })).map((line) => line.orderId).filter(Boolean) as string[];
-  const orders = await prisma.order.findMany({ where: { customerId: parsed.data.customerId, status: OrderStatus.DELIVERED, createdAt: { gte: from, lte: to }, chargedAmount: { not: null }, id: { notIn: invoiced } }, orderBy: { createdAt: "asc" } });
+  if (parsed.data.billingMode === "PER_SHIPMENT" && parsed.data.orderId && invoiced.includes(parsed.data.orderId)) return { ok: false, error: "That shipment has already been invoiced" };
+  const orders = parsed.data.billingMode === "PER_SHIPMENT"
+    ? await prisma.order.findMany({ where: { id: parsed.data.orderId || "", customerId: parsed.data.customerId, status: OrderStatus.DELIVERED, chargedAmount: { not: null } } })
+    : await prisma.order.findMany({ where: { customerId: parsed.data.customerId, status: OrderStatus.DELIVERED, createdAt: { gte: from, lte: to }, chargedAmount: { not: null }, id: { notIn: invoiced } }, orderBy: { createdAt: "asc" } });
+  if (parsed.data.billingMode === "PER_SHIPMENT" && !parsed.data.orderId) return { ok: false, error: "Select the shipment to invoice" };
   if (!orders.length) return { ok: false, error: "No unbilled delivered orders for this account" };
   const subtotal = orders.reduce((sum, order) => sum + (order.chargedAmount ?? 0), 0);
   const taxAmount = orders.reduce((sum, order) => sum + (order.taxAmount ?? 0), 0);
   const count = await prisma.invoice.count({ where: { customerId: parsed.data.customerId } });
-  await prisma.invoice.create({ data: { invoiceNumber: periodInvoiceNumber("CINV", count), tenantId: customer.tenantId, customerId: parsed.data.customerId, periodStart: from, periodEnd: to, status: InvoiceStatus.DRAFT, subtotal, taxAmount, totalAmount: subtotal + taxAmount, notes: "Customer price invoice; reseller margin included where applicable.", lineItems: { create: orders.map((order) => ({ orderId: order.id, description: `Shipment ${order.trackingCode}`, quantity: 1, unitPrice: order.chargedAmount!, amount: order.chargedAmount! })) } } });
+  const issuedAt = new Date();
+  const dueAt = new Date(issuedAt);
+  dueAt.setDate(dueAt.getDate() + (customer.paymentTermsDays || 0));
+  await prisma.invoice.create({ data: { invoiceNumber: periodInvoiceNumber("CINV", count), tenantId: customer.tenantId, customerId: parsed.data.customerId, periodStart: parsed.data.billingMode === "PER_SHIPMENT" ? orders[0].createdAt : from, periodEnd: parsed.data.billingMode === "PER_SHIPMENT" ? orders[0].createdAt : to, status: InvoiceStatus.SENT, subtotal, taxAmount, totalAmount: subtotal + taxAmount, issuedAt, dueAt, notes: `AN Logistics B2B invoice · ${parsed.data.billingMode.replace("_", " ").toLowerCase()} billing`, lineItems: { create: orders.map((order) => ({ orderId: order.id, description: `AN Logistics shipment ${order.trackingCode}`, quantity: 1, unitPrice: order.chargedAmount!, amount: order.chargedAmount! })) } } });
   revalidatePath("/billing/invoices");
   return { ok: true };
 }

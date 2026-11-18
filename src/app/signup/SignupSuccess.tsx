@@ -1,0 +1,14 @@
+"use client";
+
+import Link from "next/link";
+import { useActionState } from "react";
+import { requestSignupQuotationAction } from "@/lib/actions/public-pricing";
+import type { OnboardingState } from "@/lib/actions/onboarding";
+import { Button } from "@/components/ui/Button";
+
+export function SignupSuccess({ state }: { state: OnboardingState }) {
+  const [quotationState, quotationAction, pending] = useActionState(requestSignupQuotationAction, { ok: false });
+  const applicant = state.applicant;
+  const preview = state.ratePreview;
+  return <div role="status" className="rounded-2xl border border-success/30 bg-success-soft p-6 text-success"><h2 className="text-xl font-semibold">Application submitted successfully</h2><p className="mt-2">{state.message}</p>{preview && <div className="mt-6 rounded-xl border border-border bg-surface p-4 text-ink"><p className="text-sm text-ink-2">Applicable pricing basis: <strong>{preview.source}</strong></p><p className="mt-1 text-xs text-ink-3">These are indicative Staff/Collaborator default rates at 2× cost. Final client pricing will be discussed and agreed separately.</p>{preview.rates.length ? <div className="mt-4 overflow-x-auto"><table className="w-full text-left text-xs"><thead><tr className="border-b border-border text-ink-3"><th className="px-2 py-2">Courier</th><th className="px-2 py-2">Service</th><th className="px-2 py-2">Lane</th><th className="px-2 py-2">Weight</th><th className="px-2 py-2">Indicative rate</th></tr></thead><tbody>{preview.rates.slice(0, 12).map((rate, index) => <tr key={`${rate.courierName}-${rate.serviceCode}-${rate.lane}-${index}`} className="border-b border-border/70"><td className="px-2 py-2">{rate.courierName}</td><td className="px-2 py-2">{rate.serviceCode}</td><td className="px-2 py-2">{rate.lane}</td><td className="px-2 py-2">{rate.minWeightKg}–{rate.maxWeightKg} kg</td><td className="px-2 py-2 font-medium">₹{rate.defaultSellRate.toFixed(2)}</td></tr>)}</tbody></table></div> : <p className="mt-4 text-sm text-ink-2">The applicable detailed schedule is being prepared. Our team will contact you with the rate table.</p>}{applicant && <form action={quotationAction} className="mt-5 flex flex-col gap-3"><input type="hidden" name="name" value={applicant.name}/><input type="hidden" name="email" value={applicant.email}/><input type="hidden" name="businessModel" value={applicant.businessModel}/><input type="hidden" name="baseCity" value={applicant.baseCity}/><input type="hidden" name="pickupCity" value={applicant.pickupCity}/><input type="hidden" name="monthlyVolume" value={applicant.monthlyVolume}/><Button type="submit" loading={pending}>Email me this quotation</Button>{quotationState.error && <p className="text-sm text-danger">{quotationState.error}</p>}{quotationState.message && <p className="text-sm text-success">{quotationState.message}</p>}</form>}</div>}<Link href="/" className="mt-6 inline-block underline">Back to home</Link></div>;
+}

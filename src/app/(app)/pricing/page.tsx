@@ -61,7 +61,7 @@ export default async function PricingPage() {
           <p className="text-xs text-ink-3">Applies to ordinary bookings with no commercial-tenant override.</p>
         </CardHeader>
         <CardBody>
-          <SellRateCardsPanel audience="DEFAULT" cards={defaultCards} />
+          <SellRateCardsPanel audience="DEFAULT" cards={defaultCards} canEdit={session.user.role === "ADMIN"} />
         </CardBody>
       </Card>}
 
@@ -78,9 +78,9 @@ export default async function PricingPage() {
                 return <div key={courier.id} className="rounded-card border border-border p-4">
                   <h3 className="font-semibold text-ink">{courier.name}</h3>
                   <div className="mt-4 grid gap-5 lg:grid-cols-3">
-                    <div><p className="mb-2 text-sm font-medium text-ink-2">Default</p><SellRateCardsPanel audience="DEFAULT" courierPartnerId={courier.id} cards={cardsFor("DEFAULT")} /></div>
-                    <div><p className="mb-2 text-sm font-medium text-ink-2">Staff</p><SellRateCardsPanel audience="STAFF" courierPartnerId={courier.id} cards={cardsFor("STAFF")} /></div>
-                    <div><p className="mb-2 text-sm font-medium text-ink-2">Collaborator</p><SellRateCardsPanel audience="COLLABORATOR" courierPartnerId={courier.id} cards={cardsFor("COLLABORATOR")} /></div>
+                    <div><p className="mb-2 text-sm font-medium text-ink-2">Default</p><SellRateCardsPanel audience="DEFAULT" courierPartnerId={courier.id} cards={cardsFor("DEFAULT")} canEdit={session.user.role === "ADMIN"} /></div>
+                    <div><p className="mb-2 text-sm font-medium text-ink-2">Staff</p><SellRateCardsPanel audience="STAFF" courierPartnerId={courier.id} cards={cardsFor("STAFF")} canEdit={session.user.role === "ADMIN"} /></div>
+                    <div><p className="mb-2 text-sm font-medium text-ink-2">Collaborator</p><SellRateCardsPanel audience="COLLABORATOR" courierPartnerId={courier.id} cards={cardsFor("COLLABORATOR")} canEdit={session.user.role === "ADMIN"} /></div>
                   </div>
                 </div>;
               })}
@@ -90,8 +90,8 @@ export default async function PricingPage() {
       </Card>
 
       {session.user.role === "ADMIN" && <div className="grid gap-6 lg:grid-cols-2">
-        <Card><CardHeader><h2 className="h-section">Staff price list</h2><p className="text-xs text-ink-3">Applied when a staff login books without a client-specific rate.</p></CardHeader><CardBody><SellRateCardsPanel audience="STAFF" cards={staffCards} /></CardBody></Card>
-        <Card><CardHeader><h2 className="h-section">Collaborator price list</h2><p className="text-xs text-ink-3">Applied when a collaborator login books without a client-specific rate.</p></CardHeader><CardBody><SellRateCardsPanel audience="COLLABORATOR" cards={collaboratorCards} /></CardBody></Card>
+        <Card><CardHeader><h2 className="h-section">Staff price list</h2><p className="text-xs text-ink-3">Applied when a staff login books without a client-specific rate.</p></CardHeader><CardBody><SellRateCardsPanel audience="STAFF" cards={staffCards} canEdit /></CardBody></Card>
+        <Card><CardHeader><h2 className="h-section">Collaborator price list</h2><p className="text-xs text-ink-3">Applied when a collaborator login books without a client-specific rate.</p></CardHeader><CardBody><SellRateCardsPanel audience="COLLABORATOR" cards={collaboratorCards} canEdit /></CardBody></Card>
       </div>}
 
       {session.user.role === "ADMIN" && clientTenants.map((tenant) => (
@@ -101,8 +101,8 @@ export default async function PricingPage() {
             <p className="text-xs text-ink-3">Negotiated pricing for this commercial tenant — overrides the default list for their orders.</p>
           </CardHeader>
           <CardBody>
-            <SellRateCardsPanel audience="CLIENT" tenantId={tenant.id} cards={tenant.sellRateCards} couriers={couriers} showCourierSelector />
-            {tenant.customers.map((customer) => <div key={customer.id} className="mt-5 border-t border-border pt-4"><p className="mb-2 text-sm font-medium text-ink">{customer.name}</p><SellRateCardsPanel audience="CLIENT" tenantId={tenant.id} customerId={customer.id} cards={customer.sellRateCards} couriers={couriers} showCourierSelector /></div>)}
+            <SellRateCardsPanel audience="CLIENT" tenantId={tenant.id} cards={tenant.sellRateCards} couriers={couriers} showCourierSelector canEdit />
+            {tenant.customers.map((customer) => <div key={customer.id} className="mt-5 border-t border-border pt-4"><p className="mb-2 text-sm font-medium text-ink">{customer.name}</p><SellRateCardsPanel audience="CLIENT" tenantId={tenant.id} customerId={customer.id} cards={customer.sellRateCards} couriers={couriers} showCourierSelector canEdit /></div>)}
           </CardBody>
         </Card>
       ))}

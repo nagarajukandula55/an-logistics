@@ -175,6 +175,12 @@ enum CustomerAccountType {
   RESELLER
 }
 
+enum BillingCycle {
+  PER_SHIPMENT
+  FORTNIGHTLY
+  MONTHLY
+}
+
 model Customer {
   onboardingApplication PartnerApplication?
   allowedCouriers       CustomerCourier[]
@@ -184,6 +190,10 @@ model Customer {
   phone                 String?
   email                 String?
   address               String?
+  billingEmail          String?
+  billingAddress        String?
+  billingState          String?
+  gstin                 String?
   businessModel         String?
   baseCity              String?
   basePincode           String?
@@ -191,6 +201,8 @@ model Customer {
   kind                  CustomerKind        @default(INDIVIDUAL)
   accountType           CustomerAccountType @default(CLIENT)
   taxRatePercent        Float               @default(18)
+  billingCycle          BillingCycle        @default(MONTHLY)
+  paymentTermsDays      Int                 @default(7)
   resellerMarginType    CommissionType      @default(PERCENT)
   resellerMarginValue   Float               @default(0)
   // Staff seats beyond the owner, BUSINESS only. Enforced in
@@ -589,6 +601,10 @@ model SellRateCard {
   customer          Customer?              @relation(fields: [customerId], references: [id])
   name              String
   isActive          Boolean                @default(true)
+  // Draft cards remain editable until an administrator explicitly finalizes them.
+  isFinalized       Boolean                @default(false)
+  finalizedAt       DateTime?
+  finalizedBy       String?
   effectiveFrom     DateTime
   // Floor check, not enforced pricing: if set, a computed sell price that
   // would leave less than this % margin over a given courier's cost is
@@ -1065,30 +1081,36 @@ enum ApplicationStatus {
 }
 
 model PartnerApplication {
-  id             String            @id @default(cuid())
-  email          String            @unique
-  name           String
-  phone          String
-  company        String?
-  accountType    String
-  businessModel  String?
-  address        String
-  pincode        String
-  baseCity       String?
-  basePincode    String?
-  pickupCity     String?
-  gstin          String?
-  monthlyVolume  Int
-  requirements   String?
-  consentAt      DateTime
-  privacyVersion String            @default("2026-10-18")
-  status         ApplicationStatus @default(NEW)
-  notes          String            @default("")
-  customerId     String?           @unique
-  customer       Customer?         @relation(fields: [customerId], references: [id])
-  quotations     Quotation[]
-  createdAt      DateTime          @default(now())
-  updatedAt      DateTime          @updatedAt
+  id               String            @id @default(cuid())
+  email            String            @unique
+  name             String
+  phone            String
+  company          String?
+  accountType      String
+  businessModel    String?
+  address          String
+  pincode          String
+  baseCity         String?
+  basePincode      String?
+  pickupCity       String?
+  gstin            String?
+  billingName      String?
+  billingEmail     String?
+  billingAddress   String?
+  billingState     String?
+  billingCycle     BillingCycle      @default(MONTHLY)
+  paymentTermsDays Int               @default(7)
+  monthlyVolume    Int
+  requirements     String?
+  consentAt        DateTime
+  privacyVersion   String            @default("2026-10-18")
+  status           ApplicationStatus @default(NEW)
+  notes            String            @default("")
+  customerId       String?           @unique
+  customer         Customer?         @relation(fields: [customerId], references: [id])
+  quotations       Quotation[]
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
 
   @@index([status, createdAt])
 }

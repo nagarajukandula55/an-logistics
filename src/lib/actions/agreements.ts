@@ -30,7 +30,7 @@ export async function createAgreementAction(_prev: { ok: boolean; error?: string
   }
   const data = parsed.data;
 
-  if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: data.customerId } })) return { ok: false, error: "Rate card must belong to this customer" };
+  if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: data.customerId, isFinalized: true } })) return { ok: false, error: "Select a finalized customer rate card before creating the agreement" };
   if (data.documentTemplateId && !await prisma.documentTemplate.findFirst({ where: { id: data.documentTemplateId, kind: "AGREEMENT", isActive: true } })) return { ok: false, error: "Agreement format was not found" };
   const rateCard = data.sellRateCardId ? await prisma.sellRateCard.findUnique({ where: { id: data.sellRateCardId }, include: { slabs: true } }) : null;
   await prisma.agreement.create({
@@ -87,7 +87,7 @@ export async function updateAgreementAction(_prev: { ok: boolean; error?: string
   const data = parsed.data;
 
   if (existing.termsSnapshot && (data.sellRateCardId !== existing.sellRateCardId || data.templateVersion !== existing.templateVersion)) return { ok: false, error: "Frozen terms and rates cannot be replaced. Prepare a new draft." };
-  if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: existing.customerId } })) return { ok: false, error: "Rate card must belong to this customer" };
+  if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: existing.customerId, isFinalized: true } })) return { ok: false, error: "Select a finalized customer rate card before saving the agreement" };
   if (data.documentTemplateId && !await prisma.documentTemplate.findFirst({ where: { id: data.documentTemplateId, kind: "AGREEMENT", isActive: true } })) return { ok: false, error: "Agreement format was not found" };
   const rateCard = data.sellRateCardId ? await prisma.sellRateCard.findUnique({ where: { id: data.sellRateCardId }, include: { slabs: true } }) : null;
   if (existing.termsSnapshot && formData.get("documentMatches") !== "on") return {ok:false,error:"Confirm that the PDF contains the reviewed terms and exact rate schedule."};

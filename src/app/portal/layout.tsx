@@ -4,7 +4,7 @@ import { requireCustomerSession } from "@/lib/customer-session";
 
 export const dynamic = "force-dynamic";
 import { signOutAction } from "@/lib/actions/auth-signout";
-import { LogOut, Package, Truck, WalletCards } from "lucide-react";
+import { FileText, LogOut, Package, Truck, WalletCards } from "lucide-react";
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const { session } = await requireCustomerSession();
@@ -24,6 +24,9 @@ export default async function PortalLayout({ children }: { children: React.React
               </Link>
               <Link href="/portal/wallet" className="flex items-center gap-1.5 rounded-control px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-2">
                 <WalletCards className="size-4" /> Wallet
+              </Link>
+              <Link href="/portal/invoices" className="flex items-center gap-1.5 rounded-control px-3 py-1.5 text-sm font-medium text-ink-2 hover:bg-surface-2">
+                <FileText className="size-4" /> Invoices
               </Link>
             </nav>
           </div>

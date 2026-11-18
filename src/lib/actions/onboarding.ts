@@ -10,10 +10,13 @@ import bcrypt from "bcryptjs";
 import { randomBytes } from "crypto";
 import { getIndicativeRates } from "@/lib/indicative-pricing";
 import { sendEmail } from "@/lib/email";
+import type { IndicativeRate } from "@/lib/indicative-pricing";
 export type OnboardingState = {
     ok: boolean;
     error?: string;
     message?: string;
+    ratePreview?: { source: string; rates: IndicativeRate[] };
+    applicant?: { name: string; email: string; businessModel: string; baseCity: string; pickupCity: string; monthlyVolume: number };
 };
 const applicationSchema = z.object({
     name: z.string().trim().min(2).max(100), email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
@@ -23,14 +26,17 @@ const applicationSchema = z.object({
     address: z.string().trim().min(10).max(1000), pincode: z.string().regex(/^[1-9]\d{5}$/),
     baseCity: z.string().trim().min(2).max(100), basePincode: z.string().regex(/^[1-9]\d{5}$/), pickupCity: z.string().trim().min(2).max(100),
     gstin: z.string().trim().toUpperCase().regex(/^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "Enter a valid GSTIN or leave blank").optional(),
+    billingName: z.string().trim().min(2).max(200), billingEmail: z.string().trim().email().max(254), billingAddress: z.string().trim().min(10).max(1000), billingState: z.string().trim().min(2).max(100),
+    billingCycle: z.enum(["PER_SHIPMENT", "FORTNIGHTLY", "MONTHLY"]), paymentTermsDays: z.coerce.number().int().refine(v => [0, 7, 15, 30].includes(v), "Choose valid payment terms"),
     monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), requirements: z.string().max(2000).optional(),
-    consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), requestQuotation: z.string().optional(), website: z.string().max(0).optional(),
+    consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), website: z.string().max(0).optional(),
 });
 export async function applyPartnerAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
     const result = applicationSchema.safeParse(Object.fromEntries(fd));
     if (!result.success)
         return { ok: false, error: result.error.issues[0].message };
-    const { consent, website, requestQuotation, shipmentType, servicePreference, pickupFrequency, ...data } = result.data;
+    const { consent, website, shipmentType, servicePreference, pickupFrequency, ...data } = result.data;
+    const requestQuotation = undefined;
     const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
     data.requirements = requirements;
     void consent;
@@ -44,7 +50,7 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
             return { ok: true, message: "Your application is already with our team. We will contact you." };
         throw e;
     }
-    if (requestQuotation === "on") {
+    if (false) {
         try {
             const preview = await getIndicativeRates({ businessModel: data.businessModel, baseCity: data.baseCity, pickupCity: data.pickupCity, monthlyVolume: data.monthlyVolume });
             const rows = preview.rates.slice(0, 24).map((rate) => `<tr><td>${rate.courierName}</td><td>${rate.serviceCode}</td><td>${rate.lane}</td><td>${rate.minWeightKg}-${rate.maxWeightKg} kg</td><td>₹${rate.defaultSellRate.toFixed(2)}</td></tr>`).join("");
@@ -59,7 +65,8 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
     catch {
         console.error("Application saved; Telegram notification failed.");
     }
-    return { ok: true, message: "Application received. Our team will contact you to discuss rates and an agreement. Login access follows signing and approval." };
+    const ratePreview = await getIndicativeRates({ businessModel: data.businessModel, baseCity: data.baseCity, pickupCity: data.pickupCity, monthlyVolume: data.monthlyVolume });
+    return { ok: true, message: "Application received successfully. Review your indicative rates below and request the quotation by email.", ratePreview, applicant: { name: data.name, email: data.email, businessModel: data.businessModel, baseCity: data.baseCity, pickupCity: data.pickupCity, monthlyVolume: data.monthlyVolume } };
 }
 export async function reviewApplicationAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
     await requireOnboardingAdmin();
@@ -71,8 +78,8 @@ export async function reviewApplicationAction(_: OnboardingState, fd: FormData):
         const a = await tx.partnerApplication.findUnique({ where: { id: parsed.data.id } });
         if (!a || a.status === "ACTIVE")
             throw new Error("Application is unavailable or already active");
-        const customerId = a.customerId ?? (await tx.customer.create({ data: { name: a.company || a.name, email: a.email, phone: a.phone, address: a.address, businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode, kind: a.accountType === "individual" ? "INDIVIDUAL" : "BUSINESS", accountType: a.accountType === "reseller" ? "RESELLER" : "CLIENT", tenantId, isActive: false } })).id;
-        await tx.customer.update({ where: { id: customerId }, data: { businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode } });
+        const customerId = a.customerId ?? (await tx.customer.create({ data: { name: a.company || a.name, email: a.email, phone: a.phone, address: a.address, billingName: a.billingName || a.company || a.name, billingEmail: a.billingEmail || a.email, billingAddress: a.billingAddress || a.address, billingState: a.billingState, gstin: a.gstin, billingCycle: a.billingCycle, paymentTermsDays: a.paymentTermsDays, businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode, kind: a.accountType === "individual" ? "INDIVIDUAL" : "BUSINESS", accountType: a.accountType === "reseller" ? "RESELLER" : "CLIENT", tenantId, isActive: false } })).id;
+        await tx.customer.update({ where: { id: customerId }, data: { businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode, billingName: a.billingName || a.company || a.name, billingEmail: a.billingEmail || a.email, billingAddress: a.billingAddress || a.address, billingState: a.billingState, gstin: a.gstin, billingCycle: a.billingCycle, paymentTermsDays: a.paymentTermsDays } });
         await tx.partnerApplication.update({ where: { id: a.id }, data: { customerId, status: parsed.data.status, notes: parsed.data.notes } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     revalidatePath("/onboarding");

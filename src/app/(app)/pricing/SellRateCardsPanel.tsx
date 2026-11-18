@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useTransition } from "react";
-import { createSellRateCardAction } from "@/lib/actions/pricing";
+import { createSellRateCardAction, finalizeSellRateCardAction, updateSellRateCardAction } from "@/lib/actions/pricing";
 import { Field, Input } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { format } from "date-fns";
-import { Plus, Trash2 } from "lucide-react";
+import { CheckCircle2, Pencil, Plus, Trash2 } from "lucide-react";
 
 type Slab = {
   id: string;
@@ -23,6 +23,8 @@ type SellRateCard = {
   isActive: boolean;
   effectiveFrom: Date;
   minMarginPercent: number | null;
+  isFinalized: boolean;
+  finalizedAt: Date | null;
   slabs: Slab[];
   courierPartnerId?: string | null;
 };
@@ -33,10 +35,29 @@ function emptyDraftSlab(): DraftSlab {
   return { zone: "", minWeightKg: "", maxWeightKg: "", price: "" };
 }
 
+function EditRateCardForm({ card, audience, courierPartnerId, tenantId, customerId, onDone }: { card: SellRateCard; audience: "DEFAULT" | "STAFF" | "COLLABORATOR" | "CLIENT"; courierPartnerId?: string | null; tenantId?: string | null; customerId?: string | null; onDone: () => void }) {
+  const [name, setName] = useState(card.name);
+  const [effectiveFrom, setEffectiveFrom] = useState(format(card.effectiveFrom, "yyyy-MM-dd"));
+  const [minMarginPercent, setMinMarginPercent] = useState(card.minMarginPercent == null ? "" : String(card.minMarginPercent));
+  const [slabs, setSlabs] = useState<DraftSlab[]>(card.slabs.map((s) => ({ zone: s.zone, minWeightKg: String(s.minWeightKg), maxWeightKg: String(s.maxWeightKg), price: String(s.price) })));
+  const [pending, startTransition] = useTransition();
+  const [error, setError] = useState<string | null>(null);
+  function save() {
+    setError(null);
+    const fd = new FormData();
+    fd.set("cardId", card.id); fd.set("audience", audience); fd.set("name", name); fd.set("effectiveFrom", effectiveFrom); fd.set("slabsJson", JSON.stringify(slabs.map((s) => ({ zone: s.zone.trim(), minWeightKg: Number(s.minWeightKg), maxWeightKg: Number(s.maxWeightKg), price: Number(s.price) }))));
+    if (courierPartnerId) fd.set("courierPartnerId", courierPartnerId); if (tenantId) fd.set("tenantId", tenantId); if (customerId) fd.set("customerId", customerId); if (minMarginPercent) fd.set("minMarginPercent", minMarginPercent);
+    startTransition(async () => { try { await updateSellRateCardAction(fd); onDone(); } catch (e) { setError(e instanceof Error ? e.message : "Could not update rate card"); } });
+  }
+  return <div className="mt-3 rounded-control border border-accent/30 bg-accent-soft p-3"><div className="grid grid-cols-1 gap-2 sm:grid-cols-3"><Field label="Rate card name"><Input value={name} onChange={(e) => setName(e.target.value)} /></Field><Field label="Effective from"><Input type="date" value={effectiveFrom} onChange={(e) => setEffectiveFrom(e.target.value)} /></Field><Field label="Minimum margin %"><Input type="number" value={minMarginPercent} onChange={(e) => setMinMarginPercent(e.target.value)} /></Field></div><div className="mt-2 flex flex-col gap-2">{slabs.map((s, i) => <div key={i} className="grid grid-cols-[1fr_1fr_1fr_1fr_auto] gap-2"><Input aria-label="Zone" value={s.zone} onChange={(e) => setSlabs((p) => p.map((x, j) => j === i ? { ...x, zone: e.target.value } : x))} /><Input aria-label="From kg" type="number" value={s.minWeightKg} onChange={(e) => setSlabs((p) => p.map((x, j) => j === i ? { ...x, minWeightKg: e.target.value } : x))} /><Input aria-label="To kg" type="number" value={s.maxWeightKg} onChange={(e) => setSlabs((p) => p.map((x, j) => j === i ? { ...x, maxWeightKg: e.target.value } : x))} /><Input aria-label="Price" type="number" value={s.price} onChange={(e) => setSlabs((p) => p.map((x, j) => j === i ? { ...x, price: e.target.value } : x))} /><Button type="button" size="sm" variant="ghost" onClick={() => setSlabs((p) => p.filter((_, j) => j !== i))} disabled={slabs.length === 1}><Trash2 className="size-4" /></Button></div>)}</div><div className="mt-2 flex gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setSlabs((p) => [...p, emptyDraftSlab()])}><Plus className="size-4" /> Add slab</Button><Button type="button" size="sm" loading={pending} onClick={save}>Save draft</Button><Button type="button" size="sm" variant="ghost" onClick={onDone}>Cancel</Button></div>{error && <p className="mt-2 text-xs text-danger">{error}</p>}</div>;
+}
+
+function FinalizeButton({ id }: { id: string }) { const [pending, startTransition] = useTransition(); const [error, setError] = useState<string | null>(null); return <span><Button type="button" size="sm" loading={pending} onClick={() => startTransition(async () => { try { await finalizeSellRateCardAction(id); } catch (e) { setError(e instanceof Error ? e.message : "Could not finalize rate card"); } })}><CheckCircle2 className="size-4" /> Finalize rates</Button>{error && <span className="ml-2 text-xs text-danger">{error}</span>}</span>; }
+
 // tenantId undefined/null = the default price list (normal/marketplace
 // bookings); set it to scope this panel to one commercial CLIENT tenant's
 // own negotiated rates instead.
-export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, tenantId, customerId, cards, couriers = [], showCourierSelector = false }: { audience?: "DEFAULT" | "STAFF" | "COLLABORATOR" | "CLIENT"; courierPartnerId?: string | null; tenantId?: string | null; customerId?: string | null; cards: SellRateCard[]; couriers?: { id: string; name: string }[]; showCourierSelector?: boolean }) {
+export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, tenantId, customerId, cards, couriers = [], showCourierSelector = false, canEdit = false }: { audience?: "DEFAULT" | "STAFF" | "COLLABORATOR" | "CLIENT"; courierPartnerId?: string | null; tenantId?: string | null; customerId?: string | null; cards: SellRateCard[]; couriers?: { id: string; name: string }[]; showCourierSelector?: boolean; canEdit?: boolean }) {
   const [showForm, setShowForm] = useState(cards.length === 0);
   const [name, setName] = useState("");
   const [effectiveFrom, setEffectiveFrom] = useState("");
@@ -45,6 +66,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
   const [selectedCourierId, setSelectedCourierId] = useState(courierPartnerId ?? "");
   const [pending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
+  const [editingCardId, setEditingCardId] = useState<string | null>(null);
 
   function updateSlab(index: number, patch: Partial<DraftSlab>) {
     setSlabs((prev) => prev.map((s, i) => (i === index ? { ...s, ...patch } : s)));
@@ -129,7 +151,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
                     {card.minMarginPercent != null && ` · ${card.minMarginPercent}% margin floor`}
                   </p>
                 </div>
-                <Badge tone={card.isActive ? "success" : "neutral"}>{card.isActive ? "Active" : "Past"}</Badge>
+                <div className="flex items-center gap-2"><Badge tone={card.isFinalized ? "success" : "warning"}>{card.isFinalized ? "Finalized" : "Draft"}</Badge><Badge tone={card.isActive ? "success" : "neutral"}>{card.isActive ? "Active" : "Past"}</Badge></div>
               </div>
               {card.slabs.length > 0 && (
                 <ul className="mt-2 flex flex-wrap gap-2">
@@ -140,6 +162,8 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
                   ))}
                 </ul>
               )}
+              {canEdit && !card.isFinalized && <div className="mt-3 flex flex-wrap gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setEditingCardId(editingCardId === card.id ? null : card.id)}><Pencil className="size-4" /> Edit rates</Button><FinalizeButton id={card.id} /></div>}
+              {editingCardId === card.id && <EditRateCardForm card={card} audience={audience} courierPartnerId={courierPartnerId} tenantId={tenantId} customerId={customerId} onDone={() => setEditingCardId(null)} />}
             </li>
           ))}
         </ul>

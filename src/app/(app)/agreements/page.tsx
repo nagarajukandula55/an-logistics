@@ -22,7 +22,7 @@ export default async function AgreementsPage() {
     }),
     prisma.customer.findMany({
       orderBy: { name: "asc" },
-      include: { sellRateCards: { orderBy: { effectiveFrom: "desc" } } },
+      include: { sellRateCards: { where: { isFinalized: true }, orderBy: { effectiveFrom: "desc" } } },
     }),
     prisma.documentTemplate.findMany({ where: { kind: "AGREEMENT", isActive: true }, select: { id: true, name: true, version: true, courierPartnerId: true }, orderBy: { updatedAt: "desc" } }),
   ]);

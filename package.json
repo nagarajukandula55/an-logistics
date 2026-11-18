@@ -7,6 +7,8 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "eslint",
+    "rates:generate": "python scripts/generate-dtdc-rate-data.py",
+    "rates:import": "tsx scripts/import-dtdc-rates.ts",
     "postinstall": "prisma generate"
   },
   "dependencies": {

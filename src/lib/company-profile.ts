@@ -4,6 +4,7 @@
 export const COMPANY_PROFILE = {
   brand: process.env.AN_BRAND_NAME || "AN Logistics",
   legalName: process.env.AN_LEGAL_NAME || "AN Group",
+  invoiceName: process.env.AN_INVOICE_NAME || "AN Logistics, a unit of AN Group",
   gstin: process.env.AN_GSTIN || "37EOZPK9605G1Z5",
   address: process.env.AN_REGISTERED_ADDRESS || "1203, opp:ice factory, Bondapalle, Gotlam, Vizianagaram, 535003",
   email: process.env.AN_CONTACT_EMAIL || "contact@angroup.in",

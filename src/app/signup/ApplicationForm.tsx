@@ -1,16 +1,15 @@
 "use client";
-import { useActionState, useRef } from "react";
-import Link from "next/link";
+import { useActionState } from "react";
 import { applyPartnerAction } from "@/lib/actions/onboarding";
 import { Input, Field } from "@/components/ui/Field";
 import { Button } from "@/components/ui/Button";
-import { RatePreview } from "./RatePreview";
+import Link from "next/link";
+import { SignupSuccess } from "./SignupSuccess";
 export function ApplicationForm() {
     const [state, action, pending] = useActionState(applyPartnerAction, { ok: false });
-    const formRef = useRef<HTMLFormElement>(null);
     if (state.ok)
-        return <div role="status" className="rounded-2xl bg-success-soft p-8 text-success"><h2 className="text-xl font-semibold mb-3">Thank you for applying.</h2><p>{state.message}</p><Link href="/" className="inline-block mt-6 underline">Back to home</Link></div>;
-    return <form ref={formRef} action={action} className="grid sm:grid-cols-2 gap-5 rounded-2xl border border-border bg-surface p-6">
+        return <SignupSuccess state={state} />;
+    return <form action={action} className="grid sm:grid-cols-2 gap-5 rounded-2xl border border-border bg-surface p-6">
  {[["name", "Your full name", "text"], ["email", "Email address", "email"], ["phone", "Mobile number", "tel"], ["company", "Business / trading name (optional)", "text"]].map(([name, label, type]) => <Field key={name} label={label} htmlFor={name}><Input id={name} name={name} type={type} required={name !== "company"} maxLength={254}/></Field>)}
  <Field label="I’m applying as" htmlFor="accountType"><select id="accountType" name="accountType" className="w-full border border-border rounded-lg p-2 bg-surface"><option value="business">Business shipper</option><option value="individual">Individual</option><option value="reseller">Reseller / shipping partner</option></select></Field>
  <Field label="Shipment business model" htmlFor="businessModel"><select id="businessModel" name="businessModel" required className="w-full border border-border rounded-lg p-2 bg-surface"><option value="">Select one</option><option value="B2B">B2B</option><option value="B2C">B2C</option><option value="ECOM">E-commerce</option><option value="MIXED">Mixed B2B / B2C / E-commerce</option><option value="OTHER">Other</option></select></Field>
@@ -24,8 +23,13 @@ export function ApplicationForm() {
  <Field label="Pickup city" htmlFor="pickupCity"><Input id="pickupCity" name="pickupCity" required placeholder="City where pickups happen"/></Field>
  <Field label="Pickup pincode" htmlFor="pincode"><Input id="pincode" name="pincode" required pattern="[1-9][0-9]{5}" maxLength={6}/></Field>
  <Field label="GSTIN (if applicable)" htmlFor="gstin"><Input id="gstin" name="gstin" maxLength={15}/></Field>
+ <Field label="Billing name" htmlFor="billingName"><Input id="billingName" name="billingName" required maxLength={200} placeholder="Name to appear on AN Logistics invoices"/></Field>
+ <Field label="Billing email" htmlFor="billingEmail"><Input id="billingEmail" name="billingEmail" type="email" required maxLength={254}/></Field>
+ <div className="sm:col-span-2"><Field label="Billing address" htmlFor="billingAddress"><Input id="billingAddress" name="billingAddress" required minLength={10} maxLength={1000}/></Field></div>
+ <Field label="Billing state" htmlFor="billingState"><Input id="billingState" name="billingState" required maxLength={100}/></Field>
+ <Field label="Invoice frequency" htmlFor="billingCycle"><select id="billingCycle" name="billingCycle" required className="w-full border border-border rounded-lg p-2 bg-surface"><option value="MONTHLY">Monthly billing</option><option value="FORTNIGHTLY">Fortnightly billing</option><option value="PER_SHIPMENT">Invoice each shipment</option></select></Field>
+ <Field label="Payment terms" htmlFor="paymentTermsDays"><select id="paymentTermsDays" name="paymentTermsDays" required className="w-full border border-border rounded-lg p-2 bg-surface"><option value="0">Pay before booking</option><option value="7">7 days</option><option value="15">15 days</option><option value="30">30 days</option></select></Field>
  <label className="sm:col-span-2 text-sm">What do you ship? Any special requirements?<textarea name="requirements" className="mt-2 w-full rounded-lg border border-border bg-surface p-3" rows={3} maxLength={2000}/></label>
- <RatePreview getValues={() => { const data = new FormData(formRef.current!); return { businessModel: String(data.get("businessModel") || ""), baseCity: String(data.get("baseCity") || ""), pickupCity: String(data.get("pickupCity") || ""), monthlyVolume: Number(data.get("monthlyVolume") || 0) }; }} />
  <input name="website" aria-hidden="true" tabIndex={-1} autoComplete="off" className="hidden"/>
  <label className="sm:col-span-2 flex gap-3 text-sm text-ink-2"><input name="consent" type="checkbox" required className="mt-1"/><span>I have read the <Link href="/privacy" className="underline text-accent">privacy notice</Link> and agree to be contacted about this application.</span></label>
  {state.error && <p role="alert" className="text-danger sm:col-span-2">{state.error}</p>}<Button type="submit" loading={pending}>Submit application</Button>

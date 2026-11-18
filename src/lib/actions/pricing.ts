@@ -103,6 +103,7 @@ export async function createSellRateCardAction(formData: FormData) {
         tenantId: data.tenantId ?? null,
         customerId: data.customerId ?? null,
         name: data.name,
+        isFinalized: false,
         effectiveFrom: new Date(data.effectiveFrom),
         minMarginPercent: data.minMarginPercent ?? null,
         isActive: true,
@@ -119,4 +120,70 @@ export async function createSellRateCardAction(formData: FormData) {
   });
 
   revalidatePath("/pricing");
+}
+
+const updateSellRateCardSchema = createSellRateCardSchema.extend({
+  cardId: z.string().min(1),
+});
+
+export async function updateSellRateCardAction(formData: FormData) {
+  const context = await requireTenantSession();
+  if (context.session.user.role !== "ADMIN") throw new Error("Only administrators can manage pricing");
+
+  let slabs: unknown;
+  try {
+    slabs = JSON.parse(String(formData.get("slabsJson") ?? "[]"));
+  } catch {
+    throw new Error("Invalid slab data");
+  }
+
+  const parsed = updateSellRateCardSchema.safeParse({
+    cardId: String(formData.get("cardId") ?? ""),
+    audience: formData.get("audience") || "DEFAULT",
+    courierPartnerId: String(formData.get("courierPartnerId") ?? "") || undefined,
+    tenantId: String(formData.get("tenantId") ?? "") || undefined,
+    customerId: String(formData.get("customerId") ?? "") || undefined,
+    name: formData.get("name"),
+    effectiveFrom: formData.get("effectiveFrom"),
+    minMarginPercent: String(formData.get("minMarginPercent") ?? "") || undefined,
+    slabs,
+  });
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid input");
+  const data = parsed.data;
+
+  await prisma.$transaction(async (tx) => {
+    const existing = await tx.sellRateCard.findUnique({ where: { id: data.cardId } });
+    if (!existing) throw new Error("Rate card not found");
+    if (existing.isFinalized) throw new Error("Finalized rate cards are locked. Create a new revision to change rates.");
+    if (existing.audience !== data.audience || existing.courierPartnerId !== (data.courierPartnerId ?? null) || existing.tenantId !== (data.tenantId ?? null) || existing.customerId !== (data.customerId ?? null)) {
+      throw new Error("Rate-card ownership and audience cannot be changed");
+    }
+    await tx.sellRateCard.update({
+      where: { id: data.cardId, isFinalized: false },
+      data: {
+        name: data.name,
+        effectiveFrom: new Date(data.effectiveFrom),
+        minMarginPercent: data.minMarginPercent ?? null,
+        slabs: {
+          deleteMany: {},
+          create: data.slabs.map((s) => ({ zone: s.zone, minWeightKg: s.minWeightKg, maxWeightKg: s.maxWeightKg, price: s.price })),
+        },
+      },
+    });
+  });
+  revalidatePath("/pricing");
+}
+
+export async function finalizeSellRateCardAction(cardId: string) {
+  const context = await requireTenantSession();
+  if (context.session.user.role !== "ADMIN") throw new Error("Only administrators can finalize pricing");
+  const card = await prisma.sellRateCard.findUnique({ where: { id: cardId }, include: { slabs: { where: { isActive: true } } } });
+  if (!card) throw new Error("Rate card not found");
+  if (card.isFinalized) return;
+  if (card.slabs.length === 0) throw new Error("Add at least one rate slab before finalizing");
+  if (card.slabs.some((s) => !s.zone.trim() || s.minWeightKg < 0 || s.maxWeightKg <= s.minWeightKg || s.price < 0)) throw new Error("Every rate slab must have valid zone, weight and price values");
+  await prisma.sellRateCard.update({ where: { id: cardId, isFinalized: false }, data: { isFinalized: true, finalizedAt: new Date(), finalizedBy: context.session.user.email ?? context.session.user.id } });
+  revalidatePath("/pricing");
+  revalidatePath("/quotations");
+  revalidatePath("/agreements");
 }
