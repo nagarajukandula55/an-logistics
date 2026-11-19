@@ -1,0 +1,58 @@
+name: Refresh pincode coordinates
+
+on:
+  schedule:
+    # 08:00 Asia/Kolkata (GitHub cron runs in UTC).
+    - cron: "30 2 * * *"
+  workflow_dispatch:
+
+concurrency:
+  group: pincode-coordinate-refresh
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    name: Merge official pincode coordinates
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      PINCODE_DATA_GOV_API_KEY: ${{ secrets.PINCODE_DATA_GOV_API_KEY }}
+      PINCODE_DATA_GOV_RESOURCE_ID: ${{ secrets.PINCODE_DATA_GOV_RESOURCE_ID }}
+      PINCODE_GEO_SOURCE_URL: ${{ secrets.PINCODE_GEO_SOURCE_URL }}
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate OGD source configuration
+        shell: bash
+        run: |
+          if [[ -z "$PINCODE_GEO_SOURCE_URL" && ( -z "$PINCODE_DATA_GOV_API_KEY" || -z "$PINCODE_DATA_GOV_RESOURCE_ID" ) ]]; then
+            echo "Configure PINCODE_GEO_SOURCE_URL, or both PINCODE_DATA_GOV_API_KEY and PINCODE_DATA_GOV_RESOURCE_ID, in GitHub Actions secrets."
+            exit 1
+          fi
+
+      - name: Refresh postal master and missing coordinates
+        run: python scripts/refresh-pincode-coordinates.py
+
+      - name: Commit refreshed coordinates
+        shell: bash
+        run: |
+          if git diff --quiet -- prisma/rate-data/pincode-coverage.json; then
+            echo "No missing pincode coordinates were added."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add prisma/rate-data/pincode-coverage.json
+          git commit -m "Refresh official pincode coordinates"
+          git push origin HEAD:main
