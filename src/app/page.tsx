@@ -17,21 +17,27 @@ const solutions = [
 const rateMatrices = dtdcRates.matrices;
 const rateGroups = [
   {
-    title: "E-commerce (B2B)",
-    description: "CPDP online-shipping schedules with NEL levels. NEL0 is the default display level.",
-    items: Array.from(new Set(rateMatrices.filter((matrix) => matrix.matrixType === "CPDP_ECOM").map((matrix) => `${matrix.levelCode} - ${matrix.serviceCode}`))).sort(),
-    count: rateMatrices.filter((matrix) => matrix.matrixType === "CPDP_ECOM").length,
+    title: "E-commerce B2B",
+    description: "Business e-commerce services with clear destination and weight-based seller rates.",
+    items: Array.from(new Set(rateMatrices.filter((matrix) => matrix.matrixType === "CPDP_ECOM" && matrix.levelCode === "NEL0").map((matrix) => matrix.serviceCode))).sort(),
+    count: rateMatrices.filter((matrix) => matrix.matrixType === "CPDP_ECOM" && matrix.levelCode === "NEL0").length,
+  },
+  {
+    title: "E-commerce B2C",
+    description: "Consumer e-commerce schedules separated between DTDC direct and India Post.",
+    items: ["DTDC direct", "India Post"],
+    count: rateMatrices.filter((matrix) => matrix.matrixType === "MLB_REVERSE" && matrix.customerSegment.startsWith("B2C_ECOM")).length,
   },
   {
     title: "Branch",
     description: "DTDC and India Post branch schedules separated by Express, Air Cargo and Surface Cargo.",
-    items: rateMatrices.filter((matrix) => matrix.matrixType === "DOMESTIC_TS_BASE").map((matrix) => matrix.name.replace("DTDC ", "")),
-    count: rateMatrices.filter((matrix) => matrix.matrixType === "DOMESTIC_TS_BASE").length,
+    items: ["DTDC direct", "India Post", "Express", "Air Cargo", "Surface Cargo"],
+    count: rateMatrices.filter((matrix) => matrix.matrixType === "DOMESTIC_TS_BASE" && ["BRANCH", "INDIA_POST"].includes(matrix.customerSegment) && ["EXPRESS", "AIR_CARGO", "SURFACE_CARGO"].includes(matrix.serviceCode) && !/Express [ABC]|Freedom/i.test(matrix.name)).length,
   },
   {
-    title: "Reverse pickup (MLB)",
-    description: "Multilocation reverse-pickup schedules, including B2C e-commerce, Dox, Non-Dox and Blue CP categories.",
-    items: ["B2C E-commerce - DTDC", "Priority - Dox", "Priority - Non-Dox", "Blue CP"],
+    title: "MLB",
+    description: "Multilocation schedules separated by DTDC direct, India Post, Dox, Non-Dox and Blue services.",
+    items: ["DTDC direct", "India Post", "Dox", "Non-Dox", "Blue services"],
     count: rateMatrices.filter((matrix) => matrix.matrixType === "MLB_REVERSE").length,
   },
 ];

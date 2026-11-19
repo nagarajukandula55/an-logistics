@@ -88,11 +88,10 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
       context.globalAlpha = 0.84;
       for (const record of filteredRecords) {
         if (record[3] === null || record[4] === null) continue;
-        const x = ((record[4] - INDIA_BOUNDS.west) / (INDIA_BOUNDS.east - INDIA_BOUNDS.west)) * width;
-        const y = (1 - (record[3] - INDIA_BOUNDS.south) / (INDIA_BOUNDS.north - INDIA_BOUNDS.south)) * height;
+        const [x, y] = project([record[4], record[3]]);
         if (x < -3 || x > width + 3 || y < -3 || y > height + 3) continue;
         context.beginPath();
-        context.arc(x, y, width < 600 ? 1.7 : 2.15, 0, Math.PI * 2);
+        context.arc(x, y, (width < 600 ? 1.7 : 2.15) * Math.min(zoom, 2), 0, Math.PI * 2);
         context.fill();
       }
       context.globalAlpha = 1;
