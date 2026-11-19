@@ -5,6 +5,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   title: "AN Group Logistics",
   description: "Courier partnerships, shipping rates and delivery tracking by AN Group",
+  icons: {
+    icon: "/an-group-logistics.png",
+    apple: "/an-group-logistics.png",
+  },
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
