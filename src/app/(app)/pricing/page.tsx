@@ -83,10 +83,13 @@ export default async function PricingPage() {
                 return <div key={courier.id} className="rounded-card border border-border p-4">
                   <h3 className="font-semibold text-ink">{courier.name}</h3>
                   <div className="mt-4"><RateScheduleViewer matrices={courier.costRateMatrices} /></div>
-                  <div className="mt-4 grid gap-5 lg:grid-cols-3">
+                  <div id="seller-rate-cards" className="mt-5 border-t border-border pt-4">
+                    <p className="mb-3 text-sm font-semibold text-ink">Published seller rate cards</p>
+                    <div className="grid gap-5 lg:grid-cols-3">
                     {session.user.role === "ADMIN" && <div><p className="mb-2 text-sm font-medium text-ink-2">Default</p><SellRateCardsPanel audience="DEFAULT" courierPartnerId={courier.id} cards={cardsFor("DEFAULT")} canEdit /></div>}
                     {(session.user.role === "ADMIN" || session.user.role === "STAFF") && <div><p className="mb-2 text-sm font-medium text-ink-2">Staff</p><SellRateCardsPanel audience="STAFF" courierPartnerId={courier.id} cards={cardsFor("STAFF")} canEdit={session.user.role === "ADMIN"} /></div>}
                     {(session.user.role === "ADMIN" || session.user.role === "COLLABORATOR") && <div><p className="mb-2 text-sm font-medium text-ink-2">Collaborator</p><SellRateCardsPanel audience="COLLABORATOR" courierPartnerId={courier.id} cards={cardsFor("COLLABORATOR")} canEdit={session.user.role === "ADMIN"} /></div>}
+                    </div>
                   </div>
                 </div>;
               })}

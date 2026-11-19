@@ -66,7 +66,8 @@ export function RateScheduleViewer({ matrices }: { matrices: RateMatrix[] }) {
   const categoryMatrices = visibleMatrices.filter((matrix) => isCategory(matrix, category));
   const segments = useMemo(() => [...new Set(categoryMatrices.map((matrix) => matrix.customerSegment))], [categoryMatrices]);
   const [segment, setSegment] = useState("");
-  const activeSegment = segments.includes(segment) ? segment : segments[0] ?? "";
+  const preferredSegment = ["DTDC", "B2C_ECOM_DTDC", "BRANCH"].find((item) => segments.includes(item)) ?? segments[0] ?? "";
+  const activeSegment = segments.includes(segment) ? segment : preferredSegment;
   const segmentMatrices = category === "B2B_ECOM" ? categoryMatrices : categoryMatrices.filter((matrix) => matrix.customerSegment === activeSegment);
   const services = [...new Set(segmentMatrices.map((matrix) => matrix.serviceCode))];
   const [service, setService] = useState("");
@@ -86,8 +87,8 @@ export function RateScheduleViewer({ matrices }: { matrices: RateMatrix[] }) {
 
   if (!visibleMatrices.length) return null;
   return <section className="rounded-card border border-border bg-surface p-4">
-    <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-ink">Structured rate viewer</h3><p className="mt-1 max-w-3xl text-xs text-ink-3">Choose the shipment category, provider and service to view the customer rate schedule.</p></div><span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-ink-2">{visibleMatrices.length} schedules</span></div>
-    <div className="mt-4 flex flex-wrap gap-2">{categories.map((item) => <button key={item} type="button" onClick={() => reset(item)} className={`rounded-control border px-3 py-2 text-left text-sm ${category === item ? "border-accent bg-accent-soft text-ink" : "border-border bg-surface-2 text-ink-2"}`}><span className="font-medium">{categoryInfo[item].label}</span><span className="ml-2 text-xs text-ink-3">{categoryInfo[item].description}</span></button>)}</div>
+    <div className="flex flex-wrap items-start justify-between gap-3"><div><h3 className="font-semibold text-ink">Seller rates</h3><p className="mt-1 max-w-3xl text-xs text-ink-3">Choose a category, provider and service to view the customer-facing rate table.</p></div><span className="rounded-full bg-accent-soft px-3 py-1 text-xs font-medium text-ink-2">{visibleMatrices.length} schedules</span></div>
+    <div className="mt-4 flex flex-wrap gap-2">{categories.map((item) => <button key={item} type="button" onClick={() => reset(item)} className={`rounded-control border px-4 py-2 text-left text-sm font-medium ${category === item ? "border-accent bg-accent-soft text-ink" : "border-border bg-surface-2 text-ink-2"}`}>{categoryInfo[item].label}</button>)}</div>
     <div className="mt-4 grid gap-3 md:grid-cols-3">
       {category !== "B2B_ECOM" && segments.length > 1 && <label className="text-xs font-medium text-ink-2">Provider / category<select value={activeSegment} onChange={(event) => { setSegment(event.target.value); setService(""); setLevel(""); setMatrixId(""); }} style={{ colorScheme: "light" }} className={selectClass}>{segments.map((item) => <option className="bg-white text-slate-900" key={item} value={item}>{segmentLabel(item)}</option>)}</select></label>}
       <label className="text-xs font-medium text-ink-2">Service<select value={activeService} onChange={(event) => { setService(event.target.value); setLevel(""); setMatrixId(""); }} style={{ colorScheme: "light" }} className={selectClass}>{services.map((item) => <option className="bg-white text-slate-900" key={item} value={item}>{serviceLabel(item)}</option>)}</select></label>
