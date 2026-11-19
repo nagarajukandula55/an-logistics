@@ -64,11 +64,12 @@ function RateSlabTable({ slabs }: { slabs: Slab[] }) {
     {groups.filter((group) => weightFilter === "ALL" || weightFilter === `${group.min}|${group.max}`).map((group) => {
       const rows = group.rows.filter((slab) => matches(slab.zone)).sort((a, b) => a.zone.localeCompare(b.zone));
       if (rows.length === 0) return null;
+      const zones = [...new Set(rows.map((row) => row.zone))].sort((a, b) => a.localeCompare(b));
       return <div key={`${group.min}-${group.max}`} className="overflow-hidden rounded-control border border-border">
         <div className="flex items-center justify-between border-b border-border bg-surface-2 px-3 py-2"><span className="text-sm font-semibold text-ink">Weight: {displayWeight(group.min, group.max)}</span><span className="text-xs text-ink-3">{rows.length} zones</span></div>
         <div className="overflow-x-auto"><table className="min-w-full text-left text-sm">
-          <thead className="text-xs uppercase tracking-wide text-ink-3"><tr><th className="px-3 py-2 font-medium">Zone</th><th className="px-3 py-2 text-right font-medium">Selling price</th></tr></thead>
-          <tbody className="divide-y divide-border">{rows.map((slab) => <tr key={slab.id} className="text-ink-2"><td className="px-3 py-2">{displayZone(slab.zone)}</td><td className="px-3 py-2 text-right font-semibold tabular">Rs. {slab.price.toFixed(2)}</td></tr>)}</tbody>
+          <thead className="text-xs uppercase tracking-wide text-ink-3"><tr><th className="sticky left-0 bg-surface px-3 py-2 font-medium">Weight slab</th>{zones.map((zone) => <th key={zone} className="whitespace-nowrap px-3 py-2 text-right font-medium">{displayZone(zone)}</th>)}</tr></thead>
+          <tbody className="divide-y divide-border"><tr className="text-ink-2"><td className="sticky left-0 bg-surface px-3 py-2 font-medium">{displayWeight(group.min, group.max)}</td>{zones.map((zone) => { const slab = rows.find((item) => item.zone === zone); return <td key={zone} className="whitespace-nowrap px-3 py-2 text-right font-semibold tabular">{slab ? `Rs. ${slab.price.toFixed(2)}` : "—"}</td>; })}</tr></tbody>
         </table></div>
       </div>;
     })}

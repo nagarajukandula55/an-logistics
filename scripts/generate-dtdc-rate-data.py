@@ -161,43 +161,38 @@ def parse_mlb():
         if sheet == "Info":
             continue
         data = pd.read_excel(MLB, sheet_name=sheet, header=None)
-        for index in range(len(data)):
-            values = [str(value).upper() for value in data.iloc[index].tolist() if pd.notna(value)]
-            title = " ".join(values)
-            if not any(token in title for token in ("EXPRESS", "AIR CARGO", "SURFACE CARGO")):
+        for header_index in range(len(data)):
+            header_values = [str(value).strip().upper() for value in data.iloc[header_index].tolist() if pd.notna(value)]
+            if "WEIGHT SLAB" not in header_values:
                 continue
-            service = "AIR_CARGO" if "AIR CARGO" in title else "SURFACE_CARGO" if "SURFACE CARGO" in title else "EXPRESS"
-            header_index = None
-            for candidate in range(index + 1, min(index + 5, len(data))):
-                row_text = " ".join(str(x).upper() for x in data.iloc[candidate].tolist() if pd.notna(x))
-                if "DESTINATION" in row_text or "WEIGHT SLAB" in row_text:
-                    header_index = candidate
-                    break
-            if header_index is None:
-                continue
-            header = data.iloc[header_index].tolist()
+
+            title_values = [str(value).strip() for value in data.iloc[max(0, header_index - 2):header_index].stack().tolist() if pd.notna(value)]
+            title = " ".join(title_values)
+            service = "AIR_CARGO" if "AIR CARGO" in title.upper() else "SURFACE_CARGO" if "SURFACE CARGO" in title.upper() else "EXPRESS"
             rows = []
             for row_index in range(header_index + 1, len(data)):
-                first = data.iloc[row_index, 1] if len(data.columns) > 1 else None
-                if pd.isna(first):
+                weight_label = data.iloc[row_index, 2] if len(data.columns) > 2 else None
+                if pd.isna(weight_label) or not str(weight_label).strip():
                     break
-                lane_text = str(first).strip()
-                if lane_text.upper() in ("NAN", "DESTINATION"):
-                    continue
-                weight = weight_row(lane_text)
+                weight = weight_row(str(weight_label))
                 if not weight:
-                    weight = (0.0, 0.5, "FLAT")
-                for column, header_value in enumerate(header):
-                    if column < 2 or pd.isna(header_value):
+                    continue
+                for column in range(3, len(data.columns)):
+                    header_value = data.iloc[header_index, column]
+                    if pd.isna(header_value):
                         continue
                     value = number(data.iloc[row_index, column])
                     if value is None:
                         continue
-                    lane = LANES.get(str(header_value).strip().upper(), lane_text.upper().replace(" ", "_"))
-                    rows.append({"lane": lane, "minWeightKg": weight[0], "maxWeightKg": weight[1], "weightBasis": weight[2], "sourceCostPrice": value, "sourceRow": str(row_index + 1), "metadata": {"sourceTitle": title, "sourceLane": lane_text, "sourceColumn": column}})
+                    raw_lane = str(header_value).strip().upper()
+                    lane = LANES.get(raw_lane, raw_lane.replace(" ", "_"))
+                    group_number = ((column - 3) // 5) + 1
+                    if group_number > 1:
+                        lane = f"{lane}_{group_number}"
+                    rows.append({"lane": lane, "minWeightKg": weight[0], "maxWeightKg": weight[1], "weightBasis": weight[2], "sourceCostPrice": value, "sourceRow": str(row_index + 1), "metadata": {"sourceTitle": title, "sourceWeightLabel": str(weight_label), "sourceColumn": column, "sourceLaneGroup": group_number}})
             if rows:
-                key = f"mlb-{sheet.lower().replace(' ', '-')}-{service.lower()}-{index}"
-                result.append(matrix(key, f"DTDC MLB {sheet} {service} {index + 1}", "MLB_REVERSE", service, None, "NON_ECOM", MLB.name, sheet, "2026-10-01", 55, rows, includesFuelSurcharge=False, fuelSurchargePercent=36.5, pickupChargePerKg=7, pickupMinimumCharge=35))
+                key = f"mlb-{sheet.lower().replace(' ', '-')}-{service.lower()}-{header_index}"
+                result.append(matrix(key, f"DTDC MLB {sheet} {service} {header_index + 1}", "MLB_REVERSE", service, None, "NON_ECOM", MLB.name, sheet, "2026-10-01", 55, rows, includesFuelSurcharge=False, fuelSurchargePercent=36.5, pickupChargePerKg=7, pickupMinimumCharge=35))
     return result
 
 
