@@ -19,6 +19,7 @@ OUT = ROOT / "prisma" / "rate-data" / "dtdc-rates.json"
 NS = {"main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main", "rel": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
 
 LANES = {
+    "CITY": "CITY",
     "LOCAL": "LOCAL",
     "REGIONAL": "REGION",
     "REGION": "REGION",
@@ -53,6 +54,12 @@ def number(value):
 
 def weight_row(label: str):
     text = str(label).upper().replace("\u00a0", " ").strip()
+    if "ADDITIONAL PER KG" in text:
+        if ">5" in text:
+            return 5.0, 1000.0, "PER_KG"
+        if ">10" in text:
+            return 10.0, 1000.0, "PER_KG"
+        return 1.0, 1000.0, "PER_KG"
     if "UPTO 250" in text or "UP TO 250" in text:
         return 0.0, 0.25, "FLAT"
     if "UPTO 500" in text or "UP TO 500" in text:
@@ -67,6 +74,10 @@ def weight_row(label: str):
         return 50.001, 100.0, "BAND"
     if "ABOVE 100" in text:
         return 100.0, 1000.0, "PER_KG"
+    if "UPTO 3 KG" in text or "UP TO 3 KG" in text:
+        return 0.0, 3.0, "UP_TO_BAND"
+    if ">3 KG" in text:
+        return 3.0, 1000.0, "PER_KG"
     if "100 GM" in text:
         return 0.0, 0.1, "FLAT"
     if "250 GM" in text:
@@ -77,6 +88,20 @@ def weight_row(label: str):
         return 0.5, 1.0, "ADDITIONAL_500G"
     if ">10 KG" in text:
         return 10.0, 1000.0, "PER_KG"
+    if "UP TO 10 KG" in text or "UPTO 10 KG" in text:
+        return 0.0, 10.0, "PER_KG"
+    if "<5 KG" in text:
+        return 0.0, 5.0, "UP_TO_BAND"
+    if "<10 KG" in text:
+        return 5.0, 10.0, "UP_TO_BAND"
+    if "<25 KG" in text:
+        return 10.0, 25.0, "UP_TO_BAND"
+    if "<50 KG" in text:
+        return 25.0, 50.0, "UP_TO_BAND"
+    if ">50 KG" in text:
+        return 50.0, 1000.0, "PER_KG"
+    if ">5 KG" in text:
+        return 5.0, 1000.0, "PER_KG"
     match = re.search(r"(\d+(?:\.\d+)?)\s*-\s*(\d+(?:\.\d+)?)\s*KG", text)
     if match:
         return float(match.group(1)), float(match.group(2)), "BAND"
@@ -118,9 +143,17 @@ def read_workbook():
 
 def make_matrix(sheet: str, service: str, header_index: int, title: str, rows, segment="NON_ECOM"):
     short_title = " ".join(str(title).split())[:120] or sheet
+    short_title = re.sub(r"\s*\(FSC[^)]*\)", "", short_title, flags=re.IGNORECASE)
+    short_title = re.sub(r"\s*W\.E\.F\..*", "", short_title, flags=re.IGNORECASE)
+    short_title = re.sub(r"\s*wef:.*", "", short_title, flags=re.IGNORECASE)
+    short_title = re.sub(r"\s*Rs\.\s*.*", "", short_title, flags=re.IGNORECASE)
+    short_title = re.sub(r"\s+", " ", short_title).strip(" -")
+    segment_label = {"B2C_ECOM_DTDC": "B2C E-commerce DTDC", "B2C_ECOM_INDIA_POST": "B2C E-commerce India Post", "DTDC": "DTDC", "INDIA_POST": "India Post", "DOX": "Priority Dox", "NON_DOX": "Priority Non-dox", "MLB": "MLB"}.get(segment, "MLB")
+    if segment in ("DOX", "NON_DOX"):
+        short_title = ""
     return {
         "idKey": f"mlb-{sheet.lower().replace(' ', '-')}-{service.lower()}-{header_index}",
-        "name": f"DTDC MLB {short_title} [{service}]",
+        "name": f"MLB {'' if segment == 'NON_ECOM' else segment_label + ' '}{short_title}".strip(),
         "matrixType": "MLB_REVERSE",
         "serviceCode": service,
         "levelCode": None,
@@ -138,6 +171,108 @@ def make_matrix(sheet: str, service: str, header_index: int, title: str, rows, s
     }
 
 
+def parse_bp_bs(data, sheet):
+    matrices = []
+    india_post = False
+    blue_scope = False
+    current_service = None
+    service_title = ""
+    for index, row in enumerate(data):
+        text = " ".join(str(value).strip() for value in row.values() if str(value).strip())
+        upper = text.upper()
+        if "INDIA POST SERVICEABLE PINCODE" in upper:
+            india_post = True
+            blue_scope = False
+            current_service = None
+            continue
+        if "ECOMMERCE MULTILOCATION FORWARD TS RATES" in upper:
+            blue_scope = "BLUE CPS" in upper
+            current_service = None
+            continue
+        if "ECOMMERCE" in upper and re.search(r"\b7[VDXG]\b", upper):
+            match = re.search(r"\b(7V|7X|7D|7G)\b", upper)
+            current_service = match.group(1) if match else None
+            service_title = text
+            if india_post:
+                blue_scope = "BLUE CPS" in upper
+            continue
+        if not current_service or not blue_scope:
+            continue
+        headers = {column: str(value).strip() for column, value in row.items() if str(value).strip()}
+        if not any(value.upper() == "WEIGHT" for value in headers.values()):
+            continue
+        weight_column = next(column for column, value in headers.items() if value.upper() == "WEIGHT")
+        lane_columns = [(column, value) for column, value in headers.items() if column > weight_column]
+        parsed_rows = []
+        for row_index in range(index + 1, len(data)):
+            weight_label = str(data[row_index].get(weight_column, "")).strip()
+            if not weight_label:
+                break
+            weight = weight_row(weight_label)
+            if not weight:
+                continue
+            for column, lane_value in lane_columns:
+                value = number(data[row_index].get(column))
+                if value is None:
+                    continue
+                raw_lane = lane_value.upper().replace(".", "").strip()
+                parsed_rows.append({"lane": LANES.get(raw_lane, raw_lane.replace(" ", "_")), "minWeightKg": weight[0], "maxWeightKg": weight[1], "weightBasis": weight[2], "sourceCostPrice": value, "sourceRow": str(row_index + 1), "metadata": {"sourceTitle": service_title, "sourceWeightLabel": weight_label, "sourceColumn": column}})
+        if parsed_rows:
+            segment = "B2C_ECOM_INDIA_POST" if india_post else "B2C_ECOM_DTDC"
+            matrices.append(make_matrix(sheet, current_service, index, current_service, parsed_rows, segment))
+            current_service = None
+    return matrices
+
+
+def parse_regional_sheet(data, sheet):
+    """Parse zonal/RO sheets as explicit service sections."""
+    matrices = []
+    segment = "DTDC"
+    service = None
+    zone_title = {"NZ (except SN) Zonal Reverse TS": "North Zone", "Srinagar Zonal Reverse TS": "Jammu & Srinagar", "WZ Zonal Reverse TS": "West Zone", "SZ Zonal Reverse TS": "South Zone", "EZ Zonal Reverse TS": "East Zone", "GAU Reverse TS": "Guwahati"}.get(sheet, sheet)
+    for index, row in enumerate(data):
+        values = [str(value).strip() for value in row.values() if str(value).strip()]
+        text = " ".join(values)
+        upper = text.upper()
+        if "INDIA POST SERVICEABLE PINCODE" in upper:
+            segment = "INDIA_POST"
+            service = None
+            continue
+        if upper.startswith("EXPRESS"):
+            service = "EXPRESS"
+        elif upper.startswith("AIR CARGO"):
+            service = "AIR_CARGO"
+        elif upper.startswith("SURFACE CARGO"):
+            service = "SURFACE_CARGO"
+        if not service or not any(str(value).strip().upper() in ("DESTINATION", "DESTINATIONS") for value in row.values()):
+            continue
+        weight_columns = [(column, value) for column, value in row.items() if column > 0 and weight_row(value)]
+        if not weight_columns:
+            continue
+        values_by_key = {}
+        for row_index in range(index + 1, len(data)):
+            lane_value = str(data[row_index].get(0, "")).strip()
+            if not lane_value:
+                break
+            for column, weight_label in weight_columns:
+                weight = weight_row(weight_label)
+                value = number(data[row_index].get(column))
+                if not weight or value is None:
+                    continue
+                lane_text = lane_value.upper().replace(".", "").strip()
+                lane = LANES.get(lane_text, lane_text.replace(" ", "_"))
+                key = (lane, weight[0], weight[1], weight[2])
+                existing = values_by_key.get(key)
+                if existing is None or value > existing["sourceCostPrice"]:
+                    values_by_key[key] = {"lane": lane, "minWeightKg": weight[0], "maxWeightKg": weight[1], "weightBasis": weight[2], "sourceCostPrice": value, "sourceRow": str(row_index + 1), "metadata": {"sourceTitle": text, "sourceWeightLabel": str(weight_label), "sourceColumn": column}}
+        if values_by_key:
+            service_label = {"EXPRESS": "Express", "AIR_CARGO": "Air Cargo", "SURFACE_CARGO": "Surface Cargo"}[service]
+            segment_label = "India Post" if segment == "INDIA_POST" else "DTDC"
+            rows = sorted(values_by_key.values(), key=lambda item: (item["lane"], item["minWeightKg"]))
+            matrices.append(make_matrix(sheet, service, index, f"{zone_title} {service_label}", rows, segment))
+    return matrices
+
+
 def main():
     if not SOURCE.exists():
         raise SystemExit(f"Missing workbook: {SOURCE}")
@@ -145,6 +280,13 @@ def main():
     for sheet, data in read_workbook():
         if sheet == "Info":
             continue
+        if sheet == "BP & BS Reverse TS":
+            matrices.extend(parse_bp_bs(data, sheet))
+            continue
+        if sheet != "EP Reverse TS Rates":
+            matrices.extend(parse_regional_sheet(data, sheet))
+            continue
+        india_post = False
         if sheet == "EP Reverse TS Rates":
             # This sheet has explicit Dox and Non-dox sections without a
             # conventional Weight/Weight Slab header.
@@ -181,6 +323,10 @@ def main():
                     matrices.append(make_matrix(sheet, "PRIORITY", section_index, "PRIORITY", parsed_rows, segment))
         for header_index, row in enumerate(data):
             headers = {index: str(value).strip() for index, value in row.items() if value}
+            row_text = " ".join(headers.values()).upper()
+            if "INDIA POST SERVICEABLE PINCODE" in row_text:
+                india_post = True
+                continue
             header_kind = "WEIGHT" if any(value.upper() in ("WEIGHT", "WEIGHT SLAB") for value in headers.values()) else "DESTINATION" if any(value.upper() == "DESTINATION" for value in headers.values()) else None
             if not header_kind:
                 continue
@@ -216,9 +362,9 @@ def main():
                             raw_lane = header_value.upper()
                             parsed_rows.append({"lane": LANES.get(raw_lane, raw_lane.replace(" ", "_")), "minWeightKg": weight[0], "maxWeightKg": weight[1], "weightBasis": weight[2], "sourceCostPrice": value, "sourceRow": str(row_index + 1), "metadata": {"sourceTitle": group_title, "sourceWeightLabel": str(weight_label), "sourceColumn": column}})
                     if parsed_rows:
-                        matrices.append(make_matrix(sheet, service, header_index * 10 + group_start, group_title, parsed_rows))
+                        matrices.append(make_matrix(sheet, service, header_index * 10 + group_start, f"{base_service} Blue CP", parsed_rows))
                 continue
-            title = " ".join(str(value).strip() for previous in data[max(0, header_index - 2):header_index] for value in previous.values() if value)
+            title = " ".join(str(value).strip() for previous in data[max(0, header_index - 8):header_index] for value in previous.values() if value)
             upper_title = title.upper()
             if "GREEN CP" in upper_title or "GOLD CP" in upper_title:
                 continue
@@ -261,7 +407,7 @@ def main():
                         group_lane = f"{lane}_{group_number}" if group_number > 1 else lane
                         parsed_rows.append({"lane": group_lane, "minWeightKg": weight[0], "maxWeightKg": weight[1], "weightBasis": weight[2], "sourceCostPrice": value, "sourceRow": str(row_index + 1), "metadata": {"sourceTitle": title, "sourceWeightLabel": str(weight_label), "sourceColumn": column, "sourceLaneGroup": group_number}})
             if parsed_rows:
-                matrices.append(make_matrix(sheet, service, header_index, title, parsed_rows))
+                matrices.append(make_matrix(sheet, service, header_index, title, parsed_rows, "INDIA_POST" if india_post else "DTDC"))
     payload = json.loads(OUT.read_text(encoding="utf-8"))
     payload["matrices"] = [matrix for matrix in payload["matrices"] if matrix["matrixType"] != "MLB_REVERSE"] + matrices
     payload["generatedAt"] = datetime.now(timezone.utc).isoformat()

@@ -52,15 +52,15 @@ async function main() {
   const courier = dtdc ?? await prisma.courierPartner.create({ data: { name: "DTDC", legalName: "DTDC Express Limited", contactName: "DTDC Operations", contactPhone: "", status: "ACTIVE", integrationType: "MANUAL", commissionType: "PERCENT", commissionValue: 0 } });
 
   const importedMatrixIds = new Set(payload.matrices.map((source) => id(source.idKey)));
-  const oldMlbMatrices = await prisma.courierCostRateMatrix.findMany({
-    where: { courierPartnerId: courier.id, matrixType: "MLB_REVERSE", isActive: true },
+  const oldImportedMatrices = await prisma.courierCostRateMatrix.findMany({
+    where: { courierPartnerId: courier.id, matrixType: { in: ["MLB_REVERSE", "DOMESTIC_TS_BASE"] }, isActive: true },
     select: { id: true },
   });
-  const obsoleteMlbIds = oldMlbMatrices.map((matrix) => matrix.id).filter((matrixId) => !importedMatrixIds.has(matrixId));
-  if (obsoleteMlbIds.length > 0) {
+  const obsoleteImportedIds = oldImportedMatrices.map((matrix) => matrix.id).filter((matrixId) => !importedMatrixIds.has(matrixId));
+  if (obsoleteImportedIds.length > 0) {
     await prisma.courierCostRateMatrix.updateMany({
-      where: { id: { in: obsoleteMlbIds } },
-      data: { isActive: false, notes: "Superseded by corrected MLB workbook normalization; retained for audit." },
+      where: { id: { in: obsoleteImportedIds } },
+      data: { isActive: false, notes: "Superseded by corrected source-rate normalization; retained for audit." },
     });
   }
 

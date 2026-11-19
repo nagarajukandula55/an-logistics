@@ -17,7 +17,7 @@ export const authConfig = {
 
       if (pathname === "/portal/signup" || pathname === "/book") return Response.redirect(new URL("/signup", request.nextUrl));
       const isPublic =
-        pathname === "/" || pathname === "/signup" || pathname === "/privacy" ||
+        pathname === "/" || pathname === "/signup" || pathname === "/privacy" || pathname === "/rate-card-1" ||
         pathname.startsWith("/login") ||
         pathname.startsWith("/api/auth") ||
         pathname.startsWith("/track") ||
