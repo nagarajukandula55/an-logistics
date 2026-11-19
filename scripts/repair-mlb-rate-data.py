@@ -18,7 +18,22 @@ SOURCE = ROOT / "_source_rates" / "Reverse pickup Multilocation Business (MLB) T
 OUT = ROOT / "prisma" / "rate-data" / "dtdc-rates.json"
 NS = {"main": "http://schemas.openxmlformats.org/spreadsheetml/2006/main", "rel": "http://schemas.openxmlformats.org/officeDocument/2006/relationships"}
 
-LANES = {"LOCAL": "LOCAL", "REGIONAL": "REGION", "ZONAL": "ZONE", "METRO": "METRO", "REST OF INDIA": "ROI"}
+LANES = {
+    "LOCAL": "LOCAL",
+    "REGIONAL": "REGION",
+    "REGION": "REGION",
+    "ZONAL": "ZONE",
+    "ZONE": "ZONE",
+    "METRO": "METRO",
+    "REST OF INDIA": "ROI",
+    "ROI": "ROI",
+    "ROI - A": "ROI_A",
+    "ROI- A": "ROI_A",
+    "ROI - B": "ROI_B",
+    "ROI- B": "ROI_B",
+    "SPL DEST.": "SPECIAL_DESTINATION",
+    "SPECIAL DESTINATION": "SPECIAL_DESTINATION",
+}
 
 
 def col_index(ref: str) -> int:
@@ -102,9 +117,10 @@ def read_workbook():
 
 
 def make_matrix(sheet: str, service: str, header_index: int, title: str, rows, segment="NON_ECOM"):
+    short_title = " ".join(str(title).split())[:120] or sheet
     return {
         "idKey": f"mlb-{sheet.lower().replace(' ', '-')}-{service.lower()}-{header_index}",
-        "name": f"DTDC MLB {segment.replace('_', ' ')} {sheet} {service} {header_index + 1}",
+        "name": f"DTDC MLB {short_title} [{service}]",
         "matrixType": "MLB_REVERSE",
         "serviceCode": service,
         "levelCode": None,
@@ -162,14 +178,50 @@ def main():
                         })
                 if parsed_rows:
                     segment = "DOX" if section_label == "DOX" else "NON_DOX"
-                    matrices.append(make_matrix(sheet, "EXPRESS", section_index, "PRIORITY", parsed_rows, segment))
+                    matrices.append(make_matrix(sheet, "PRIORITY", section_index, "PRIORITY", parsed_rows, segment))
         for header_index, row in enumerate(data):
             headers = {index: str(value).strip() for index, value in row.items() if value}
             header_kind = "WEIGHT" if any(value.upper() in ("WEIGHT", "WEIGHT SLAB") for value in headers.values()) else "DESTINATION" if any(value.upper() == "DESTINATION" for value in headers.values()) else None
             if not header_kind:
                 continue
+            if sheet == "EP Reverse TS Rates" and header_kind == "WEIGHT":
+                weight_column = next(index for index, value in headers.items() if value.upper() in ("WEIGHT", "WEIGHT SLAB"))
+                destination_columns = [(index, value) for index, value in headers.items() if index != weight_column and value.upper() not in ("TS RATES", "RATES")]
+                first_destination = min(index for index, _ in destination_columns)
+                group_width = 5
+                for group_number, group_start in enumerate(range(first_destination, max(index for index, _ in destination_columns) + 1, group_width)):
+                    # Only Blue CP rates are in scope. Green and Gold groups
+                    # are present in the workbook but must not be imported.
+                    if group_number != 0:
+                        continue
+                    group_columns = [(index, value) for index, value in destination_columns if group_start <= index < group_start + group_width]
+                    if not group_columns:
+                        continue
+                    group_title = str(data[header_index - 1].get(group_start, "")).strip() if header_index > 0 else ""
+                    upper_group_title = group_title.upper()
+                    base_service = "PEP" if "PEP" in upper_group_title else "PEC" if "PEC" in upper_group_title else "PRIORITY" if "PRIORITY" in upper_group_title else "EXPRESS"
+                    service = f"{base_service}_BLUE"
+                    parsed_rows = []
+                    for row_index in range(header_index + 1, len(data)):
+                        weight_label = data[row_index].get(weight_column, "")
+                        if not str(weight_label).strip():
+                            break
+                        weight = weight_row(weight_label)
+                        if not weight:
+                            continue
+                        for column, header_value in group_columns:
+                            value = number(data[row_index].get(column))
+                            if value is None:
+                                continue
+                            raw_lane = header_value.upper()
+                            parsed_rows.append({"lane": LANES.get(raw_lane, raw_lane.replace(" ", "_")), "minWeightKg": weight[0], "maxWeightKg": weight[1], "weightBasis": weight[2], "sourceCostPrice": value, "sourceRow": str(row_index + 1), "metadata": {"sourceTitle": group_title, "sourceWeightLabel": str(weight_label), "sourceColumn": column}})
+                    if parsed_rows:
+                        matrices.append(make_matrix(sheet, service, header_index * 10 + group_start, group_title, parsed_rows))
+                continue
             title = " ".join(str(value).strip() for previous in data[max(0, header_index - 2):header_index] for value in previous.values() if value)
             upper_title = title.upper()
+            if "GREEN CP" in upper_title or "GOLD CP" in upper_title:
+                continue
             service = "AIR_CARGO" if "AIR CARGO" in upper_title else "SURFACE_CARGO" if "SURFACE CARGO" in upper_title else "EXPRESS"
             parsed_rows = []
             if header_kind == "WEIGHT":

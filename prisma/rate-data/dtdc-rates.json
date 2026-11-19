@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-11-19T11:37:51.788959+00:00",
+  "generatedAt": "2026-11-19T11:51:50.665015+00:00",
   "matrices": [
     {
       "idKey": "cpdp-nel0-7v",
@@ -12657,10 +12657,10 @@
       "fuelSurchargePercent": 35
     },
     {
-      "idKey": "mlb-ep-reverse-ts-rates-express-18",
-      "name": "DTDC MLB DOX EP Reverse TS Rates EXPRESS 19",
+      "idKey": "mlb-ep-reverse-ts-rates-priority-18",
+      "name": "DTDC MLB PRIORITY [PRIORITY]",
       "matrixType": "MLB_REVERSE",
-      "serviceCode": "EXPRESS",
+      "serviceCode": "PRIORITY",
       "levelCode": null,
       "customerSegment": "DOX",
       "sourceFile": "Reverse pickup Multilocation Business (MLB) TS Rates (w.e.f. 1 Oct 2026) (1).xlsx",
@@ -12826,7 +12826,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -12839,7 +12839,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -12852,7 +12852,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -12865,7 +12865,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -12878,7 +12878,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -12891,7 +12891,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -12904,7 +12904,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -12917,7 +12917,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -12930,7 +12930,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -13099,7 +13099,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -13112,7 +13112,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -13125,7 +13125,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -13138,7 +13138,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -13151,7 +13151,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -13164,7 +13164,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -13177,7 +13177,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -13190,7 +13190,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -13203,7 +13203,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -13222,10 +13222,10 @@
       "pickupMinimumCharge": 35
     },
     {
-      "idKey": "mlb-ep-reverse-ts-rates-express-26",
-      "name": "DTDC MLB NON DOX EP Reverse TS Rates EXPRESS 27",
+      "idKey": "mlb-ep-reverse-ts-rates-priority-26",
+      "name": "DTDC MLB PRIORITY [PRIORITY]",
       "matrixType": "MLB_REVERSE",
-      "serviceCode": "EXPRESS",
+      "serviceCode": "PRIORITY",
       "levelCode": null,
       "customerSegment": "NON_DOX",
       "sourceFile": "Reverse pickup Multilocation Business (MLB) TS Rates (w.e.f. 1 Oct 2026) (1).xlsx",
@@ -13443,7 +13443,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 3.0,
           "maxWeightKg": 25.0,
           "weightBasis": "BAND",
@@ -13456,7 +13456,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 25.001,
           "maxWeightKg": 50.0,
           "weightBasis": "BAND",
@@ -13469,7 +13469,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 50.001,
           "maxWeightKg": 100.0,
           "weightBasis": "BAND",
@@ -13482,7 +13482,7 @@
           }
         },
         {
-          "lane": "ROI_-_A",
+          "lane": "ROI_A",
           "minWeightKg": 100.0,
           "maxWeightKg": 1000.0,
           "weightBasis": "PER_KG",
@@ -13495,7 +13495,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 3.0,
           "maxWeightKg": 25.0,
           "weightBasis": "BAND",
@@ -13508,7 +13508,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 25.001,
           "maxWeightKg": 50.0,
           "weightBasis": "BAND",
@@ -13521,7 +13521,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 50.001,
           "maxWeightKg": 100.0,
           "weightBasis": "BAND",
@@ -13534,7 +13534,7 @@
           }
         },
         {
-          "lane": "ROI_-_B",
+          "lane": "ROI_B",
           "minWeightKg": 100.0,
           "maxWeightKg": 1000.0,
           "weightBasis": "PER_KG",
@@ -13547,7 +13547,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 3.0,
           "maxWeightKg": 25.0,
           "weightBasis": "BAND",
@@ -13560,7 +13560,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 25.001,
           "maxWeightKg": 50.0,
           "weightBasis": "BAND",
@@ -13573,7 +13573,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 50.001,
           "maxWeightKg": 100.0,
           "weightBasis": "BAND",
@@ -13586,7 +13586,7 @@
           }
         },
         {
-          "lane": "SPL_DEST.",
+          "lane": "SPECIAL_DESTINATION",
           "minWeightKg": 100.0,
           "maxWeightKg": 1000.0,
           "weightBasis": "PER_KG",
@@ -13605,10 +13605,10 @@
       "pickupMinimumCharge": 35
     },
     {
-      "idKey": "mlb-ep-reverse-ts-rates-express-1",
-      "name": "DTDC MLB NON ECOM EP Reverse TS Rates EXPRESS 2",
+      "idKey": "mlb-ep-reverse-ts-rates-pep_blue-13",
+      "name": "DTDC MLB PEP Multilocation Forward TS Rates (w.e.f. 01 Oct 2026) FSC: 36.5% [PEP_BLUE]",
       "matrixType": "MLB_REVERSE",
-      "serviceCode": "EXPRESS",
+      "serviceCode": "PEP_BLUE",
       "levelCode": null,
       "customerSegment": "NON_ECOM",
       "sourceFile": "Reverse pickup Multilocation Business (MLB) TS Rates (w.e.f. 1 Oct 2026) (1).xlsx",
@@ -13625,10 +13625,9 @@
           "sourceCostPrice": 48.3,
           "sourceRow": "3",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "250 gm",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
+            "sourceColumn": 3
           }
         },
         {
@@ -13639,10 +13638,9 @@
           "sourceCostPrice": 80.5,
           "sourceRow": "3",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "250 gm",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
+            "sourceColumn": 4
           }
         },
         {
@@ -13653,10 +13651,9 @@
           "sourceCostPrice": 129.95,
           "sourceRow": "3",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "250 gm",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
+            "sourceColumn": 5
           }
         },
         {
@@ -13667,10 +13664,9 @@
           "sourceCostPrice": 154.1,
           "sourceRow": "3",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "250 gm",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
+            "sourceColumn": 6
           }
         },
         {
@@ -13681,150 +13677,9 @@
           "sourceCostPrice": 178.25,
           "sourceRow": "3",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "250 gm",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "LOCAL_2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 43.7,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "REGION_2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 73.6,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ZONE_2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 117.3,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 10,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "METRO_2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 139.15,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 11,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ROI_2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 161.0,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 12,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "LOCAL_3",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 40.25,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 13,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "REGION_3",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 70.15,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 14,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ZONE_3",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 111.55,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 15,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "METRO_3",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 132.25,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 16,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ROI_3",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 152.95,
-          "sourceRow": "3",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "250 gm",
-            "sourceColumn": 17,
-            "sourceLaneGroup": 3
+            "sourceColumn": 7
           }
         },
         {
@@ -13835,10 +13690,9 @@
           "sourceCostPrice": 50.6,
           "sourceRow": "4",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "500 gm",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
+            "sourceColumn": 3
           }
         },
         {
@@ -13849,10 +13703,9 @@
           "sourceCostPrice": 86.25,
           "sourceRow": "4",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "500 gm",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
+            "sourceColumn": 4
           }
         },
         {
@@ -13863,10 +13716,9 @@
           "sourceCostPrice": 136.85,
           "sourceRow": "4",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "500 gm",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
+            "sourceColumn": 5
           }
         },
         {
@@ -13877,10 +13729,9 @@
           "sourceCostPrice": 161.0,
           "sourceRow": "4",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "500 gm",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
+            "sourceColumn": 6
           }
         },
         {
@@ -13891,150 +13742,9 @@
           "sourceCostPrice": 186.3,
           "sourceRow": "4",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "500 gm",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "LOCAL_2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 46.0,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "REGION_2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 77.05,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ZONE_2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 124.2,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 10,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "METRO_2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 147.2,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 11,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ROI_2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 169.05,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 12,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "LOCAL_3",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 43.7,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 13,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "REGION_3",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 73.6,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 14,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ZONE_3",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 117.3,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 15,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "METRO_3",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 139.15,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 16,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ROI_3",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 159.85,
-          "sourceRow": "4",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "500 gm",
-            "sourceColumn": 17,
-            "sourceLaneGroup": 3
+            "sourceColumn": 7
           }
         },
         {
@@ -14045,10 +13755,9 @@
           "sourceCostPrice": 46.0,
           "sourceRow": "5",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
+            "sourceColumn": 3
           }
         },
         {
@@ -14059,10 +13768,9 @@
           "sourceCostPrice": 47.15,
           "sourceRow": "5",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
+            "sourceColumn": 4
           }
         },
         {
@@ -14073,10 +13781,9 @@
           "sourceCostPrice": 103.5,
           "sourceRow": "5",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
+            "sourceColumn": 5
           }
         },
         {
@@ -14087,10 +13794,9 @@
           "sourceCostPrice": 133.4,
           "sourceRow": "5",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
+            "sourceColumn": 6
           }
         },
         {
@@ -14101,150 +13807,9 @@
           "sourceCostPrice": 150.65,
           "sourceRow": "5",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "LOCAL_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 40.25,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "REGION_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 42.55,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ZONE_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 93.15,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 10,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "METRO_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 120.75,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 11,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ROI_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 135.7,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 12,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "LOCAL_3",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 37.95,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 13,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "REGION_3",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 39.1,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 14,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ZONE_3",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 88.55,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 15,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "METRO_3",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 115.0,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 16,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ROI_3",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 128.8,
-          "sourceRow": "5",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "Addnl. 500 gm",
-            "sourceColumn": 17,
-            "sourceLaneGroup": 3
+            "sourceColumn": 7
           }
         },
         {
@@ -14255,10 +13820,9 @@
           "sourceCostPrice": 64.4,
           "sourceRow": "6",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
+            "sourceColumn": 3
           }
         },
         {
@@ -14269,10 +13833,9 @@
           "sourceCostPrice": 66.7,
           "sourceRow": "6",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
+            "sourceColumn": 4
           }
         },
         {
@@ -14283,10 +13846,9 @@
           "sourceCostPrice": 167.9,
           "sourceRow": "6",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
+            "sourceColumn": 5
           }
         },
         {
@@ -14297,10 +13859,9 @@
           "sourceCostPrice": 218.5,
           "sourceRow": "6",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
+            "sourceColumn": 6
           }
         },
         {
@@ -14311,150 +13872,9 @@
           "sourceCostPrice": 250.7,
           "sourceRow": "6",
           "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "LOCAL_2",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 57.5,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "REGION_2",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 59.8,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ZONE_2",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 151.8,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 10,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "METRO_2",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 197.8,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 11,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ROI_2",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 227.7,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 12,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "LOCAL_3",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 54.05,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 13,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "REGION_3",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 56.35,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 14,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ZONE_3",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 144.9,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 15,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "METRO_3",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 188.6,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 16,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ROI_3",
-          "minWeightKg": 10.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 216.2,
-          "sourceRow": "6",
-          "metadata": {
-            "sourceTitle": "PEP Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEP Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">10 kg (per kg)",
-            "sourceColumn": 17,
-            "sourceLaneGroup": 3
+            "sourceColumn": 7
           }
         }
       ],
@@ -14464,10 +13884,10 @@
       "pickupMinimumCharge": 35
     },
     {
-      "idKey": "mlb-ep-reverse-ts-rates-express-11",
-      "name": "DTDC MLB NON ECOM EP Reverse TS Rates EXPRESS 12",
+      "idKey": "mlb-ep-reverse-ts-rates-pec_blue-113",
+      "name": "DTDC MLB PEC Multilocation Forward TS Rates (w.e.f. 01 Oct 2026) FSC: 36.5% [PEC_BLUE]",
       "matrixType": "MLB_REVERSE",
-      "serviceCode": "EXPRESS",
+      "serviceCode": "PEC_BLUE",
       "levelCode": null,
       "customerSegment": "NON_ECOM",
       "sourceFile": "Reverse pickup Multilocation Business (MLB) TS Rates (w.e.f. 1 Oct 2026) (1).xlsx",
@@ -14484,10 +13904,9 @@
           "sourceCostPrice": 46.0,
           "sourceRow": "13",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
+            "sourceColumn": 3
           }
         },
         {
@@ -14498,10 +13917,9 @@
           "sourceCostPrice": 50.6,
           "sourceRow": "13",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
+            "sourceColumn": 4
           }
         },
         {
@@ -14512,10 +13930,9 @@
           "sourceCostPrice": 144.9,
           "sourceRow": "13",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
+            "sourceColumn": 5
           }
         },
         {
@@ -14526,10 +13943,9 @@
           "sourceCostPrice": 170.2,
           "sourceRow": "13",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
+            "sourceColumn": 6
           }
         },
         {
@@ -14540,150 +13956,9 @@
           "sourceCostPrice": 196.65,
           "sourceRow": "13",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "LOCAL_2",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 40.25,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "REGION_2",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 46.0,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ZONE_2",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 131.1,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 10,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "METRO_2",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 154.1,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 11,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ROI_2",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 178.25,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 12,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "LOCAL_3",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 37.95,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 13,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "REGION_3",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 43.7,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 14,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ZONE_3",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 124.2,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 15,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "METRO_3",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 147.2,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 16,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ROI_3",
-          "minWeightKg": 25.1,
-          "maxWeightKg": 50.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 170.2,
-          "sourceRow": "13",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "25.1 - 50 kg",
-            "sourceColumn": 17,
-            "sourceLaneGroup": 3
+            "sourceColumn": 7
           }
         },
         {
@@ -14694,10 +13969,9 @@
           "sourceCostPrice": 44.85,
           "sourceRow": "14",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
+            "sourceColumn": 3
           }
         },
         {
@@ -14708,10 +13982,9 @@
           "sourceCostPrice": 47.15,
           "sourceRow": "14",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
+            "sourceColumn": 4
           }
         },
         {
@@ -14722,10 +13995,9 @@
           "sourceCostPrice": 140.3,
           "sourceRow": "14",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
+            "sourceColumn": 5
           }
         },
         {
@@ -14736,10 +14008,9 @@
           "sourceCostPrice": 152.95,
           "sourceRow": "14",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
+            "sourceColumn": 6
           }
         },
         {
@@ -14750,150 +14021,9 @@
           "sourceCostPrice": 179.4,
           "sourceRow": "14",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "LOCAL_2",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 39.1,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "REGION_2",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 42.55,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ZONE_2",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 127.65,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 10,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "METRO_2",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 138.0,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 11,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ROI_2",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 162.15,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 12,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "LOCAL_3",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 36.8,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 13,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "REGION_3",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 39.1,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 14,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ZONE_3",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 120.75,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 15,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "METRO_3",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 131.1,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 16,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ROI_3",
-          "minWeightKg": 50.1,
-          "maxWeightKg": 100.0,
-          "weightBasis": "BAND",
-          "sourceCostPrice": 154.1,
-          "sourceRow": "14",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": "50.1 - 100 kg",
-            "sourceColumn": 17,
-            "sourceLaneGroup": 3
+            "sourceColumn": 7
           }
         },
         {
@@ -14904,10 +14034,9 @@
           "sourceCostPrice": 36.8,
           "sourceRow": "15",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
+            "sourceColumn": 3
           }
         },
         {
@@ -14918,10 +14047,9 @@
           "sourceCostPrice": 43.7,
           "sourceRow": "15",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
+            "sourceColumn": 4
           }
         },
         {
@@ -14932,10 +14060,9 @@
           "sourceCostPrice": 138.0,
           "sourceRow": "15",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
+            "sourceColumn": 5
           }
         },
         {
@@ -14946,10 +14073,9 @@
           "sourceCostPrice": 133.4,
           "sourceRow": "15",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
+            "sourceColumn": 6
           }
         },
         {
@@ -14960,150 +14086,9 @@
           "sourceCostPrice": 152.95,
           "sourceRow": "15",
           "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
+            "sourceTitle": "PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
             "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "LOCAL_2",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 33.35,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "REGION_2",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 37.95,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ZONE_2",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 125.35,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 10,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "METRO_2",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 120.75,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 11,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "ROI_2",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 138.0,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 12,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "LOCAL_3",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 31.05,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 13,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "REGION_3",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 35.65,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 14,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ZONE_3",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 118.45,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 15,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "METRO_3",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 115.0,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 16,
-            "sourceLaneGroup": 3
-          }
-        },
-        {
-          "lane": "ROI_3",
-          "minWeightKg": 100.0,
-          "maxWeightKg": 1000.0,
-          "weightBasis": "PER_KG",
-          "sourceCostPrice": 131.1,
-          "sourceRow": "15",
-          "metadata": {
-            "sourceTitle": "PEC Multilocation Forward TS Rates\n(W.E.F. 01-10-2026) PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5% PEC Multilocation Forward TS Rates\n (w.e.f. 01 Oct 2026) \nFSC: 36.5%",
-            "sourceWeightLabel": ">100 kg (per kg)",
-            "sourceColumn": 17,
-            "sourceLaneGroup": 3
+            "sourceColumn": 7
           }
         }
       ],
@@ -15114,7 +14099,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-6",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 7",
+      "name": "DTDC MLB Ecommerce Premium - 7V (FSC = 36.5% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -15182,7 +14167,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15196,7 +14181,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15210,7 +14195,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15280,7 +14265,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15294,7 +14279,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15308,7 +14293,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15329,7 +14314,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-11",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 12",
+      "name": "DTDC MLB Ecommerce Priority - 7X (FSC = 36.5% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -15397,7 +14382,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15411,7 +14396,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15425,7 +14410,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15495,7 +14480,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15509,7 +14494,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15523,7 +14508,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15544,7 +14529,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-16",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 17",
+      "name": "DTDC MLB Ecommerce Ground Premium - 7D (FSC = 38% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -15612,7 +14597,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15626,7 +14611,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15640,7 +14625,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -15710,7 +14695,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15724,7 +14709,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15738,7 +14723,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15808,7 +14793,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15822,7 +14807,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15836,7 +14821,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15857,7 +14842,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-22",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 23",
+      "name": "DTDC MLB Ecommerce Ground Standard - 7G (FSC = 38% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -15925,7 +14910,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15939,7 +14924,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15953,7 +14938,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -15974,7 +14959,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-31",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 32",
+      "name": "DTDC MLB Ecommerce Premium - 7V (FSC = 36.5% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -16042,7 +15027,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16056,7 +15041,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16070,7 +15055,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16140,7 +15125,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16154,7 +15139,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16168,7 +15153,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16189,7 +15174,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-36",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 37",
+      "name": "DTDC MLB Ecommerce Priority - 7X (FSC = 36.5% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -16257,7 +15242,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16271,7 +15256,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16285,7 +15270,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16355,7 +15340,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16369,7 +15354,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16383,7 +15368,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16404,7 +15389,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-41",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 42",
+      "name": "DTDC MLB Ecommerce Ground Premium - 7D (FSC = 38% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -16472,7 +15457,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16486,7 +15471,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16500,7 +15485,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16570,7 +15555,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16584,7 +15569,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16598,7 +15583,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16668,7 +15653,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16682,7 +15667,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16696,7 +15681,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16717,7 +15702,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-47",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 48",
+      "name": "DTDC MLB Ecommerce Ground Standard - 7G (FSC = 38% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -16785,7 +15770,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16799,7 +15784,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16813,7 +15798,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -16834,7 +15819,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-55",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 56",
+      "name": "DTDC MLB Ecommerce Premium - 7V (FSC = 36.5% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -16902,7 +15887,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16916,7 +15901,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -16930,7 +15915,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -17000,7 +15985,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17014,7 +15999,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17028,7 +16013,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17049,7 +16034,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-60",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 61",
+      "name": "DTDC MLB Ecommerce Priority - 7X (FSC = 36.5% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -17117,7 +16102,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -17131,7 +16116,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -17145,7 +16130,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -17215,7 +16200,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17229,7 +16214,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17243,7 +16228,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17264,7 +16249,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-65",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 66",
+      "name": "DTDC MLB Ecommerce Ground Premium - 7D (FSC = 38% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -17332,7 +16317,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -17346,7 +16331,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -17360,7 +16345,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -17430,7 +16415,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17444,7 +16429,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17458,7 +16443,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17528,7 +16513,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17542,7 +16527,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17556,7 +16541,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17577,7 +16562,7 @@
     },
     {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-71",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 72",
+      "name": "DTDC MLB Ecommerce Ground Standard - 7G (FSC = 38% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -17645,7 +16630,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17659,7 +16644,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17673,7 +16658,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -17693,830 +16678,8 @@
       "pickupMinimumCharge": 35
     },
     {
-      "idKey": "mlb-bp-&-bs-reverse-ts-express-79",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 80",
-      "matrixType": "MLB_REVERSE",
-      "serviceCode": "EXPRESS",
-      "levelCode": null,
-      "customerSegment": "NON_ECOM",
-      "sourceFile": "Reverse pickup Multilocation Business (MLB) TS Rates (w.e.f. 1 Oct 2026) (1).xlsx",
-      "sourceSheet": "BP & BS Reverse TS",
-      "effectiveFrom": "2026-10-01",
-      "costAdjustmentPercent": 55,
-      "gstPercent": 18,
-      "rows": [
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 66.29,
-          "sourceRow": "81",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 73.19,
-          "sourceRow": "81",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 75.49,
-          "sourceRow": "81",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 78.94,
-          "sourceRow": "81",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 82.39,
-          "sourceRow": "81",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 89.29,
-          "sourceRow": "81",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 101.94,
-          "sourceRow": "81",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 70.0,
-          "sourceRow": "82",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 76.9,
-          "sourceRow": "82",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 79.2,
-          "sourceRow": "82",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 82.65,
-          "sourceRow": "82",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 86.1,
-          "sourceRow": "82",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 93.0,
-          "sourceRow": "82",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 105.65,
-          "sourceRow": "82",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 39.8,
-          "sourceRow": "83",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 42.1,
-          "sourceRow": "83",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 45.55,
-          "sourceRow": "83",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 54.75,
-          "sourceRow": "83",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 57.05,
-          "sourceRow": "83",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 59.35,
-          "sourceRow": "83",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 68.55,
-          "sourceRow": "83",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 63.99,
-          "sourceRow": "84",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 67.44,
-          "sourceRow": "84",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 73.19,
-          "sourceRow": "84",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 90.44,
-          "sourceRow": "84",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 98.49,
-          "sourceRow": "84",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 101.94,
-          "sourceRow": "84",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 107.69,
-          "sourceRow": "84",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GOLD CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        }
-      ],
-      "includesFuelSurcharge": false,
-      "fuelSurchargePercent": 36.5,
-      "pickupChargePerKg": 7,
-      "pickupMinimumCharge": 35
-    },
-    {
-      "idKey": "mlb-bp-&-bs-reverse-ts-express-86",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 87",
-      "matrixType": "MLB_REVERSE",
-      "serviceCode": "EXPRESS",
-      "levelCode": null,
-      "customerSegment": "NON_ECOM",
-      "sourceFile": "Reverse pickup Multilocation Business (MLB) TS Rates (w.e.f. 1 Oct 2026) (1).xlsx",
-      "sourceSheet": "BP & BS Reverse TS",
-      "effectiveFrom": "2026-10-01",
-      "costAdjustmentPercent": 55,
-      "gstPercent": 18,
-      "rows": [
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 66.29,
-          "sourceRow": "88",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 73.19,
-          "sourceRow": "88",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 75.49,
-          "sourceRow": "88",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 78.94,
-          "sourceRow": "88",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 82.39,
-          "sourceRow": "88",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 89.29,
-          "sourceRow": "88",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.0,
-          "maxWeightKg": 0.25,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 101.94,
-          "sourceRow": "88",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "250 GM",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 70.0,
-          "sourceRow": "89",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 76.9,
-          "sourceRow": "89",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 79.2,
-          "sourceRow": "89",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 82.65,
-          "sourceRow": "89",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 86.1,
-          "sourceRow": "89",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 93.0,
-          "sourceRow": "89",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.25,
-          "maxWeightKg": 0.5,
-          "weightBasis": "FLAT",
-          "sourceCostPrice": 105.65,
-          "sourceRow": "89",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "500 GM",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 39.8,
-          "sourceRow": "90",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 42.1,
-          "sourceRow": "90",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 45.55,
-          "sourceRow": "90",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 54.75,
-          "sourceRow": "90",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 57.05,
-          "sourceRow": "90",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 59.35,
-          "sourceRow": "90",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 68.55,
-          "sourceRow": "90",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional 500 GM",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "CITY",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 63.99,
-          "sourceRow": "91",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 3,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "REGION",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 67.44,
-          "sourceRow": "91",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 4,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ZONE",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 73.19,
-          "sourceRow": "91",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 5,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "METRO",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 90.44,
-          "sourceRow": "91",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 6,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_A",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 98.49,
-          "sourceRow": "91",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 7,
-            "sourceLaneGroup": 1
-          }
-        },
-        {
-          "lane": "ROI-_B_2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 101.94,
-          "sourceRow": "91",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 8,
-            "sourceLaneGroup": 2
-          }
-        },
-        {
-          "lane": "SPL_DEST._2",
-          "minWeightKg": 0.5,
-          "maxWeightKg": 1.0,
-          "weightBasis": "ADDITIONAL_500G",
-          "sourceCostPrice": 107.69,
-          "sourceRow": "91",
-          "metadata": {
-            "sourceTitle": "Ecommerce Ground Premium - 7D for GREEN CPs (FSC = 38% & Book Cost = Rs.12)",
-            "sourceWeightLabel": "Additional Per KG | > 3 KG",
-            "sourceColumn": 9,
-            "sourceLaneGroup": 2
-          }
-        }
-      ],
-      "includesFuelSurcharge": false,
-      "fuelSurchargePercent": 36.5,
-      "pickupChargePerKg": 7,
-      "pickupMinimumCharge": 35
-    },
-    {
       "idKey": "mlb-bp-&-bs-reverse-ts-express-93",
-      "name": "DTDC MLB NON ECOM BP & BS Reverse TS EXPRESS 94",
+      "name": "DTDC MLB Ecommerce Ground Premium - 7D for BLUE CPs (FSC = 38% & Book Cost = Rs.12) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -18584,7 +16747,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -18598,7 +16761,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -18612,7 +16775,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.0,
           "maxWeightKg": 0.25,
           "weightBasis": "FLAT",
@@ -18682,7 +16845,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -18696,7 +16859,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -18710,7 +16873,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.25,
           "maxWeightKg": 0.5,
           "weightBasis": "FLAT",
@@ -18780,7 +16943,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -18794,7 +16957,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -18808,7 +16971,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -18878,7 +17041,7 @@
           }
         },
         {
-          "lane": "ROI-_A",
+          "lane": "ROI_A",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -18892,7 +17055,7 @@
           }
         },
         {
-          "lane": "ROI-_B_2",
+          "lane": "ROI_B_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -18906,7 +17069,7 @@
           }
         },
         {
-          "lane": "SPL_DEST._2",
+          "lane": "SPECIAL_DESTINATION_2",
           "minWeightKg": 0.5,
           "maxWeightKg": 1.0,
           "weightBasis": "ADDITIONAL_500G",
@@ -18927,7 +17090,7 @@
     },
     {
       "idKey": "mlb-nz-(except-sn)-zonal-reverse-ts-express-2",
-      "name": "DTDC MLB NON ECOM NZ (except SN) Zonal Reverse TS EXPRESS 3",
+      "name": "DTDC MLB North Zone Multilocation Forward TS (except Jammu & Srinagar) (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) wef: 01 Oct 26 (FS [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -19954,7 +18117,7 @@
     },
     {
       "idKey": "mlb-nz-(except-sn)-zonal-reverse-ts-express-32",
-      "name": "DTDC MLB NON ECOM NZ (except SN) Zonal Reverse TS EXPRESS 33",
+      "name": "DTDC MLB North Zone Multilocation Forward TS (except Jammu & Srinagar) (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) (FSC=36.5%) (FSC=3 [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -21737,7 +19900,7 @@
     },
     {
       "idKey": "mlb-srinagar-zonal-reverse-ts-express-2",
-      "name": "DTDC MLB NON ECOM Srinagar Zonal Reverse TS EXPRESS 3",
+      "name": "DTDC MLB Jammu & Srinagar Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=21.5%) wef: 01 Oct 26 (FSC=21.5%) wef: 01 Oct [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -22764,7 +20927,7 @@
     },
     {
       "idKey": "mlb-srinagar-zonal-reverse-ts-express-33",
-      "name": "DTDC MLB NON ECOM Srinagar Zonal Reverse TS EXPRESS 34",
+      "name": "DTDC MLB Jammu & Srinagar Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=21.5%) (FSC=21.5%) (FSC=21.5%) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -23791,7 +21954,7 @@
     },
     {
       "idKey": "mlb-wz-zonal-reverse-ts-express-2",
-      "name": "DTDC MLB NON ECOM WZ Zonal Reverse TS EXPRESS 3",
+      "name": "DTDC MLB West Zone Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) wef: 01 Oct 26 (FSC=36.5%) wef: 01 Oct 26 (FS [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -24818,7 +22981,7 @@
     },
     {
       "idKey": "mlb-wz-zonal-reverse-ts-express-32",
-      "name": "DTDC MLB NON ECOM WZ Zonal Reverse TS EXPRESS 33",
+      "name": "DTDC MLB West Zone Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) (FSC=36.5%) (FSC=36.5%) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -26601,7 +24764,7 @@
     },
     {
       "idKey": "mlb-sz-zonal-reverse-ts-express-2",
-      "name": "DTDC MLB NON ECOM SZ Zonal Reverse TS EXPRESS 3",
+      "name": "DTDC MLB South Zone Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) wef: 01 Oct 26 (FSC=36.5%) wef: 01 Oct 26 (F [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -27628,7 +25791,7 @@
     },
     {
       "idKey": "mlb-sz-zonal-reverse-ts-express-33",
-      "name": "DTDC MLB NON ECOM SZ Zonal Reverse TS EXPRESS 34",
+      "name": "DTDC MLB South Zone Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) (FSC=36.5%) (FSC=36.5%) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -28655,7 +26818,7 @@
     },
     {
       "idKey": "mlb-ez-zonal-reverse-ts-express-2",
-      "name": "DTDC MLB NON ECOM EZ Zonal Reverse TS EXPRESS 3",
+      "name": "DTDC MLB East Zone Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) wef: 01 Oct 26 (FSC=36.5%) wef: 01 Oct 26 (FS [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -29682,7 +27845,7 @@
     },
     {
       "idKey": "mlb-ez-zonal-reverse-ts-express-32",
-      "name": "DTDC MLB NON ECOM EZ Zonal Reverse TS EXPRESS 33",
+      "name": "DTDC MLB East Zone Multilocation Forward TS (W.E.F. 01-10-2026) EXPRESS (FSC=36.5%) (FSC=36.5%) (FSC=36.5%) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -31465,7 +29628,7 @@
     },
     {
       "idKey": "mlb-gau-reverse-ts-express-3",
-      "name": "DTDC MLB NON ECOM GAU Reverse TS EXPRESS 4",
+      "name": "DTDC MLB EXPRESS (FSC=36.5%) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
@@ -32716,7 +30879,7 @@
     },
     {
       "idKey": "mlb-gau-reverse-ts-air_cargo-12",
-      "name": "DTDC MLB NON ECOM GAU Reverse TS AIR_CARGO 13",
+      "name": "DTDC MLB Remote Area - Extra Charges Rs. 4.00 per Document / per Kg. AIR CARGO (MCW: 3 KG) (FSC=36.5%) [AIR_CARGO]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "AIR_CARGO",
       "levelCode": null,
@@ -33799,7 +31962,7 @@
     },
     {
       "idKey": "mlb-gau-reverse-ts-surface_cargo-17",
-      "name": "DTDC MLB NON ECOM GAU Reverse TS SURFACE_CARGO 18",
+      "name": "DTDC MLB REST OF INDIA 103.64 95.66 91.14 84.32 78.540000000000006 SURFACE CARGO (MCW: 3 KG Within Zone & 5 KG Outstide Zone) (FS [SURFACE_CARGO]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "SURFACE_CARGO",
       "levelCode": null,
@@ -34672,7 +32835,7 @@
     },
     {
       "idKey": "mlb-gau-reverse-ts-express-27",
-      "name": "DTDC MLB NON ECOM GAU Reverse TS EXPRESS 28",
+      "name": "DTDC MLB GUWAHATI RO Multilocation Forward TS - W.E.F. 01 Oct 2026 EXPRESS (FSC=36.5%) [EXPRESS]",
       "matrixType": "MLB_REVERSE",
       "serviceCode": "EXPRESS",
       "levelCode": null,
