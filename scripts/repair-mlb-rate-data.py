@@ -38,6 +38,20 @@ def number(value):
 
 def weight_row(label: str):
     text = str(label).upper().replace("\u00a0", " ").strip()
+    if "UPTO 250" in text or "UP TO 250" in text:
+        return 0.0, 0.25, "FLAT"
+    if "UPTO 500" in text or "UP TO 500" in text:
+        return 0.0, 0.5, "FLAT"
+    if "ADDL" in text and "500" in text:
+        return 0.5, 1.0, "ADDITIONAL_500G"
+    if "3-25 KG" in text or "3 - 25 KG" in text:
+        return 3.0, 25.0, "BAND"
+    if "25.001 - 50" in text:
+        return 25.001, 50.0, "BAND"
+    if "50.001 - 100" in text:
+        return 50.001, 100.0, "BAND"
+    if "ABOVE 100" in text:
+        return 100.0, 1000.0, "PER_KG"
     if "100 GM" in text:
         return 0.0, 0.1, "FLAT"
     if "250 GM" in text:
@@ -87,14 +101,14 @@ def read_workbook():
             yield sheet_name, rows
 
 
-def make_matrix(sheet: str, service: str, header_index: int, title: str, rows):
+def make_matrix(sheet: str, service: str, header_index: int, title: str, rows, segment="NON_ECOM"):
     return {
         "idKey": f"mlb-{sheet.lower().replace(' ', '-')}-{service.lower()}-{header_index}",
-        "name": f"DTDC MLB {sheet} {service} {header_index + 1}",
+        "name": f"DTDC MLB {segment.replace('_', ' ')} {sheet} {service} {header_index + 1}",
         "matrixType": "MLB_REVERSE",
         "serviceCode": service,
         "levelCode": None,
-        "customerSegment": "NON_ECOM",
+        "customerSegment": segment,
         "sourceFile": SOURCE.name,
         "sourceSheet": sheet,
         "effectiveFrom": "2026-10-01",
@@ -115,6 +129,40 @@ def main():
     for sheet, data in read_workbook():
         if sheet == "Info":
             continue
+        if sheet == "EP Reverse TS Rates":
+            # This sheet has explicit Dox and Non-dox sections without a
+            # conventional Weight/Weight Slab header.
+            for section_index, section in enumerate(data):
+                section_label = str(section.get(1, "")).strip().upper()
+                if section_label not in ("DOX", "NON-DOX", "NON DOX"):
+                    continue
+                weight_columns = [(index, value) for index, value in section.items() if index > 1 and weight_row(value)]
+                parsed_rows = []
+                for row_index in range(section_index + 1, len(data)):
+                    lane_value = str(data[row_index].get(1, "")).strip()
+                    if not lane_value:
+                        break
+                    for column, weight_label in weight_columns:
+                        weight = weight_row(weight_label)
+                        value = number(data[row_index].get(column))
+                        if not weight or value is None:
+                            continue
+                        parsed_rows.append({
+                            "lane": LANES.get(lane_value.upper(), lane_value.upper().replace(" ", "_")),
+                            "minWeightKg": weight[0],
+                            "maxWeightKg": weight[1],
+                            "weightBasis": weight[2],
+                            "sourceCostPrice": value,
+                            "sourceRow": str(row_index + 1),
+                            "metadata": {
+                                "sourceTitle": "PRIORITY Multilocation Forward TS Rates",
+                                "sourceWeightLabel": str(weight_label),
+                                "sourceColumn": column,
+                            },
+                        })
+                if parsed_rows:
+                    segment = "DOX" if section_label == "DOX" else "NON_DOX"
+                    matrices.append(make_matrix(sheet, "EXPRESS", section_index, "PRIORITY", parsed_rows, segment))
         for header_index, row in enumerate(data):
             headers = {index: str(value).strip() for index, value in row.items() if value}
             header_kind = "WEIGHT" if any(value.upper() in ("WEIGHT", "WEIGHT SLAB") for value in headers.values()) else "DESTINATION" if any(value.upper() == "DESTINATION" for value in headers.values()) else None

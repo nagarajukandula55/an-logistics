@@ -195,7 +195,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
                 </div>
                 <div className="flex items-center gap-2"><Badge tone={card.isFinalized ? "success" : "warning"}>{card.isFinalized ? "Finalized" : "Draft"}</Badge><Badge tone={card.isActive ? "success" : "neutral"}>{card.isActive ? "Active" : "Past"}</Badge></div>
               </div>
-              {card.slabs.length > 0 && <RateSlabTable slabs={card.slabs} />}
+              {card.slabs.length > 0 && (card.name.toLowerCase().includes("all services") ? <div className="mt-4 rounded-control border border-accent/20 bg-accent-soft px-3 py-2 text-xs text-ink-2">Detailed rates are shown in the structured viewer above. Select E-commerce, Domestic TS, or Reverse pickup, then choose the service and weight columns you need.</div> : <RateSlabTable slabs={card.slabs} />)}
               {canEdit && !card.isFinalized && <div className="mt-3 flex flex-wrap gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setEditingCardId(editingCardId === card.id ? null : card.id)}><Pencil className="size-4" /> Edit rates</Button><FinalizeButton id={card.id} /></div>}
               {editingCardId === card.id && <EditRateCardForm card={card} audience={audience} courierPartnerId={courierPartnerId} tenantId={tenantId} customerId={customerId} onDone={() => setEditingCardId(null)} />}
             </li>
