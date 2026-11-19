@@ -154,13 +154,13 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
                 <div className="flex items-center gap-2"><Badge tone={card.isFinalized ? "success" : "warning"}>{card.isFinalized ? "Finalized" : "Draft"}</Badge><Badge tone={card.isActive ? "success" : "neutral"}>{card.isActive ? "Active" : "Past"}</Badge></div>
               </div>
               {card.slabs.length > 0 && (
-                <ul className="mt-2 flex flex-wrap gap-2">
+                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
                   {card.slabs.map((slab) => (
-                    <li key={slab.id} className="rounded-control bg-surface-2 px-2 py-1 text-xs text-ink-2 tabular">
+                    <div key={slab.id} className="rounded-control border border-border bg-surface-2 px-3 py-2 text-xs text-ink-2 tabular">
                       {slab.zone}: {slab.minWeightKg}–{slab.maxWeightKg}kg · ₹{slab.price.toFixed(2)}
-                    </li>
+                    </div>
                   ))}
-                </ul>
+                </div>
               )}
               {canEdit && !card.isFinalized && <div className="mt-3 flex flex-wrap gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setEditingCardId(editingCardId === card.id ? null : card.id)}><Pencil className="size-4" /> Edit rates</Button><FinalizeButton id={card.id} /></div>}
               {editingCardId === card.id && <EditRateCardForm card={card} audience={audience} courierPartnerId={courierPartnerId} tenantId={tenantId} customerId={customerId} onDone={() => setEditingCardId(null)} />}

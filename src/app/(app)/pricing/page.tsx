@@ -2,7 +2,7 @@ import Link from "next/link";
 import { prisma } from "@/lib/prisma";
 import { PageHeader } from "@/components/ui/PageHeader";
 import { Card, CardBody, CardHeader } from "@/components/ui/Card";
-import { TenantType } from "@prisma/client";
+import { SellRateCardAudience, TenantType } from "@prisma/client";
 import { SellRateCardsPanel } from "./SellRateCardsPanel";
 import { requireTenantSession } from "@/lib/tenant";
 
@@ -18,6 +18,9 @@ export default async function PricingPage() {
   const assignedCourierIds = session.user.role === "STAFF" || session.user.role === "COLLABORATOR"
     ? (await prisma.userCourierAssignment.findMany({ where: { userId: session.user.id }, select: { courierPartnerId: true } })).map((a) => a.courierPartnerId)
     : [];
+  const visibleSellAudiences: SellRateCardAudience[] = session.user.role === "ADMIN"
+    ? [SellRateCardAudience.DEFAULT, SellRateCardAudience.STAFF, SellRateCardAudience.COLLABORATOR]
+    : [session.user.role as SellRateCardAudience];
   const [defaultCards, staffCards, collaboratorCards, clientTenants, couriers] = await Promise.all([
     prisma.sellRateCard.findMany({
       where: { audience: "DEFAULT", tenantId: null, customerId: null },
@@ -35,7 +38,7 @@ export default async function PricingPage() {
       where: session.user.role === "ADMIN" ? {} : { id: { in: assignedCourierIds } },
       include: {
         sellRateCards: {
-          where: { tenantId: null, customerId: null, audience: { in: ["DEFAULT", "STAFF", "COLLABORATOR"] } },
+          where: { tenantId: null, customerId: null, audience: { in: visibleSellAudiences } },
           include: { slabs: true },
           orderBy: { effectiveFrom: "desc" },
         },
@@ -78,9 +81,9 @@ export default async function PricingPage() {
                 return <div key={courier.id} className="rounded-card border border-border p-4">
                   <h3 className="font-semibold text-ink">{courier.name}</h3>
                   <div className="mt-4 grid gap-5 lg:grid-cols-3">
-                    <div><p className="mb-2 text-sm font-medium text-ink-2">Default</p><SellRateCardsPanel audience="DEFAULT" courierPartnerId={courier.id} cards={cardsFor("DEFAULT")} canEdit={session.user.role === "ADMIN"} /></div>
-                    <div><p className="mb-2 text-sm font-medium text-ink-2">Staff</p><SellRateCardsPanel audience="STAFF" courierPartnerId={courier.id} cards={cardsFor("STAFF")} canEdit={session.user.role === "ADMIN"} /></div>
-                    <div><p className="mb-2 text-sm font-medium text-ink-2">Collaborator</p><SellRateCardsPanel audience="COLLABORATOR" courierPartnerId={courier.id} cards={cardsFor("COLLABORATOR")} canEdit={session.user.role === "ADMIN"} /></div>
+                    {session.user.role === "ADMIN" && <div><p className="mb-2 text-sm font-medium text-ink-2">Default</p><SellRateCardsPanel audience="DEFAULT" courierPartnerId={courier.id} cards={cardsFor("DEFAULT")} canEdit /></div>}
+                    {(session.user.role === "ADMIN" || session.user.role === "STAFF") && <div><p className="mb-2 text-sm font-medium text-ink-2">Staff</p><SellRateCardsPanel audience="STAFF" courierPartnerId={courier.id} cards={cardsFor("STAFF")} canEdit={session.user.role === "ADMIN"} /></div>}
+                    {(session.user.role === "ADMIN" || session.user.role === "COLLABORATOR") && <div><p className="mb-2 text-sm font-medium text-ink-2">Collaborator</p><SellRateCardsPanel audience="COLLABORATOR" courierPartnerId={courier.id} cards={cardsFor("COLLABORATOR")} canEdit={session.user.role === "ADMIN"} /></div>}
                   </div>
                 </div>;
               })}
