@@ -35,6 +35,46 @@ function emptyDraftSlab(): DraftSlab {
   return { zone: "", minWeightKg: "", maxWeightKg: "", price: "" };
 }
 
+function displayZone(zone: string) {
+  return zone.toLowerCase().split("_").map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(" ");
+}
+
+function displayWeight(min: number, max: number) {
+  const formatKg = (value: number) => Number.isInteger(value) ? String(value) : value.toFixed(2).replace(/0+$/, "").replace(/\.$/, "");
+  return max >= 1000 ? `${formatKg(min)} kg and above` : `${formatKg(min)}–${formatKg(max)} kg`;
+}
+
+function RateSlabTable({ slabs }: { slabs: Slab[] }) {
+  const [query, setQuery] = useState("");
+  const [weightFilter, setWeightFilter] = useState("ALL");
+  const grouped = new Map<string, { min: number; max: number; rows: Slab[] }>();
+  for (const slab of slabs) {
+    const key = `${slab.minWeightKg}|${slab.maxWeightKg}`;
+    const existing = grouped.get(key);
+    if (existing) existing.rows.push(slab);
+    else grouped.set(key, { min: slab.minWeightKg, max: slab.maxWeightKg, rows: [slab] });
+  }
+  const groups = [...grouped.values()].sort((a, b) => a.min - b.min);
+  const matches = (zone: string) => displayZone(zone).toLowerCase().includes(query.trim().toLowerCase());
+  return <div className="mt-4 flex flex-col gap-4">
+    <div className="grid gap-3 rounded-control border border-border bg-surface-2 p-3 sm:grid-cols-[minmax(0,1fr)_auto] sm:items-end">
+      <Field label="Search zone"><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search City, Region, Andhra Pradesh..." /></Field>
+      <Field label="Weight slab"><select value={weightFilter} onChange={(event) => setWeightFilter(event.target.value)} className="h-10 rounded-control border border-border bg-surface px-3 text-sm text-ink"><option value="ALL">All weight slabs</option>{groups.map((group) => <option key={`${group.min}-${group.max}`} value={`${group.min}|${group.max}`}>{displayWeight(group.min, group.max)}</option>)}</select></Field>
+    </div>
+    {groups.filter((group) => weightFilter === "ALL" || weightFilter === `${group.min}|${group.max}`).map((group) => {
+      const rows = group.rows.filter((slab) => matches(slab.zone)).sort((a, b) => a.zone.localeCompare(b.zone));
+      if (rows.length === 0) return null;
+      return <div key={`${group.min}-${group.max}`} className="overflow-hidden rounded-control border border-border">
+        <div className="flex items-center justify-between border-b border-border bg-surface-2 px-3 py-2"><span className="text-sm font-semibold text-ink">Weight: {displayWeight(group.min, group.max)}</span><span className="text-xs text-ink-3">{rows.length} zones</span></div>
+        <div className="overflow-x-auto"><table className="min-w-full text-left text-sm">
+          <thead className="text-xs uppercase tracking-wide text-ink-3"><tr><th className="px-3 py-2 font-medium">Zone</th><th className="px-3 py-2 text-right font-medium">Selling price</th></tr></thead>
+          <tbody className="divide-y divide-border">{rows.map((slab) => <tr key={slab.id} className="text-ink-2"><td className="px-3 py-2">{displayZone(slab.zone)}</td><td className="px-3 py-2 text-right font-semibold tabular">Rs. {slab.price.toFixed(2)}</td></tr>)}</tbody>
+        </table></div>
+      </div>;
+    })}
+  </div>;
+}
+
 function EditRateCardForm({ card, audience, courierPartnerId, tenantId, customerId, onDone }: { card: SellRateCard; audience: "DEFAULT" | "STAFF" | "COLLABORATOR" | "CLIENT"; courierPartnerId?: string | null; tenantId?: string | null; customerId?: string | null; onDone: () => void }) {
   const [name, setName] = useState(card.name);
   const [effectiveFrom, setEffectiveFrom] = useState(format(card.effectiveFrom, "yyyy-MM-dd"));
@@ -146,6 +186,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-ink">{card.name}</p>
+                  <p className="text-xs text-ink-2">Selling price by destination zone and chargeable weight</p>
                   <p className="text-ink-3 tabular">
                     Effective {format(card.effectiveFrom, "MMM d, yyyy")}
                     {card.minMarginPercent != null && ` · ${card.minMarginPercent}% margin floor`}
@@ -153,15 +194,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
                 </div>
                 <div className="flex items-center gap-2"><Badge tone={card.isFinalized ? "success" : "warning"}>{card.isFinalized ? "Finalized" : "Draft"}</Badge><Badge tone={card.isActive ? "success" : "neutral"}>{card.isActive ? "Active" : "Past"}</Badge></div>
               </div>
-              {card.slabs.length > 0 && (
-                <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-2 xl:grid-cols-3">
-                  {card.slabs.map((slab) => (
-                    <div key={slab.id} className="rounded-control border border-border bg-surface-2 px-3 py-2 text-xs text-ink-2 tabular">
-                      {slab.zone}: {slab.minWeightKg}–{slab.maxWeightKg}kg · ₹{slab.price.toFixed(2)}
-                    </div>
-                  ))}
-                </div>
-              )}
+              {card.slabs.length > 0 && <RateSlabTable slabs={card.slabs} />}
               {canEdit && !card.isFinalized && <div className="mt-3 flex flex-wrap gap-2"><Button type="button" size="sm" variant="secondary" onClick={() => setEditingCardId(editingCardId === card.id ? null : card.id)}><Pencil className="size-4" /> Edit rates</Button><FinalizeButton id={card.id} /></div>}
               {editingCardId === card.id && <EditRateCardForm card={card} audience={audience} courierPartnerId={courierPartnerId} tenantId={tenantId} customerId={customerId} onDone={() => setEditingCardId(null)} />}
             </li>
