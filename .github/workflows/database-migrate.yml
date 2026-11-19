@@ -1,0 +1,53 @@
+name: Deploy database migrations
+
+on:
+  workflow_dispatch:
+    inputs:
+      import_rates:
+        description: Import the committed DTDC cost-rate matrices after migrations
+        required: true
+        default: true
+        type: boolean
+
+concurrency:
+  group: production-database-migration
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  migrate:
+    name: Apply Prisma migrations
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Validate database secret
+        shell: bash
+        run: |
+          if [ -z "$DATABASE_URL" ]; then
+            echo "DATABASE_URL GitHub Actions secret is not configured."
+            exit 1
+          fi
+
+      - name: Apply pending Prisma migrations
+        run: npx prisma migrate deploy
+
+      - name: Import DTDC cost and sell-rate data
+        if: ${{ inputs.import_rates == true }}
+        run: npm run rates:import
