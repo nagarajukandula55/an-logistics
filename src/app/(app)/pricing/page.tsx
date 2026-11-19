@@ -82,7 +82,7 @@ export default async function PricingPage() {
                 const cardsFor = (audience: "DEFAULT" | "STAFF" | "COLLABORATOR") => courier.sellRateCards.filter((card) => card.audience === audience);
                 return <div key={courier.id} className="rounded-card border border-border p-4">
                   <h3 className="font-semibold text-ink">{courier.name}</h3>
-                  <div className="mt-4"><RateScheduleViewer matrices={courier.costRateMatrices} audience={session.user.role === "ADMIN" ? "DEFAULT" : session.user.role as "STAFF" | "COLLABORATOR"} /></div>
+                  <div className="mt-4"><RateScheduleViewer matrices={courier.costRateMatrices} /></div>
                   <div className="mt-4 grid gap-5 lg:grid-cols-3">
                     {session.user.role === "ADMIN" && <div><p className="mb-2 text-sm font-medium text-ink-2">Default</p><SellRateCardsPanel audience="DEFAULT" courierPartnerId={courier.id} cards={cardsFor("DEFAULT")} canEdit /></div>}
                     {(session.user.role === "ADMIN" || session.user.role === "STAFF") && <div><p className="mb-2 text-sm font-medium text-ink-2">Staff</p><SellRateCardsPanel audience="STAFF" courierPartnerId={courier.id} cards={cardsFor("STAFF")} canEdit={session.user.role === "ADMIN"} /></div>}

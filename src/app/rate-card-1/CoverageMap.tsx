@@ -25,6 +25,7 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
   const frameRef = useRef<HTMLDivElement>(null);
   const [state, setState] = useState("ALL INDIA");
   const [filter, setFilter] = useState<Filter>("dtdc");
+  const [zoom, setZoom] = useState(1);
 
   const states = useMemo(() => ["ALL INDIA", ...Array.from(new Set(records.map((record) => record[0]))).sort()], [records]);
   const filteredRecords = useMemo(() => records.filter((record) => {
@@ -52,10 +53,11 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
       context.clearRect(0, 0, width, height);
       context.fillStyle = "#e4edf0";
       context.fillRect(0, 0, width, height);
-      const project = ([longitude, latitude]: number[]) => [
-        ((longitude - INDIA_BOUNDS.west) / (INDIA_BOUNDS.east - INDIA_BOUNDS.west)) * width,
-        (1 - (latitude - INDIA_BOUNDS.south) / (INDIA_BOUNDS.north - INDIA_BOUNDS.south)) * height,
-      ] as const;
+      const project = ([longitude, latitude]: number[]) => {
+        const baseX = ((longitude - INDIA_BOUNDS.west) / (INDIA_BOUNDS.east - INDIA_BOUNDS.west)) * width;
+        const baseY = (1 - (latitude - INDIA_BOUNDS.south) / (INDIA_BOUNDS.north - INDIA_BOUNDS.south)) * height;
+        return [width / 2 + (baseX - width / 2) * zoom, height / 2 + (baseY - height / 2) * zoom] as const;
+      };
       const drawRing = (ring: number[][]) => {
         ring.forEach((coordinate, index) => {
           const [x, y] = project(coordinate);
@@ -99,7 +101,7 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
     const observer = new ResizeObserver(draw);
     observer.observe(frame);
     return () => observer.disconnect();
-  }, [filter, filteredRecords]);
+  }, [filter, filteredRecords, state, zoom]);
 
   const directCount = records.filter((record) => record[2] && (state === "ALL INDIA" || record[0] === state)).length;
   const indiaPostCount = records.filter((record) => record[1] && (state === "ALL INDIA" || record[0] === state)).length;
@@ -113,6 +115,11 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
     </div>
     <div ref={frameRef} className="relative aspect-[1200/760] overflow-hidden rounded-2xl border border-border bg-[#dce5e9] shadow-inner">
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" aria-label="Pincode coverage markers" />
+      <div className="absolute left-3 top-3 flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm" aria-label="Map zoom controls">
+        <button type="button" onClick={() => setZoom((value) => Math.min(4, Number((value + 0.5).toFixed(1))))} className="h-9 w-9 border-r border-slate-200 text-lg font-semibold text-slate-800 hover:bg-slate-100" aria-label="Zoom in">+</button>
+        <button type="button" onClick={() => setZoom((value) => Math.max(1, Number((value - 0.5).toFixed(1))))} className="h-9 w-9 border-r border-slate-200 text-lg font-semibold text-slate-800 hover:bg-slate-100" aria-label="Zoom out">−</button>
+        <button type="button" onClick={() => setZoom(1)} className="px-3 text-xs font-medium text-slate-800 hover:bg-slate-100" aria-label="Reset map zoom">Reset</button>
+      </div>
       <div className="absolute bottom-3 right-3 flex gap-3 rounded-lg bg-slate-950/80 px-3 py-2 text-xs text-white shadow"><span><i className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />DTDC direct</span><span><i className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />India Post</span></div>
     </div>
     <p className="text-xs text-ink-3">Markers use the supplied official pincode coordinates. India state boundaries are bundled locally and rendered in one canvas, so the map does not call an external map API.</p>

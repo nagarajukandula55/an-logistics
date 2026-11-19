@@ -44,6 +44,13 @@ function displayWeight(min: number, max: number) {
   return max >= 1000 ? `${formatKg(min)} kg and above` : `${formatKg(min)}–${formatKg(max)} kg`;
 }
 
+function displayCardName(name: string) {
+  return name
+    .replace(/\s+-\s+2x adjusted cost/i, "")
+    .replace(/\s+all services/i, "")
+    .trim() || "Rate card";
+}
+
 function RateSlabTable({ slabs }: { slabs: Slab[] }) {
   const [query, setQuery] = useState("");
   const [weightFilter, setWeightFilter] = useState("ALL");
@@ -186,7 +193,7 @@ export function SellRateCardsPanel({ audience = "DEFAULT", courierPartnerId, ten
             <li key={card.id} className="rounded-control border border-border p-3 text-sm">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-ink">{card.name}</p>
+                  <p className="text-ink">{displayCardName(card.name)}</p>
                   <p className="text-xs text-ink-2">Selling price by destination zone and chargeable weight</p>
                   <p className="text-ink-3 tabular">
                     Effective {format(card.effectiveFrom, "MMM d, yyyy")}
