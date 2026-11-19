@@ -130,7 +130,7 @@ async function main() {
     }
   }
 
-  for (const audience of ["STAFF", "COLLABORATOR"] as const) {
+  for (const audience of ["DEFAULT", "STAFF", "COLLABORATOR"] as const) {
     await prisma.sellPricingStrategy.upsert({
       where: { id: id(`strategy-${audience}`) },
       create: { id: id(`strategy-${audience}`), courierPartnerId: courier.id, audience, name: `DTDC ${audience} - 2x cost price`, markupPercent: 100, handlingFee: 0, roundingUnit: 1, effectiveFrom: new Date("2026-01-01"), notes: "Selling price is 2x the applicable adjusted DTDC cost price." },
@@ -159,7 +159,7 @@ async function main() {
         id: cardId,
         audience,
         courierPartnerId: courier.id,
-        name: `DTDC ${audience} all services - 2x adjusted cost`,
+        name: audience === "DEFAULT" ? "Rate Card 1" : `DTDC ${audience} all services - 2x adjusted cost`,
         isActive: true,
         isFinalized: true,
         finalizedAt: new Date(),
@@ -170,7 +170,7 @@ async function main() {
       },
       update: {
         courierPartnerId: courier.id,
-        name: `DTDC ${audience} all services - 2x adjusted cost`,
+        name: audience === "DEFAULT" ? "Rate Card 1" : `DTDC ${audience} all services - 2x adjusted cost`,
         isActive: true,
         isFinalized: true,
         finalizedAt: new Date(),

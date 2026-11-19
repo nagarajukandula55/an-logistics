@@ -19,7 +19,11 @@ export default async function RateCardOnePage({ searchParams }: { searchParams: 
     where: { name: "Rate Card 1", audience: "DEFAULT", tenantId: null, customerId: null, isActive: true, isFinalized: true },
     include: { slabs: { where: { isActive: true }, orderBy: [{ zone: "asc" }, { minWeightKg: "asc" }] }, courierPartner: true },
     orderBy: { effectiveFrom: "desc" },
-  }).catch(() => null);
+  }).then((rateCard) => rateCard ?? prisma.sellRateCard.findFirst({
+    where: { audience: "DEFAULT", tenantId: null, customerId: null, isActive: true, isFinalized: true },
+    include: { slabs: { where: { isActive: true }, orderBy: [{ zone: "asc" }, { minWeightKg: "asc" }] }, courierPartner: true },
+    orderBy: { effectiveFrom: "desc" },
+  })).catch(() => null);
 
   return <main className="min-h-screen bg-canvas px-4 py-8 text-ink sm:px-8">
     <div className="mx-auto max-w-7xl space-y-8">
