@@ -125,16 +125,17 @@ async function main() {
     });
 
     // SellRateCard is intentionally service-agnostic in the existing booking
-    // flow. Build one conservative, generic NEL0 baseline card from the
-    // highest CPDP source price for each lane/weight slab, then apply the
-    // agreed 2x rule. Domestic/MLB remain available as cost matrices for
-    // future service-specific quoting and audit.
+    // flow. Build one consolidated card from the highest 2x adjusted price
+    // for each lane/weight slab across every imported DTDC service. This keeps
+    // the current lookup deterministic while ensuring CPDP, Domestic TS and
+    // MLB never produce an underpriced booking.
     const baseline = new Map<string, { zone: string; minWeightKg: number; maxWeightKg: number; price: number }>();
-    for (const source of payload.matrices.filter((item) => item.matrixType === "CPDP_ECOM" && item.levelCode === "NEL0")) {
+    for (const source of payload.matrices) {
       for (const row of source.rows) {
         const key = `${row.lane}|${row.minWeightKg}|${row.maxWeightKg}`;
         const current = baseline.get(key);
-        const price = rounded(row.sourceCostPrice * 2);
+        const adjustedCost = row.sourceCostPrice * (1 + source.costAdjustmentPercent / 100);
+        const price = rounded(adjustedCost * 2);
         if (!current || price > current.price) baseline.set(key, { zone: row.lane, minWeightKg: row.minWeightKg, maxWeightKg: row.maxWeightKg, price });
       }
     }
@@ -145,7 +146,7 @@ async function main() {
         id: cardId,
         audience,
         courierPartnerId: courier.id,
-        name: `DTDC ${audience} NEL0 baseline - 2x cost`,
+        name: `DTDC ${audience} all services - 2x adjusted cost`,
         isActive: true,
         isFinalized: true,
         finalizedAt: new Date(),
@@ -156,7 +157,7 @@ async function main() {
       },
       update: {
         courierPartnerId: courier.id,
-        name: `DTDC ${audience} NEL0 baseline - 2x cost`,
+        name: `DTDC ${audience} all services - 2x adjusted cost`,
         isActive: true,
         isFinalized: true,
         finalizedAt: new Date(),
@@ -171,7 +172,7 @@ async function main() {
   console.log(`Imported ${payload.matrices.length} DTDC matrices and ${rowCount} rows for ${courier.name}.`);
   console.log("Domestic TS and MLB rows include +55% adjusted cost; CPDP rows remain unchanged.");
   console.log("Staff and collaborator strategies are configured at 100% markup (2x cost).");
-  console.log("Staff and collaborator NEL0 baseline sell cards were generated at 2x source cost.");
+  console.log("Staff and collaborator consolidated sell cards were generated at 2x adjusted cost across CPDP, Domestic TS and MLB.");
 }
 
 main().catch((error) => { console.error(error); process.exitCode = 1; }).finally(async () => { await prisma.$disconnect(); });
