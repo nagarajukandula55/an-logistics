@@ -15,6 +15,7 @@ from pathlib import Path
 
 TARGET = Path("prisma/rate-data/pincode-coverage.json")
 DEFAULT_API = "https://api.data.gov.in/resource/"
+FALLBACK_ARCGIS_LAYER = "https://livingatlas.esri.in/server1/rest/services/India/All_India_Pincode_Directory/MapServer/0/query"
 
 
 def key_name(record, names):
@@ -41,6 +42,44 @@ def longitude(value):
     return parsed if -180 <= parsed <= 180 else None
 
 
+def curl_json(url):
+    result = subprocess.run(
+        [
+            "curl", "--fail", "--silent", "--show-error", "--location",
+            "--ipv4", "--retry", "5", "--retry-all-errors",
+            "--connect-timeout", "20", "--max-time", "120",
+            "-H", "User-Agent: AN-Logistics-pincode-refresh/1.0", url,
+        ],
+        check=True,
+        capture_output=True,
+        text=True,
+    )
+    return json.loads(result.stdout)
+
+
+def read_arcgis_source():
+    records = []
+    offset = 0
+    while True:
+        query = urllib.parse.urlencode({
+            "where": "1=1",
+            "outFields": "pincode,statename,district,officename,delivery,lat,long",
+            "returnGeometry": "false",
+            "f": "json",
+            "resultRecordCount": 2000,
+            "resultOffset": offset,
+        })
+        payload = curl_json(f"{FALLBACK_ARCGIS_LAYER}?{query}")
+        if payload.get("error"):
+            raise RuntimeError(json.dumps(payload["error"]))
+        page = payload.get("features", [])
+        records.extend(feature.get("attributes", {}) for feature in page)
+        if not page or not payload.get("exceededTransferLimit"):
+            break
+        offset += len(page)
+    return records
+
+
 def read_source():
     direct_url = os.environ.get("PINCODE_GEO_SOURCE_URL", "").strip()
     if direct_url:
@@ -54,31 +93,18 @@ def read_source():
         url = f"{DEFAULT_API}{resource_id}?{query}"
 
     try:
-        result = subprocess.run(
-            [
-                "curl", "--fail", "--silent", "--show-error", "--location",
-                "--ipv4", "--retry", "5", "--retry-all-errors",
-                "--connect-timeout", "20", "--max-time", "120",
-                "-H", "User-Agent: AN-Logistics-pincode-refresh/1.0", url,
-            ],
-            check=True,
-            capture_output=True,
-            text=True,
-        )
-    except FileNotFoundError as error:
-        raise SystemExit("curl is required on the GitHub runner but was not found.") from error
-    except subprocess.CalledProcessError as error:
-        detail = (error.stderr or "").strip()
-        raise SystemExit(f"Could not reach the official pincode API after retries: {detail}") from error
-    try:
-        payload = json.loads(result.stdout)
-    except json.JSONDecodeError as error:
-        raise SystemExit("The official pincode API returned a non-JSON response.") from error
-    if isinstance(payload, dict) and isinstance(payload.get("records"), list):
-        return payload["records"]
-    if isinstance(payload, list):
-        return payload
-    raise SystemExit("The official pincode source did not return a records array.")
+        payload = curl_json(url)
+        if isinstance(payload, dict) and isinstance(payload.get("records"), list):
+            return payload["records"]
+        if isinstance(payload, list):
+            return payload
+        raise RuntimeError("The OGD API did not return a records array.")
+    except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError, RuntimeError) as error:
+        print(f"OGD API unavailable; using official India postal GIS fallback: {error}")
+        try:
+            return read_arcgis_source()
+        except (FileNotFoundError, subprocess.CalledProcessError, json.JSONDecodeError, RuntimeError) as fallback_error:
+            raise SystemExit(f"Both official pincode sources failed. OGD: {error}; GIS fallback: {fallback_error}") from fallback_error
 
 
 def main():
