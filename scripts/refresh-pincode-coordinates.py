@@ -8,9 +8,8 @@ by a scheduled run unless --replace-existing is explicitly used locally.
 
 import json
 import os
-import sys
+import subprocess
 import urllib.parse
-import urllib.request
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -54,9 +53,27 @@ def read_source():
         query = urllib.parse.urlencode({"api-key": api_key, "format": "json", "limit": 100000})
         url = f"{DEFAULT_API}{resource_id}?{query}"
 
-    request = urllib.request.Request(url, headers={"User-Agent": "AN-Logistics-pincode-refresh/1.0"})
-    with urllib.request.urlopen(request, timeout=60) as response:
-        payload = json.loads(response.read().decode("utf-8"))
+    try:
+        result = subprocess.run(
+            [
+                "curl", "--fail", "--silent", "--show-error", "--location",
+                "--ipv4", "--retry", "5", "--retry-all-errors",
+                "--connect-timeout", "20", "--max-time", "120",
+                "-H", "User-Agent: AN-Logistics-pincode-refresh/1.0", url,
+            ],
+            check=True,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError as error:
+        raise SystemExit("curl is required on the GitHub runner but was not found.") from error
+    except subprocess.CalledProcessError as error:
+        detail = (error.stderr or "").strip()
+        raise SystemExit(f"Could not reach the official pincode API after retries: {detail}") from error
+    try:
+        payload = json.loads(result.stdout)
+    except json.JSONDecodeError as error:
+        raise SystemExit("The official pincode API returned a non-JSON response.") from error
     if isinstance(payload, dict) and isinstance(payload.get("records"), list):
         return payload["records"]
     if isinstance(payload, list):
