@@ -47,8 +47,9 @@ export async function sendAgreementForSignature(agreementId: string): Promise<vo
   const token = await getZohoAccessToken();
   if (!token) throw new Error("Configure Zoho Sign credentials before sending.");
   const headers = { Authorization: `Zoho-oauthtoken ${token}` };
-  const agreement = await prisma.agreement.findUnique({ where: { id: agreementId }, include: { customer: true } });
+  const agreement = await prisma.agreement.findUnique({ where: { id: agreementId }, include: { customer: { include: { onboardingApplication: true } } } });
   if (!agreement || !["DRAFT", "SENDING"].includes(agreement.status)) throw new Error("This agreement cannot be sent again.");
+  if (!agreement.sellRateCardId || !agreement.rateSnapshot || !agreement.customer.onboardingApplication?.notes.includes("[RATES_CONFIRMED]")) throw new Error("Rates must be discussed and confirmed in onboarding before this agreement can be sent.");
   const signerEmail = agreement.signerEmail || agreement.customer.email;
   if (!signerEmail) throw new Error("A signer email is required.");
   let requestId = agreement.externalEnvelopeId;

@@ -30,6 +30,8 @@ export async function createAgreementAction(_prev: { ok: boolean; error?: string
   }
   const data = parsed.data;
 
+  const customer = await prisma.customer.findUnique({ where: { id: data.customerId }, include: { onboardingApplication: true } });
+  if (!customer || !customer.onboardingApplication?.notes.includes("[RATES_CONFIRMED]")) return { ok: false, error: "Rates must be discussed and confirmed in onboarding before creating an agreement" };
   if (data.sellRateCardId && !await prisma.sellRateCard.findFirst({ where: { id: data.sellRateCardId, customerId: data.customerId, isFinalized: true } })) return { ok: false, error: "Select a finalized customer rate card before creating the agreement" };
   if (data.documentTemplateId && !await prisma.documentTemplate.findFirst({ where: { id: data.documentTemplateId, kind: "AGREEMENT", isActive: true } })) return { ok: false, error: "Agreement format was not found" };
   const rateCard = data.sellRateCardId ? await prisma.sellRateCard.findUnique({ where: { id: data.sellRateCardId }, include: { slabs: true } }) : null;

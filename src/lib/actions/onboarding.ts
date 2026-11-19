@@ -15,29 +15,29 @@ export type OnboardingState = {
     ok: boolean;
     error?: string;
     message?: string;
+    quotationSent?: boolean;
     ratePreview?: { source: string; rates: IndicativeRate[] };
-    applicant?: { name: string; email: string; businessModel: string; baseCity: string; pickupCity: string; monthlyVolume: number };
+    applicant?: { name: string; email: string; businessModel: string; baseCity: string; basePincode: string; pickupCity: string; pickupPincode: string; monthlyVolume: number };
 };
 const applicationSchema = z.object({
     name: z.string().trim().min(2).max(100), email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
     phone: z.string().trim().regex(/^(?:\+91[ -]?)?[6-9]\d{9}$/, "Enter a valid Indian mobile number"),
     company: z.string().trim().max(200).optional(), accountType: z.enum(["individual", "business", "reseller"]),
-    businessModel: z.enum(["B2B", "B2C", "ECOM", "MIXED", "OTHER"]),
+    businessModel: z.string().refine((value) => value.split(",").every((item) => ["ECOM_B2B", "ECOM_B2C", "BIZ_B2B", "BIZ_B2C", "B2B", "B2C", "ECOM", "MIXED", "OTHER"].includes(item)), "Choose valid rate categories").refine((value) => value.length > 0, "Choose at least one rate category"),
     address: z.string().trim().min(10).max(1000), pincode: z.string().regex(/^[1-9]\d{5}$/),
     baseCity: z.string().trim().min(2).max(100), basePincode: z.string().regex(/^[1-9]\d{5}$/), pickupCity: z.string().trim().min(2).max(100),
     gstin: z.string().trim().toUpperCase().regex(/^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "Enter a valid GSTIN or leave blank").optional(),
     billingName: z.string().trim().min(2).max(200), billingEmail: z.string().trim().email().max(254), billingAddress: z.string().trim().min(10).max(1000), billingState: z.string().trim().min(2).max(100),
     billingCycle: z.enum(["PER_SHIPMENT", "FORTNIGHTLY", "MONTHLY"]), paymentTermsDays: z.coerce.number().int().refine(v => [0, 7, 15, 30].includes(v), "Choose valid payment terms"),
-    monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), requirements: z.string().max(2000).optional(),
+    monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), operationArea: z.enum(["PAN_INDIA", "SELECTED_STATES", "BASE_CITY"]), operatingStates: z.string().trim().max(500).optional(), requirements: z.string().max(2000).optional(),
     consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), website: z.string().max(0).optional(),
 });
 export async function applyPartnerAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
-    const result = applicationSchema.safeParse(Object.fromEntries(fd));
+    const result = applicationSchema.safeParse({ ...Object.fromEntries(fd), businessModel: fd.getAll("businessModel").map(String).join(",") });
     if (!result.success)
         return { ok: false, error: result.error.issues[0].message };
-    const { consent, website, shipmentType, servicePreference, pickupFrequency, ...data } = result.data;
-    const requestQuotation = undefined;
-    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
+    const { consent, website, shipmentType, servicePreference, pickupFrequency, operationArea, operatingStates, ...data } = result.data;
+    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, `Operation area: ${operationArea}`, operatingStates && `Operating states: ${operatingStates}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
     data.requirements = requirements;
     void consent;
     void website;
@@ -50,29 +50,36 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
             return { ok: true, message: "Your application is already with our team. We will contact you." };
         throw e;
     }
-    if (false) {
-        try {
-            const preview = await getIndicativeRates({ businessModel: data.businessModel, baseCity: data.baseCity, pickupCity: data.pickupCity, monthlyVolume: data.monthlyVolume });
-            const rows = preview.rates.slice(0, 24).map((rate) => `<tr><td>${rate.courierName}</td><td>${rate.serviceCode}</td><td>${rate.lane}</td><td>${rate.minWeightKg}-${rate.maxWeightKg} kg</td><td>₹${rate.defaultSellRate.toFixed(2)}</td></tr>`).join("");
-            await sendEmail({ to: data.email, subject: "AN Logistics indicative quotation", html: `<h2>Indicative quotation for ${escape(data.company || data.name)}</h2><p>Pricing basis: ${escape(preview.source)}. These are discussion rates and become final only after commercial confirmation and agreement.</p>${rows ? `<table border="1" cellpadding="6" cellspacing="0"><tr><th>Courier</th><th>Service</th><th>Lane</th><th>Weight</th><th>Indicative sell rate</th></tr>${rows}</table>` : "<p>Our team will prepare the detailed rate table from the applicable courier schedule and contact you.</p>"}` });
-        } catch {
-            console.error("Application saved; indicative quotation email failed.");
-        }
-    }
     try {
         await notifyOpsTelegram("PARTNER_APPLICATION", `New application: <b>${escape(data.name)}</b>\n${escape(data.company || data.accountType)}\n${escape(data.email)} · ${escape(data.phone)}\nReview in Admin → Onboarding.`);
     }
     catch {
         console.error("Application saved; Telegram notification failed.");
     }
-    const ratePreview = await getIndicativeRates({ businessModel: data.businessModel, baseCity: data.baseCity, pickupCity: data.pickupCity, monthlyVolume: data.monthlyVolume });
-    return { ok: true, message: "Application received successfully. Review your indicative rates below and request the quotation by email.", ratePreview, applicant: { name: data.name, email: data.email, businessModel: data.businessModel, baseCity: data.baseCity, pickupCity: data.pickupCity, monthlyVolume: data.monthlyVolume } };
+    let ratePreview: Awaited<ReturnType<typeof getIndicativeRates>> | undefined;
+    let quotationSent = false;
+    try {
+        ratePreview = await getIndicativeRates({ businessModel: data.businessModel, baseCity: data.baseCity, basePincode: data.basePincode, pickupCity: data.pickupCity, pickupPincode: data.pincode, monthlyVolume: data.monthlyVolume });
+        const rows = ratePreview.rates.slice(0, 80).map((rate) => `<tr><td>${escape(rate.courierName)}</td><td>${escape(rate.serviceCode)}</td><td>${escape(rate.lane)}</td><td>${rate.minWeightKg}-${rate.maxWeightKg} kg</td><td>Rs. ${rate.defaultSellRate.toFixed(2)}</td></tr>`).join("");
+        quotationSent = await sendEmail({ to: data.email, subject: "AN Logistics applied indicative quotation", html: `<h2>Applied indicative quotation for ${escape(data.company || data.name)}</h2><p>Applicable category: <strong>${escape(ratePreview.source)}</strong></p><p>These are discussion rates only and are not final. Please discuss and confirm the applicable services, rates, coverage, taxes, and additional charges with AN Logistics before the agreement is prepared.</p>${rows ? `<table border="1" cellpadding="6" cellspacing="0"><tr><th>Courier</th><th>Service</th><th>Lane</th><th>Weight</th><th>Indicative seller rate</th></tr>${rows}</table>` : "<p>Our team will prepare the detailed schedule and contact you.</p>"}` });
+        const application = await prisma.partnerApplication.findUnique({ where: { email: data.email } });
+        if (application && ratePreview) {
+            const courier = await prisma.courierPartner.findFirst({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } });
+            const quotation = await prisma.quotation.create({ data: { quoteNumber: `ANQ-${new Date().getFullYear()}-${Date.now().toString().slice(-8)}`, applicationId: application.id, courierPartnerId: courier?.id ?? null, status: quotationSent ? "SENT" : "DRAFT", title: `Applied indicative rates - ${ratePreview.source}`, termsSnapshot: "Indicative rates only. Final rates, serviceability, taxes, surcharges, and commercial terms require discussion and confirmation before agreement.", rateSnapshot: ratePreview.rates.map((rate) => ({ zone: rate.lane, minWeightKg: rate.minWeightKg, maxWeightKg: rate.maxWeightKg, price: rate.defaultSellRate, courierName: rate.courierName, serviceCode: rate.serviceCode })), sentAt: quotationSent ? new Date() : null } });
+            void quotation;
+            if (quotationSent) await prisma.partnerApplication.update({ where: { id: application.id }, data: { status: "QUOTATION" } });
+        }
+    } catch {
+        console.error("Application saved; indicative quotation email failed.");
+    }
+    return { ok: true, message: quotationSent ? "Application received. Your applied indicative quotation has been emailed. Please discuss and confirm the rates with AN Logistics before final agreement." : "Application received. We could not send the quotation email yet; our team will contact you to discuss and confirm the rates before final agreement.", quotationSent, ratePreview, applicant: { name: data.name, email: data.email, businessModel: data.businessModel, baseCity: data.baseCity, basePincode: data.basePincode, pickupCity: data.pickupCity, pickupPincode: data.pincode, monthlyVolume: data.monthlyVolume } };
 }
 export async function reviewApplicationAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
     await requireOnboardingAdmin();
     const parsed = z.object({ id: z.string(), status: z.enum(["CONTACTED", "NEGOTIATING", "AGREEMENT", "REJECTED"]), notes: z.string().max(10000) }).safeParse(Object.fromEntries(fd));
     if (!parsed.success)
         return { ok: false, error: "Invalid review details" };
+    if (parsed.data.status === "AGREEMENT" && fd.get("ratesConfirmed") !== "on") return { ok: false, error: "Confirm that the applied rates were discussed and agreed before moving this application to agreement." };
     const tenantId = await getMarketplaceTenantId();
     await prisma.$transaction(async (tx) => {
         const a = await tx.partnerApplication.findUnique({ where: { id: parsed.data.id } });
@@ -80,7 +87,8 @@ export async function reviewApplicationAction(_: OnboardingState, fd: FormData):
             throw new Error("Application is unavailable or already active");
         const customerId = a.customerId ?? (await tx.customer.create({ data: { name: a.company || a.name, email: a.email, phone: a.phone, address: a.address, billingName: a.billingName || a.company || a.name, billingEmail: a.billingEmail || a.email, billingAddress: a.billingAddress || a.address, billingState: a.billingState, gstin: a.gstin, billingCycle: a.billingCycle, paymentTermsDays: a.paymentTermsDays, businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode, kind: a.accountType === "individual" ? "INDIVIDUAL" : "BUSINESS", accountType: a.accountType === "reseller" ? "RESELLER" : "CLIENT", tenantId, isActive: false } })).id;
         await tx.customer.update({ where: { id: customerId }, data: { businessModel: a.businessModel, baseCity: a.baseCity, basePincode: a.basePincode, billingName: a.billingName || a.company || a.name, billingEmail: a.billingEmail || a.email, billingAddress: a.billingAddress || a.address, billingState: a.billingState, gstin: a.gstin, billingCycle: a.billingCycle, paymentTermsDays: a.paymentTermsDays } });
-        await tx.partnerApplication.update({ where: { id: a.id }, data: { customerId, status: parsed.data.status, notes: parsed.data.notes } });
+        const confirmedNotes = parsed.data.status === "AGREEMENT" ? `${parsed.data.notes}\n[RATES_CONFIRMED] Applied rates discussed and confirmed by AN Logistics on ${new Date().toISOString()}.` : parsed.data.notes;
+        await tx.partnerApplication.update({ where: { id: a.id }, data: { customerId, status: parsed.data.status, notes: confirmedNotes } });
     }, { isolationLevel: Prisma.TransactionIsolationLevel.Serializable });
     revalidatePath("/onboarding");
     return { ok: true, message: "Review saved. Customer record is ready for an agreement." };
@@ -110,6 +118,7 @@ export async function prepareAgreementAction(_: OnboardingState, fd: FormData): 
     const template = await prisma.agreementTemplate.findUnique({ where: { id: p.data.templateId } });
     if (!a?.customer || !template || a.status === "REJECTED")
         return { ok: false, error: "Review the application and choose a saved template first." };
+    if (a.status !== "AGREEMENT" || !a.notes.includes("[RATES_CONFIRMED]")) return { ok: false, error: "Rates must be discussed and confirmed in onboarding before preparing the agreement." };
     let raw: unknown;
     try {
         raw = JSON.parse(p.data.slabsJson);

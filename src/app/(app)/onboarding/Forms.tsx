@@ -13,7 +13,7 @@ export function ReviewForm({ id, notes, status }: {
     status: string;
 }) {
     const [s, a, p] = useActionState(reviewApplicationAction, { ok: false });
-    return <form action={a} className="space-y-3"><input type="hidden" name="id" value={id}/><label className="block text-sm">Stage<select name="status" defaultValue={status === "NEW" ? "CONTACTED" : status} className={input}>{["CONTACTED", "NEGOTIATING", "AGREEMENT", "REJECTED"].map(v => <option key={v}>{v}</option>)}</select></label><label className="block text-sm">Contact history and internal notes<textarea name="notes" defaultValue={notes} className={input} rows={3}/></label><Button loading={p}>Save review</Button><Result state={s}/></form>;
+    return <form action={a} className="space-y-3"><input type="hidden" name="id" value={id}/><label className="block text-sm">Stage<select name="status" defaultValue={status === "NEW" ? "CONTACTED" : status} className={input}>{["CONTACTED", "NEGOTIATING", "AGREEMENT", "REJECTED"].map(v => <option key={v}>{v}</option>)}</select></label><label className="block text-sm">Contact history and internal notes<textarea name="notes" defaultValue={notes} className={input} rows={3}/></label><label className="flex gap-2 text-sm"><input type="checkbox" name="ratesConfirmed"/>I confirm the applied rates were discussed and agreed for agreement preparation.</label><Button loading={p}>Save review</Button><Result state={s}/></form>;
 }
 export function ActivateForm({ id, couriers }: {
     id: string;

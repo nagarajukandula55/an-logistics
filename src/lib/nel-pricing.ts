@@ -39,23 +39,30 @@ export function adjustedNonEcomCost(sourceRate: number, adjustmentPercent = 55):
 /** Backward-compatible name for callers that specifically handle MLB rows. */
 export const mlbAdjustedCost = adjustedNonEcomCost;
 
-export function isBaseLocationMatch(pickupLocation: string | null | undefined, baseLocation: string | null | undefined): boolean {
-  if (!pickupLocation || !baseLocation) return false;
-  return pickupLocation.trim().toLocaleLowerCase() === baseLocation.trim().toLocaleLowerCase();
+export function isBaseLocationMatch(pickupLocation: string | null | undefined, baseLocation: string | null | undefined, pickupPincode?: string | null, basePincode?: string | null): boolean {
+  const cityMatches = Boolean(pickupLocation && baseLocation && pickupLocation.trim().toLocaleLowerCase() === baseLocation.trim().toLocaleLowerCase());
+  const pincodeMatches = Boolean(pickupPincode && basePincode && pickupPincode.trim() === basePincode.trim());
+  return cityMatches || pincodeMatches;
 }
 
 export function selectCustomerCostSchedule({
   customerSegment,
   pickupLocation,
+  pickupPincode,
   customerBaseLocation,
+  customerBasePincode,
   baseLocation,
+  basePincode,
 }: {
   customerSegment: "ECOM" | "NON_ECOM";
   pickupLocation?: string | null;
+  pickupPincode?: string | null;
   customerBaseLocation?: string | null;
+  customerBasePincode?: string | null;
   baseLocation?: string | null;
+  basePincode?: string | null;
 }): "CPDP_NEL" | "DOMESTIC_TS_BASE" | "MLB" {
   if (customerSegment === "ECOM") return "CPDP_NEL";
-  if (isBaseLocationMatch(pickupLocation, baseLocation) || isBaseLocationMatch(customerBaseLocation, baseLocation)) return "DOMESTIC_TS_BASE";
+  if (isBaseLocationMatch(pickupLocation, baseLocation, pickupPincode, basePincode) || isBaseLocationMatch(customerBaseLocation, baseLocation, customerBasePincode, basePincode)) return "DOMESTIC_TS_BASE";
   return "MLB";
 }

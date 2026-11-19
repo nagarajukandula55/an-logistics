@@ -26,14 +26,19 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
   const [state, setState] = useState("ALL INDIA");
   const [filter, setFilter] = useState<Filter>("dtdc");
   const [zoom, setZoom] = useState(1);
+  const [pan, setPan] = useState({ x: 0, y: 0 });
+  const [dragging, setDragging] = useState(false);
+  const dragRef = useRef<{ x: number; y: number; panX: number; panY: number } | null>(null);
 
   const states = useMemo(() => ["ALL INDIA", ...Array.from(new Set(records.map((record) => record[0]))).sort()], [records]);
+  const normalizeState = (value: string) => value.trim().toUpperCase().replace(/&/g, "AND").replace(/\s+/g, " ");
+  const selectedState = normalizeState(state);
   const filteredRecords = useMemo(() => records.filter((record) => {
-    if (state !== "ALL INDIA" && record[0] !== state) return false;
+    if (selectedState !== "ALL INDIA" && normalizeState(record[0]) !== selectedState) return false;
     if (filter === "india-post") return record[1];
     if (filter === "dtdc") return record[2];
     return true;
-  }), [filter, records, state]);
+  }), [filter, records, selectedState]);
 
   useEffect(() => {
     const canvas = canvasRef.current;
@@ -56,7 +61,7 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
       const project = ([longitude, latitude]: number[]) => {
         const baseX = ((longitude - INDIA_BOUNDS.west) / (INDIA_BOUNDS.east - INDIA_BOUNDS.west)) * width;
         const baseY = (1 - (latitude - INDIA_BOUNDS.south) / (INDIA_BOUNDS.north - INDIA_BOUNDS.south)) * height;
-        return [width / 2 + (baseX - width / 2) * zoom, height / 2 + (baseY - height / 2) * zoom] as const;
+        return [width / 2 + (baseX - width / 2) * zoom + pan.x, height / 2 + (baseY - height / 2) * zoom + pan.y] as const;
       };
       const drawRing = (ring: number[][]) => {
         ring.forEach((coordinate, index) => {
@@ -76,7 +81,7 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
             for (const ring of polygon) drawRing(ring);
           }
         }
-        const selected = state !== "ALL INDIA" && feature.properties?.name?.toUpperCase() === state;
+        const selected = selectedState !== "ALL INDIA" && normalizeState(feature.properties?.name ?? "") === selectedState;
         context.fillStyle = selected ? "#b7d3dc" : "#cbd9dd";
         context.fill("evenodd");
         context.strokeStyle = selected ? "#1683a3" : "#647b84";
@@ -100,24 +105,26 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
     const observer = new ResizeObserver(draw);
     observer.observe(frame);
     return () => observer.disconnect();
-  }, [filter, filteredRecords, state, zoom]);
+  }, [filter, filteredRecords, selectedState, zoom, pan]);
 
-  const directCount = records.filter((record) => record[2] && (state === "ALL INDIA" || record[0] === state)).length;
-  const indiaPostCount = records.filter((record) => record[1] && (state === "ALL INDIA" || record[0] === state)).length;
+  const directCount = records.filter((record) => record[2] && (selectedState === "ALL INDIA" || normalizeState(record[0]) === selectedState)).length;
+  const indiaPostCount = records.filter((record) => record[1] && (selectedState === "ALL INDIA" || normalizeState(record[0]) === selectedState)).length;
   const mappedCount = filteredRecords.filter((record) => record[3] !== null && record[4] !== null).length;
+  const clampPan = (next: { x: number; y: number }, nextZoom = zoom) => { const frame = frameRef.current; if (!frame) return next; return { x: Math.max(-frame.clientWidth * (nextZoom - 1) / 2, Math.min(frame.clientWidth * (nextZoom - 1) / 2, next.x)), y: Math.max(-frame.clientHeight * (nextZoom - 1) / 2, Math.min(frame.clientHeight * (nextZoom - 1) / 2, next.y)) }; };
+  const changeZoom = (delta: number) => setZoom((value) => { const nextZoom = Math.min(4, Math.max(1, Number((value + delta).toFixed(1)))); setPan((current) => nextZoom === 1 ? { x: 0, y: 0 } : clampPan(current, nextZoom)); return nextZoom; });
 
   return <div className="space-y-4">
     <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-      <label className="text-xs font-semibold uppercase tracking-[.12em] text-ink-3">State<select value={state} onChange={(event) => setState(event.target.value)} style={{ colorScheme: "light" }} className="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 shadow-sm"><option className="bg-white text-slate-900" value="ALL INDIA">All India</option>{states.slice(1).map((item) => <option className="bg-white text-slate-900" key={item}>{item}</option>)}</select></label>
-      <label className="text-xs font-semibold uppercase tracking-[.12em] text-ink-3">Coverage on map<select value={filter} onChange={(event) => setFilter(event.target.value as Filter)} style={{ colorScheme: "light" }} className="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 shadow-sm"><option className="bg-white text-slate-900" value="dtdc">DTDC direct service</option><option className="bg-white text-slate-900" value="india-post">India Post</option><option className="bg-white text-slate-900" value="all">All supplied pincodes</option></select></label>
+      <label className="text-xs font-semibold uppercase tracking-[.12em] text-ink-3">State<select value={state} onChange={(event) => { setState(event.target.value); setPan({ x: 0, y: 0 }); }} style={{ colorScheme: "light" }} className="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 shadow-sm"><option className="bg-white text-slate-900" value="ALL INDIA">All India</option>{states.slice(1).map((item) => <option className="bg-white text-slate-900" key={item}>{item}</option>)}</select></label>
+      <label className="text-xs font-semibold uppercase tracking-[.12em] text-ink-3">Coverage on map<select value={filter} onChange={(event) => { setFilter(event.target.value as Filter); setPan({ x: 0, y: 0 }); }} style={{ colorScheme: "light" }} className="mt-2 block w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm font-normal normal-case tracking-normal text-slate-900 shadow-sm"><option className="bg-white text-slate-900" value="dtdc">DTDC direct service</option><option className="bg-white text-slate-900" value="india-post">India Post</option><option className="bg-white text-slate-900" value="all">All supplied pincodes</option></select></label>
       <div className="rounded-xl border border-border bg-canvas px-3 py-2 text-xs text-ink-2"><div>{filteredRecords.length.toLocaleString()} pincodes shown</div><div className="mt-1 text-ink-3">{mappedCount.toLocaleString()} mapped - DTDC {directCount.toLocaleString()} - India Post {indiaPostCount.toLocaleString()}</div></div>
     </div>
-    <div ref={frameRef} className="relative aspect-[1200/760] overflow-hidden rounded-2xl border border-border bg-[#dce5e9] shadow-inner">
+    <div ref={frameRef} onPointerDown={(event) => { if (zoom <= 1) return; event.currentTarget.setPointerCapture(event.pointerId); dragRef.current = { x: event.clientX, y: event.clientY, panX: pan.x, panY: pan.y }; setDragging(true); }} onPointerMove={(event) => { const drag = dragRef.current; if (!drag) return; setPan(clampPan({ x: drag.panX + event.clientX - drag.x, y: drag.panY + event.clientY - drag.y })); }} onPointerUp={(event) => { dragRef.current = null; setDragging(false); event.currentTarget.releasePointerCapture(event.pointerId); }} onPointerCancel={() => { dragRef.current = null; setDragging(false); }} className={`relative touch-none aspect-[1200/760] overflow-hidden rounded-2xl border border-border bg-[#dce5e9] shadow-inner ${zoom > 1 ? (dragging ? "cursor-grabbing" : "cursor-grab") : ""}`}>
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" aria-label="Pincode coverage markers" />
       <div className="absolute left-3 top-3 flex overflow-hidden rounded-lg border border-slate-300 bg-white shadow-sm" aria-label="Map zoom controls">
-        <button type="button" onClick={() => setZoom((value) => Math.min(4, Number((value + 0.5).toFixed(1))))} className="h-9 w-9 border-r border-slate-200 text-lg font-semibold text-slate-800 hover:bg-slate-100" aria-label="Zoom in">+</button>
-        <button type="button" onClick={() => setZoom((value) => Math.max(1, Number((value - 0.5).toFixed(1))))} className="h-9 w-9 border-r border-slate-200 text-lg font-semibold text-slate-800 hover:bg-slate-100" aria-label="Zoom out">−</button>
-        <button type="button" onClick={() => setZoom(1)} className="px-3 text-xs font-medium text-slate-800 hover:bg-slate-100" aria-label="Reset map zoom">Reset</button>
+        <button type="button" onClick={() => changeZoom(0.5)} className="h-9 w-9 border-r border-slate-200 text-lg font-semibold text-slate-800 hover:bg-slate-100" aria-label="Zoom in">+</button>
+        <button type="button" onClick={() => changeZoom(-0.5)} className="h-9 w-9 border-r border-slate-200 text-lg font-semibold text-slate-800 hover:bg-slate-100" aria-label="Zoom out">-</button>
+        <button type="button" onClick={() => { setZoom(1); setPan({ x: 0, y: 0 }); }} className="px-3 text-xs font-medium text-slate-800 hover:bg-slate-100" aria-label="Reset map zoom">Reset</button>
       </div>
       <div className="absolute bottom-3 right-3 flex gap-3 rounded-lg bg-slate-950/80 px-3 py-2 text-xs text-white shadow"><span><i className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />DTDC direct</span><span><i className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />India Post</span></div>
     </div>

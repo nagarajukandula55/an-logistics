@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getIndicativeRates } from "@/lib/indicative-pricing";
 import { sendEmail } from "@/lib/email";
 
-const schema = z.object({ businessModel: z.enum(["B2B", "B2C", "ECOM", "MIXED", "OTHER"]), baseCity: z.string().min(2), pickupCity: z.string().min(2), monthlyVolume: z.coerce.number().int().min(0) });
+const schema = z.object({ businessModel: z.string().refine((value) => value.split(",").every((item) => ["ECOM_B2B", "ECOM_B2C", "BIZ_B2B", "BIZ_B2C", "B2B", "B2C", "ECOM", "MIXED", "OTHER"].includes(item)), "Choose a valid rate category"), baseCity: z.string().min(2), basePincode: z.string().regex(/^[1-9]\d{5}$/).optional(), pickupCity: z.string().min(2), pickupPincode: z.string().regex(/^[1-9]\d{5}$/).optional(), monthlyVolume: z.coerce.number().int().min(0) });
 export type QuotationRequestState = { ok: boolean; message?: string; error?: string };
 
 export async function previewSignupRates(input: { businessModel: string; baseCity: string; pickupCity: string; monthlyVolume: number }) {
