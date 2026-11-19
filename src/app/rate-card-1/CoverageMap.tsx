@@ -4,22 +4,11 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 
-const INDIA_MAP_IMAGE = "https://livingatlas.esri.in/server1/rest/services/India/Pincode_Boundary_2025/MapServer/export?bbox=68,6,98,38&bboxSR=4326&imageSR=4326&size=1200,760&format=png32&transparent=false&f=image";
+const INDIA_MAP_IMAGE = "/api/india-map";
 const INDIA_BOUNDS = { west: 68, east: 98, south: 6, north: 38 };
 
-type CoverageRecord = {
-  pincode: string;
-  state: string;
-  indiaPostAvailable: boolean;
-  pickupStatus: string;
-  latitude: number | null;
-  longitude: number | null;
-};
+type CoverageRecord = [state: string, indiaPostAvailable: boolean, dtdcDirect: boolean, latitude: number | null, longitude: number | null];
 type Filter = "all" | "dtdc" | "india-post";
-
-function isDtdcDirect(record: CoverageRecord) {
-  return record.pickupStatus.trim().toUpperCase() === "NORMAL PICK UP SERVICE AVAILABLE";
-}
 
 export function CoverageMap({ records }: { records: CoverageRecord[] }) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -28,11 +17,11 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
   const [filter, setFilter] = useState<Filter>("dtdc");
   const [mapLoaded, setMapLoaded] = useState(false);
 
-  const states = useMemo(() => ["ALL INDIA", ...Array.from(new Set(records.map((record) => record.state))).sort()], [records]);
+  const states = useMemo(() => ["ALL INDIA", ...Array.from(new Set(records.map((record) => record[0]))).sort()], [records]);
   const filteredRecords = useMemo(() => records.filter((record) => {
-    if (state !== "ALL INDIA" && record.state !== state) return false;
-    if (filter === "india-post") return record.indiaPostAvailable;
-    if (filter === "dtdc") return isDtdcDirect(record);
+    if (state !== "ALL INDIA" && record[0] !== state) return false;
+    if (filter === "india-post") return record[1];
+    if (filter === "dtdc") return record[2];
     return true;
   }), [filter, records, state]);
 
@@ -56,9 +45,9 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
       context.fillStyle = color;
       context.globalAlpha = 0.84;
       for (const record of filteredRecords) {
-        if (record.latitude === null || record.longitude === null) continue;
-        const x = ((record.longitude - INDIA_BOUNDS.west) / (INDIA_BOUNDS.east - INDIA_BOUNDS.west)) * width;
-        const y = (1 - (record.latitude - INDIA_BOUNDS.south) / (INDIA_BOUNDS.north - INDIA_BOUNDS.south)) * height;
+        if (record[3] === null || record[4] === null) continue;
+        const x = ((record[4] - INDIA_BOUNDS.west) / (INDIA_BOUNDS.east - INDIA_BOUNDS.west)) * width;
+        const y = (1 - (record[3] - INDIA_BOUNDS.south) / (INDIA_BOUNDS.north - INDIA_BOUNDS.south)) * height;
         if (x < -3 || x > width + 3 || y < -3 || y > height + 3) continue;
         context.beginPath();
         context.arc(x, y, width < 600 ? 1.7 : 2.15, 0, Math.PI * 2);
@@ -72,9 +61,9 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
     return () => observer.disconnect();
   }, [filter, filteredRecords]);
 
-  const directCount = records.filter((record) => isDtdcDirect(record) && (state === "ALL INDIA" || record.state === state)).length;
-  const indiaPostCount = records.filter((record) => record.indiaPostAvailable && (state === "ALL INDIA" || record.state === state)).length;
-  const mappedCount = filteredRecords.filter((record) => record.latitude !== null && record.longitude !== null).length;
+  const directCount = records.filter((record) => record[2] && (state === "ALL INDIA" || record[0] === state)).length;
+  const indiaPostCount = records.filter((record) => record[1] && (state === "ALL INDIA" || record[0] === state)).length;
+  const mappedCount = filteredRecords.filter((record) => record[3] !== null && record[4] !== null).length;
 
   return <div className="space-y-4">
     <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
@@ -83,7 +72,7 @@ export function CoverageMap({ records }: { records: CoverageRecord[] }) {
       <div className="rounded-xl border border-border bg-canvas px-3 py-2 text-xs text-ink-2"><div>{filteredRecords.length.toLocaleString()} pincodes shown</div><div className="mt-1 text-ink-3">{mappedCount.toLocaleString()} mapped - DTDC {directCount.toLocaleString()} - India Post {indiaPostCount.toLocaleString()}</div></div>
     </div>
     <div ref={frameRef} className="relative aspect-[1200/760] overflow-hidden rounded-2xl border border-border bg-[#dce5e9] shadow-inner">
-      <img src={INDIA_MAP_IMAGE} alt="Official geographic map of India" onLoad={() => setMapLoaded(true)} className="absolute inset-0 h-full w-full object-cover" />
+      <img src={INDIA_MAP_IMAGE} alt="Official geographic map of India" loading="lazy" decoding="async" onLoad={() => setMapLoaded(true)} className="absolute inset-0 h-full w-full object-cover" />
       <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" aria-label="Pincode coverage markers" />
       {!mapLoaded && <div className="absolute left-3 top-3 rounded-lg bg-white/90 px-3 py-2 text-xs text-slate-800 shadow">Loading India map…</div>}
       <div className="absolute bottom-3 right-3 flex gap-3 rounded-lg bg-slate-950/80 px-3 py-2 text-xs text-white shadow"><span><i className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-emerald-400" />DTDC direct</span><span><i className="mr-1 inline-block h-2.5 w-2.5 rounded-full bg-amber-400" />India Post</span></div>
