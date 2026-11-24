@@ -11,6 +11,7 @@ import { CourierAssignPanel } from "./CourierAssignPanel";
 import { StatusControls } from "./StatusControls";
 import { PodPanel } from "./PodPanel";
 import { requireTenantSession } from "@/lib/tenant";
+import { ManualBookingPanel } from "./ManualBookingPanel";
 
 export default async function OrderDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -171,6 +172,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                       <p className="text-ink tabular">₹{order.platformFeeAmount.toFixed(2)}</p>
                     </div>
                   )}
+                  {order.bookingState === "MANUAL_REVIEW" && <ManualBookingPanel orderId={order.id} currentState={order.bookingState} />}
                 </div>
               ) : needsDispatch ? (
                 <div className="flex flex-col gap-6">
@@ -221,6 +223,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
                   Signed by <span className="font-medium">{order.proofOfDelivery.signedByName}</span>
                 </p>
                 {order.proofOfDelivery.notes && <p className="text-ink-2">{order.proofOfDelivery.notes}</p>}
+                {order.proofOfDelivery.photoUrl && <a href={order.proofOfDelivery.photoUrl} target="_blank" rel="noreferrer" className="text-accent underline">Open POD evidence</a>}
                 <p className="text-ink-3 tabular text-xs">{format(order.proofOfDelivery.createdAt, "MMM d, yyyy HH:mm")}</p>
               </CardBody>
             </Card>

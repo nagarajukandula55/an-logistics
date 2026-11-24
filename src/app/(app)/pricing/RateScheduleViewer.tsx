@@ -37,7 +37,7 @@ const segmentLabels: Record<string, string> = {
   NON_ECOM: "Blue services",
 };
 
-function label(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase()); }
+function label(value: string) { return laneLabels[value] ?? value.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase()); }
 const laneLabels: Record<string, string> = { CITY: "City", LOCAL: "Local", METRO: "Metro", REGION: "Region", ZONE: "Zone", ROI: "ROI", ROI_A: "ROI A", ROI_B: "ROI B", SPECIAL_DESTINATION: "Special Destination", SPL_DEST: "Special Destination" };
 function laneLabel(value: string) { return laneLabels[value] ?? label(value); }
 function serviceLabel(value: string) { return serviceLabels[value] ?? label(value); }

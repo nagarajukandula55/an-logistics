@@ -128,6 +128,21 @@ export async function sendTelegramDocument(chatId: string, documentUrl: string, 
   }
 }
 
+export async function sendTelegramDocumentBytes(chatId: string, bytes: ArrayBuffer, filename: string, mimeType: string, caption?: string): Promise<void> {
+  const token = process.env.TELEGRAM_BOT_TOKEN;
+  if (!token) return;
+  try {
+    const form = new FormData();
+    form.append("chat_id", chatId);
+    form.append("document", new Blob([bytes], { type: mimeType }), filename);
+    if (caption) { form.append("caption", caption); form.append("parse_mode", "HTML"); }
+    const response = await fetch(`https://api.telegram.org/bot${token}/sendDocument`, { method: "POST", body: form });
+    if (!response.ok) console.error(`[telegram] sendDocument upload failed for chat ${chatId}: ${response.status}`);
+  } catch (error) {
+    console.error(`[telegram] sendDocument upload request failed for chat ${chatId}:`, error);
+  }
+}
+
 /**
  * Notifies a Customer's linked chat(s) — personal DM and/or group, both if
  * both are linked — of a shipment update. Called from wherever OrderStatus
@@ -165,7 +180,12 @@ export async function notifyTenantTelegram(tenantId: string, text: string): Prom
  * the event, or it's been toggled off.
  */
 export async function notifyOpsTelegram(event: TelegramNotificationEvent, text: string): Promise<void> {
-  const channel = await prisma.telegramNotificationChannel.findUnique({ where: { event } });
-  if (!channel?.isActive) return;
-  await sendRawTelegramMessage(channel.groupChatId, text);
+  const channels = await prisma.telegramNotificationChannel.findMany({
+    where: { isActive: true },
+    select: { event: true, groupChatId: true },
+  });
+  const eventChannel = channels.find((channel) => channel.event === event);
+  const chatIds = [...new Set(channels.map((channel) => channel.groupChatId).filter(Boolean))];
+  if (eventChannel?.groupChatId && !chatIds.includes(eventChannel.groupChatId)) chatIds.push(eventChannel.groupChatId);
+  await Promise.all(chatIds.map((chatId) => sendRawTelegramMessage(chatId, text)));
 }

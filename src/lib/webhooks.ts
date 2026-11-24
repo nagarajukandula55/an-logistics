@@ -67,7 +67,16 @@ export async function notifyCustomerOnStatusChange(order: Order, event: OrderSta
  */
 export async function notifyOpsOnStatusChange(order: Order, event: OrderStatusEvent) {
   const statusText = event.status.replace(/_/g, " ").toLowerCase();
-  const lines = [`<b>${order.trackingCode}</b> is now ${statusText}.`];
+  const customer = await prisma.customer.findUnique({ where: { id: order.customerId }, select: { name: true } });
+  const lines = [
+    `<b>${order.trackingCode}</b> is now ${statusText}.`,
+    `Customer: ${customer?.name || "Unknown"}`,
+    `Booking state: ${order.bookingState}`,
+    `Pickup: ${order.pickupPincode || "Not supplied"} → Delivery: ${order.deliveryPincode || "Not supplied"}`,
+    `Agreed charge: ${order.chargedAmount == null ? "Pending agreed-rate resolution" : `Rs. ${order.chargedAmount.toFixed(2)}`}`,
+  ];
+  lines.splice(4, 0, `Pickup address: ${order.pickupAddress}`, `Delivery address: ${order.deliveryAddress}`, `Package: ${order.packageDescription || "Not supplied"} | Weight: ${order.weightKg == null ? "Not supplied" : `${order.weightKg} kg`}`);
+  if (order.providerRef) lines.push(`Courier docket: ${order.providerRef}`);
   if (event.note) lines.push(event.note);
   await notifyOpsTelegram(TelegramNotificationEvent.ORDER_STATUS_CHANGE, lines.join("\n"));
 }

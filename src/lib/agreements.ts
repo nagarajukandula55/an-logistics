@@ -2,6 +2,8 @@ import { prisma } from "@/lib/prisma";
 import { AgreementStatus, TelegramNotificationEvent } from "@prisma/client";
 import { sendEmail } from "@/lib/email";
 import { notifyOpsTelegram } from "@/lib/telegram";
+import { isGoogleDriveConfigured } from "@/lib/google-drive";
+import { importBytesAsManagedFile } from "@/lib/managed-files";
 
 /**
  * Zoho Sign access tokens last 60 minutes; cache in-memory per server
@@ -158,6 +160,14 @@ export async function markAgreementSigned(agreementId: string, signedAt: Date = 
   if (!pdf) {
     console.error(`[agreements] Could not fetch signed PDF for agreement ${agreementId} — skipping copy email`);
     return;
+  }
+
+  if (isGoogleDriveConfigured()) {
+    try {
+      await importBytesAsManagedFile({ name: `agreement-${agreement.id}-signed.pdf`, mimeType: "application/pdf", bytes: Uint8Array.from(pdf).buffer, category: "AGREEMENT_SIGNED", agreementId: agreement.id, customerId: agreement.customerId });
+    } catch (error) {
+      console.error(`[agreements] Could not archive signed PDF in Google Drive for ${agreementId}`, error);
+    }
   }
 
   const signerEmail = agreement.signerEmail ?? agreement.customer.email;

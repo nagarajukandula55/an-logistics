@@ -7,8 +7,9 @@ import {
   findTenantIdByChatId,
   parseStartPayload,
   parseTenantStartPayload,
-  sendRawTelegramMessage, sendTelegramDocument,
+  sendRawTelegramMessage, sendTelegramDocument, sendTelegramDocumentBytes,
 } from "@/lib/telegram";
+import { downloadFileFromGoogleDrive } from "@/lib/google-drive";
 
 /**
  * Telegram webhook — see .env.example for the setWebhook call that points
@@ -134,7 +135,17 @@ export async function POST(request: Request) {
     } else if (!order.providerLabelUrl) {
       await sendRawTelegramMessage(chatId, `No document available yet for ${trackingCode} (status: ${order.status}).`);
     } else {
-      await sendTelegramDocument(chatId, order.providerLabelUrl, `<b>${trackingCode}</b> shipping document`);
+      const managedMatch = order.providerLabelUrl.match(/^\/api\/files\/([^/?#]+)$/);
+      if (managedMatch) {
+        const managed = await prisma.managedFile.findUnique({ where: { id: managedMatch[1] } });
+        if (!managed) await sendRawTelegramMessage(chatId, `The document record for ${trackingCode} is unavailable.`);
+        else {
+          const downloaded = await downloadFileFromGoogleDrive(managed.driveFileId);
+          await sendTelegramDocumentBytes(chatId, downloaded.bytes, managed.originalName, managed.mimeType, `<b>${trackingCode}</b> shipping document`);
+        }
+      } else {
+        await sendTelegramDocument(chatId, order.providerLabelUrl, `<b>${trackingCode}</b> shipping document`);
+      }
     }
     return NextResponse.json({ ok: true });
   }

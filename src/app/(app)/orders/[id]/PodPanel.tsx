@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/Button";
 export function PodPanel({ orderId }: { orderId: string }) {
   const [signedByName, setSignedByName] = useState("");
   const [notes, setNotes] = useState("");
+  const [photo, setPhoto] = useState<File | null>(null);
   const [pending, startTransition] = useTransition();
   const [failing, startFailing] = useTransition();
   const [error, setError] = useState<string | null>(null);
@@ -22,6 +23,7 @@ export function PodPanel({ orderId }: { orderId: string }) {
     fd.set("orderId", orderId);
     fd.set("signedByName", signedByName.trim());
     fd.set("notes", notes.trim());
+    if (photo) fd.set("photo", photo);
     startTransition(async () => {
       try {
         await capturePodAction(fd);
@@ -53,6 +55,9 @@ export function PodPanel({ orderId }: { orderId: string }) {
       </Field>
       <Field label="Notes" htmlFor="notes">
         <Textarea id="notes" value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Optional delivery notes" />
+      </Field>
+      <Field label="POD photo" htmlFor="pod-photo" hint="Optional; archived securely in Google Drive when configured">
+        <Input id="pod-photo" type="file" accept="image/*,application/pdf" onChange={(e) => setPhoto(e.target.files?.[0] ?? null)} />
       </Field>
       {error && <p className="text-xs text-danger">{error}</p>}
       <Button onClick={handleDeliver} loading={pending} className="w-full">

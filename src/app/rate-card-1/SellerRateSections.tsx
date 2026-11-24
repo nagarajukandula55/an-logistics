@@ -7,7 +7,7 @@ type SourceMatrix = { idKey: string; name: string; matrixType: string; serviceCo
 
 const labels: Record<string, string> = { ECOM_B2B: "E-commerce B2B", ECOM_B2C: "E-commerce B2C", BRANCH: "Branch", MLB: "MLB B2B / Non-e-commerce" };
 const segmentLabels: Record<string, string> = { ECOM: "DTDC Direct", B2C_ECOM_DTDC: "DTDC Direct", B2C_ECOM_INDIA_POST: "India Post", BRANCH: "DTDC Direct", DTDC: "DTDC Direct", INDIA_POST: "India Post", DOX: "Dox", NON_DOX: "Non-Dox", NON_ECOM: "Blue CP" };
-const laneLabels: Record<string, string> = { CITY: "City", LOCAL: "Local", METRO: "Metro", REGION: "Region", ZONE: "Zone", ROI: "ROI", ROI_A: "ROI A", ROI_B: "ROI B", SPECIAL_DESTINATION: "Special Destination", SPL_DEST: "Special Destination" };
+const laneLabels: Record<string, string> = { CITY: "City", LOCAL: "Local", METRO: "Metro", REGION: "Region", ZONE: "Zone", ROI: "Rest of India (ROI)", ROI_A: "Rest of India A (ROI A)", ROI_B: "Rest of India B (ROI B)", SPECIAL_DESTINATION: "Special Destination", SPL_DEST: "Special Destination" };
 const laneLabel = (lane: string) => laneLabels[lane] ?? lane.replaceAll("_", " ").replace(/\b\w/g, (value) => value.toUpperCase());
 const segmentLabel = (segment: string) => segmentLabels[segment] ?? segment.replaceAll("_", " ").replace(/\b\w/g, (value) => value.toUpperCase());
 const serviceLabel = (service: string) => ({ "7V": "7V", "7X": "7X", "7D": "7D", "7G": "7G", EXPRESS: "Express", AIR_CARGO: "Air Cargo", SURFACE_CARGO: "Surface Cargo", PRIORITY: "Priority", PEP_BLUE: "Blue PEP", PEC_BLUE: "Blue PEC" }[service] ?? service);

@@ -4,7 +4,7 @@ import { z } from "zod";
 import { getIndicativeRates } from "@/lib/indicative-pricing";
 import { sendEmail } from "@/lib/email";
 
-const schema = z.object({ businessModel: z.string().refine((value) => value.split(",").every((item) => ["ECOM_B2B", "ECOM_B2C", "BIZ_B2B", "BIZ_B2C", "B2B", "B2C", "ECOM", "MIXED", "OTHER"].includes(item)), "Choose a valid rate category"), baseCity: z.string().min(2), basePincode: z.string().regex(/^[1-9]\d{5}$/).optional(), pickupCity: z.string().min(2), pickupPincode: z.string().regex(/^[1-9]\d{5}$/).optional(), monthlyVolume: z.coerce.number().int().min(0) });
+const schema = z.object({ businessModel: z.string().refine((value) => value.split(",").every((item) => ["ECOM_B2B", "ECOM_B2C", "MLB_B2B", "BIZ_B2B", "BIZ_B2C", "B2B", "B2C", "ECOM", "MIXED", "OTHER"].includes(item)), "Choose a valid rate category"), baseCity: z.string().min(2), basePincode: z.string().regex(/^[1-9]\d{5}$/).optional(), pickupCity: z.string().min(2), pickupPincode: z.string().regex(/^[1-9]\d{5}$/).optional(), monthlyVolume: z.coerce.number().int().min(0) });
 export type QuotationRequestState = { ok: boolean; message?: string; error?: string };
 
 export async function previewSignupRates(input: { businessModel: string; baseCity: string; pickupCity: string; monthlyVolume: number }) {
@@ -18,8 +18,10 @@ export async function requestSignupQuotationAction(_previous: QuotationRequestSt
   if (!parsed.success) return { ok: false, error: "Your application details are incomplete." };
   const preview = await getIndicativeRates(parsed.data);
   const escape = (value: string) => value.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
-  const rows = preview.rates.slice(0, 24).map((rate) => `<tr><td>${escape(rate.courierName)}</td><td>${escape(rate.serviceCode)}</td><td>${escape(rate.lane)}</td><td>${rate.minWeightKg}-${rate.maxWeightKg} kg</td><td>₹${rate.defaultSellRate.toFixed(2)}</td></tr>`).join("");
-  const sent = await sendEmail({ to: parsed.data.email, subject: "AN Logistics indicative quotation", html: `<h2>Indicative quotation for ${escape(parsed.data.company || parsed.data.name)}</h2><p>Pricing basis: ${escape(preview.source)}. These rates are for discussion and become final only after commercial confirmation.</p>${rows ? `<table border="1" cellpadding="6" cellspacing="0"><tr><th>Courier</th><th>Service</th><th>Lane</th><th>Weight</th><th>Indicative sell rate</th></tr>${rows}</table>` : "<p>The detailed schedule is being prepared. Our team will contact you with the final quotation.</p>"}` });
+  const grouped = new Map<string, typeof preview.rates>();
+  for (const rate of preview.rates) grouped.set(rate.categoryLabel, [...(grouped.get(rate.categoryLabel) ?? []), rate]);
+  const tables = [...grouped.entries()].map(([category, rates]) => { const rows = rates.slice(0, 80).map((rate) => `<tr><td>${escape(rate.courierName)}</td><td>${escape(rate.serviceCode)}</td><td>${escape(rate.lane)}</td><td>${rate.minWeightKg}-${rate.maxWeightKg} kg</td><td>Rs. ${rate.defaultSellRate.toFixed(2)}</td></tr>`).join(""); return `<h3>${escape(category)}</h3><table border="1" cellpadding="6" cellspacing="0"><tr><th>Courier</th><th>Service</th><th>Lane</th><th>Weight</th><th>Indicative sell rate</th></tr>${rows}</table>`; }).join("");
+  const sent = await sendEmail({ to: parsed.data.email, subject: "AN Logistics indicative quotation", html: `<h2>Indicative quotation for ${escape(parsed.data.company || parsed.data.name)}</h2><p>Selected categories: ${escape(preview.source)}. These rates are for discussion and become final only after commercial confirmation.</p>${tables || "<p>The detailed schedule is being prepared. Our team will contact you with the final quotation.</p>"}` });
   if (!sent) return { ok: false, error: "Quotation email is not configured yet. Our team will contact you directly." };
   return { ok: true, message: `Indicative quotation sent to ${parsed.data.email}.` };
 }

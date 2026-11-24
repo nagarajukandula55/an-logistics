@@ -5,8 +5,9 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/auth";
-import { InvoiceStatus, OrderStatus, SettlementStatus } from "@prisma/client";
+import { InvoiceStatus, OrderStatus, SettlementStatus, TelegramNotificationEvent } from "@prisma/client";
 import { syncInvoiceToAccounting, syncSettlementToAccounting } from "@/lib/accounting-sync";
+import { notifyOpsTelegram } from "@/lib/telegram";
 
 export type ActionState = { ok: boolean; error?: string };
 
@@ -69,7 +70,7 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
   const subtotal = orders.reduce((sum, o) => sum + (o.platformFeeAmount ?? 0), 0);
   const existingCount = await prisma.invoice.count({ where: { tenantId } });
 
-  await prisma.invoice.create({
+  const invoice = await prisma.invoice.create({
     data: {
       invoiceNumber: periodInvoiceNumber("INV", existingCount),
       tenantId,
@@ -89,6 +90,8 @@ export async function generateInvoiceAction(_prev: ActionState, formData: FormDa
       },
     },
   });
+
+  void notifyOpsTelegram(TelegramNotificationEvent.AGENT_ALERT, `<b>Platform invoice created</b>\n${invoice.invoiceNumber}\nTenant: ${tenantId}\nAmount: Rs. ${invoice.totalAmount.toFixed(2)}`);
 
   revalidatePath("/billing/invoices");
   return { ok: true };
@@ -127,7 +130,9 @@ export async function generateCustomerInvoiceAction(_prev: ActionState, formData
   const issuedAt = new Date();
   const dueAt = new Date(issuedAt);
   dueAt.setDate(dueAt.getDate() + (customer.paymentTermsDays || 0));
+  const customerInvoiceNumber = periodInvoiceNumber("CINV", count);
   await prisma.invoice.create({ data: { invoiceNumber: periodInvoiceNumber("CINV", count), tenantId: customer.tenantId, customerId: parsed.data.customerId, periodStart: parsed.data.billingMode === "PER_SHIPMENT" ? orders[0].createdAt : from, periodEnd: parsed.data.billingMode === "PER_SHIPMENT" ? orders[0].createdAt : to, status: InvoiceStatus.SENT, subtotal, taxAmount, totalAmount: subtotal + taxAmount, issuedAt, dueAt, notes: `AN Logistics B2B invoice · ${parsed.data.billingMode.replace("_", " ").toLowerCase()} billing`, lineItems: { create: orders.map((order) => ({ orderId: order.id, description: `AN Logistics shipment ${order.trackingCode}`, quantity: 1, unitPrice: order.chargedAmount!, amount: order.chargedAmount! })) } } });
+  void notifyOpsTelegram(TelegramNotificationEvent.AGENT_ALERT, `<b>Customer invoice issued</b>\n${customerInvoiceNumber}\nCustomer: ${customer.name}\nAmount: Rs. ${(subtotal + taxAmount).toFixed(2)}\nStatus: SENT`);
   revalidatePath("/billing/invoices");
   return { ok: true };
 }
@@ -150,6 +155,7 @@ export async function updateInvoiceStatusAction(formData: FormData) {
   });
   revalidatePath(`/billing/invoices/${invoiceId}`);
   revalidatePath("/billing/invoices");
+  void notifyOpsTelegram(TelegramNotificationEvent.AGENT_ALERT, `<b>Invoice status changed</b>\nInvoice: ${invoiceId}\nStatus: ${status}`);
 
   if (status === InvoiceStatus.PAID) {
     // Fire-and-forget: this app's own PAID transition already committed
@@ -228,6 +234,7 @@ export async function generateSettlementAction(_prev: ActionState, formData: For
   });
 
   revalidatePath("/billing/settlements");
+  void notifyOpsTelegram(TelegramNotificationEvent.AGENT_ALERT, `<b>Courier settlement prepared</b>\n${periodInvoiceNumber("SET", existingCount)}\nCourier: ${partner.name}\nNet amount: Rs. ${grossPayoutAmount.toFixed(2)}\nStatus: DRAFT`);
   return { ok: true };
 }
 
@@ -245,6 +252,7 @@ export async function updateSettlementStatusAction(formData: FormData) {
   });
   revalidatePath(`/billing/settlements/${settlementId}`);
   revalidatePath("/billing/settlements");
+  void notifyOpsTelegram(TelegramNotificationEvent.AGENT_ALERT, `<b>Settlement status changed</b>\nSettlement: ${settlementId}\nStatus: ${status}`);
 
   if (status === SettlementStatus.PAID) {
     void syncSettlementToAccounting(settlementId);

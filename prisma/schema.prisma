@@ -222,6 +222,7 @@ model Customer {
   agreements                    Agreement[]
   quotations                    Quotation[]
   invoices                      Invoice[]
+  managedFiles                  ManagedFile[]
   telegramLink                  TelegramLink?
   customerCourierNelAssignments CustomerCourierNelAssignment[]
   customerCourierRevenueMonths  CustomerCourierRevenueMonth[]
@@ -388,6 +389,7 @@ model Order {
 
   statusEvents        OrderStatusEvent[]
   proofOfDelivery     ProofOfDelivery?
+  managedFiles        ManagedFile[]
   invoiceLineItems    InvoiceLineItem[]
   settlementLineItems SettlementLineItem[]
 
@@ -921,6 +923,7 @@ model Agreement {
   renewalReminderSentAt DateTime?
   createdAt             DateTime          @default(now())
   updatedAt             DateTime          @updatedAt
+  managedFiles          ManagedFile[]
 
   @@index([customerId])
   @@index([externalEnvelopeId])
@@ -1014,9 +1017,45 @@ model Invoice {
   updatedAt     DateTime      @updatedAt
 
   lineItems InvoiceLineItem[]
+  managedFiles ManagedFile[]
 
   @@index([tenantId])
   @@index([status])
+}
+
+enum ManagedFileCategory {
+  COURIER_DOCUMENT
+  AGREEMENT_SOURCE
+  AGREEMENT_SIGNED
+  PROOF_OF_DELIVERY
+  INVOICE
+  OTHER
+}
+
+model ManagedFile {
+  id              String              @id @default(cuid())
+  category        ManagedFileCategory
+  originalName    String
+  mimeType        String
+  sizeBytes       Int?
+  driveFileId     String              @unique
+  driveWebViewUrl String?
+  orderId         String?
+  order           Order?              @relation(fields: [orderId], references: [id], onDelete: SetNull)
+  agreementId     String?
+  agreement       Agreement?          @relation(fields: [agreementId], references: [id], onDelete: SetNull)
+  invoiceId       String?
+  invoice         Invoice?            @relation(fields: [invoiceId], references: [id], onDelete: SetNull)
+  customerId      String?
+  customer        Customer?           @relation(fields: [customerId], references: [id], onDelete: SetNull)
+  createdAt       DateTime            @default(now())
+  updatedAt       DateTime            @updatedAt
+
+  @@index([category])
+  @@index([orderId])
+  @@index([agreementId])
+  @@index([invoiceId])
+  @@index([customerId])
 }
 
 model InvoiceLineItem {

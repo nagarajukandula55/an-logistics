@@ -5,13 +5,16 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { prisma } from "@/lib/prisma";
 import { generateTrackingCode } from "@/lib/tracking-code";
-import { OrderStatus } from "@prisma/client";
+import { OrderStatus, TelegramNotificationEvent } from "@prisma/client";
 import { optionalPincodeSchema } from "@/lib/validation";
 import { requireTenantSession } from "@/lib/tenant";
 import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
 import { calculateVolumetricWeight } from "@/lib/volumetric-weight";
 import { getSignedCustomerSellPrice, hasSignedCustomerRateAgreement } from "@/lib/sell-pricing";
 import { determineZone } from "@/lib/zone";
+import { notifyOpsTelegram } from "@/lib/telegram";
+import { isGoogleDriveConfigured } from "@/lib/google-drive";
+import { importBytesAsManagedFile, importUrlAsManagedFile } from "@/lib/managed-files";
 
 const createOrderSchema = z.object({
   tenantId: z.string().optional(),
@@ -233,6 +236,53 @@ export async function advanceOrderStatusAction(formData: FormData) {
   revalidatePath("/vehicles");
 }
 
+const manualBookingSchema = z.object({
+  orderId: z.string().min(1),
+  providerRef: z.string().trim().min(1, "Enter the courier docket or booking number").max(120),
+  labelUrl: z.string().trim().url("Enter a valid document URL").optional().or(z.literal("")),
+  note: z.string().trim().max(500).optional(),
+});
+
+export async function completeManualCourierBookingAction(formData: FormData) {
+  const { isStaff } = await requireTenantSession();
+  if (!isStaff) throw new Error("Only operations staff can complete a manual courier booking");
+  const parsed = manualBookingSchema.safeParse(Object.fromEntries(formData.entries()));
+  if (!parsed.success) throw new Error(parsed.error.issues[0]?.message ?? "Invalid booking details");
+  const { orderId, providerRef, labelUrl, note } = parsed.data;
+  const order = await prisma.order.findUnique({ where: { id: orderId } });
+  if (!order || !order.courierPartnerId) throw new Error("Order or courier assignment not found");
+  const event = await prisma.$transaction(async (tx) => {
+    const updated = await tx.order.update({
+      where: { id: orderId },
+      data: {
+        providerRef,
+        providerLabelUrl: labelUrl || null,
+        bookingState: "CONFIRMED",
+        statusEvents: { create: { status: OrderStatus.CREATED, note: note || `Manual courier booking confirmed: ${providerRef}` } },
+      },
+      include: { statusEvents: { orderBy: { createdAt: "desc" }, take: 1 } },
+    });
+    return updated.statusEvents[0];
+  });
+  let partnerDocumentUrl = labelUrl || null;
+  if (labelUrl && isGoogleDriveConfigured()) {
+    try {
+      const managed = await importUrlAsManagedFile({ url: labelUrl, name: `${order.trackingCode}-courier-document`, category: "COURIER_DOCUMENT", orderId, customerId: order.customerId });
+      partnerDocumentUrl = `/api/files/${managed.id}`;
+      await prisma.order.update({ where: { id: orderId }, data: { providerLabelUrl: partnerDocumentUrl } });
+    } catch (error) {
+      console.error("Manual courier document could not be copied to Google Drive", error);
+    }
+  }
+  const updatedOrder = { ...order, providerRef, providerLabelUrl: partnerDocumentUrl, bookingState: "CONFIRMED" };
+  notifyTenantOnStatusChange(updatedOrder, event).catch(() => {});
+  notifyCustomerOnStatusChange(updatedOrder, event).catch(() => {});
+  notifyOpsOnStatusChange(updatedOrder, event).catch(() => {});
+  void notifyOpsTelegram(TelegramNotificationEvent.AGENT_ALERT, `<b>Manual courier booking completed</b>\n${order.trackingCode}\nDocket: ${providerRef}${labelUrl ? `\nDocument: ${labelUrl}` : "\nDocument: not attached"}`);
+  revalidatePath(`/orders/${orderId}`);
+  revalidatePath("/orders");
+}
+
 const podSchema = z.object({
   orderId: z.string().min(1),
   signedByName: z.string().min(1, "Signee name is required"),
@@ -247,15 +297,22 @@ export async function capturePodAction(formData: FormData) {
     throw new Error(parsed.error.issues.map((i) => i.message).join(", "));
   }
   const { orderId, signedByName, notes } = parsed.data;
+  const photo = formData.get("photo");
 
   const order = await prisma.order.findUnique({ where: { id: orderId } });
   if (!order || (!isStaff && order.tenantId !== tenantId)) throw new Error("Order not found");
 
+  let photoUrl: string | null = null;
+  if (photo instanceof File && photo.size > 0 && isGoogleDriveConfigured()) {
+    if (photo.size > 25 * 1024 * 1024) throw new Error("POD photo is larger than the 25 MB limit");
+    const managed = await importBytesAsManagedFile({ name: `${order.trackingCode}-proof-of-delivery`, mimeType: photo.type || "application/octet-stream", bytes: await photo.arrayBuffer(), category: "PROOF_OF_DELIVERY", orderId, customerId: order.customerId });
+    photoUrl = `/api/files/${managed.id}`;
+  }
   const event = await prisma.$transaction(async (tx) => {
     await tx.proofOfDelivery.upsert({
       where: { orderId },
-      create: { orderId, signedByName, notes: notes || null },
-      update: { signedByName, notes: notes || null },
+      create: { orderId, signedByName, notes: notes || null, photoUrl },
+      update: { signedByName, notes: notes || null, photoUrl: photoUrl ?? undefined },
     });
 
     const updated = await tx.order.update({
