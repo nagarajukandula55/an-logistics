@@ -5,7 +5,7 @@ import { prisma } from "@/lib/prisma";
 import { requireCustomerSession } from "@/lib/customer-session";
 import { generateTrackingCode } from "@/lib/tracking-code";
 import { computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
-import { getSellPrice } from "@/lib/sell-pricing";
+import { getSellPrice, getSignedCustomerSellPrice } from "@/lib/sell-pricing";
 import { determineZone } from "@/lib/zone";
 import { OrderAssignmentMethod, OrderFulfillmentType, OrderStatus } from "@prisma/client";
 import { z } from "zod";
@@ -101,11 +101,18 @@ export async function createCustomerBookingAction(_prev: CreateCustomerBookingSt
     const partner = branch.courierPartner;
     const commission = await getEffectiveCommission(partner.id, partner);
     const zone = determineZone(data.pickupPincode, data.deliveryPincode);
-    const sell = await getSellPrice(tenantId, zone, weight.chargeableWeightKg, customerId, null, partner.id);
+    const signedSell = await getSignedCustomerSellPrice(customerId, zone, weight.chargeableWeightKg);
+    if (signedSell?.hasSignedAgreement && signedSell.price <= 0)
+        return { ok: false, error: "Your signed rate card has no matching zone and weight slab for this shipment. Please contact your account manager." };
+    const sell = signedSell?.hasSignedAgreement
+        ? signedSell
+        : await getSellPrice(tenantId, zone, weight.chargeableWeightKg, customerId, null, partner.id);
     if (!sell)
         return { ok: false, error: "No agreed rate covers this shipment. Please contact your account manager." };
     const agreedPriceAmount = sell.price;
-    const marginAmount = customer.accountType === "RESELLER"
+    const marginAmount = signedSell?.hasSignedAgreement
+        ? 0
+        : customer.accountType === "RESELLER"
         ? customer.resellerMarginType === "PERCENT"
             ? Math.round(agreedPriceAmount * (customer.resellerMarginValue / 100) * 100) / 100
             : Math.round(customer.resellerMarginValue * 100) / 100

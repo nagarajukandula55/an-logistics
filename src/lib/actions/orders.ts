@@ -10,6 +10,8 @@ import { optionalPincodeSchema } from "@/lib/validation";
 import { requireTenantSession } from "@/lib/tenant";
 import { notifyTenantOnStatusChange, notifyCustomerOnStatusChange, notifyOpsOnStatusChange } from "@/lib/webhooks";
 import { calculateVolumetricWeight } from "@/lib/volumetric-weight";
+import { getSignedCustomerSellPrice, hasSignedCustomerRateAgreement } from "@/lib/sell-pricing";
+import { determineZone } from "@/lib/zone";
 
 const createOrderSchema = z.object({
   tenantId: z.string().optional(),
@@ -52,6 +54,20 @@ export async function createOrderAction(_prev: CreateOrderState, formData: FormD
   // a CLIENT-tenant user's orders always go under their own tenant.
   const effectiveTenantId = isStaff && data.tenantId ? data.tenantId : tenantId;
 
+  let chargedAmount: number | null = null;
+  const signedRate = data.pickupPincode && data.deliveryPincode && weight
+    ? await getSignedCustomerSellPrice(data.customerId, determineZone(data.pickupPincode, data.deliveryPincode), weight.chargeableWeightKg)
+    : null;
+  if (await hasSignedCustomerRateAgreement(data.customerId)) {
+    if (!data.pickupPincode || !data.deliveryPincode || !weight) {
+      return { ok: false, message: "Pickup pincode, delivery pincode, and package weight are required for a customer with a signed rate agreement." };
+    }
+    if (!signedRate || signedRate.price <= 0) {
+      return { ok: false, message: "The customer's signed rate card has no matching zone and weight slab for this shipment." };
+    }
+    chargedAmount = signedRate.price;
+  }
+
   const order = await prisma.order.create({
     data: {
       trackingCode: generateTrackingCode(),
@@ -68,6 +84,7 @@ export async function createOrderAction(_prev: CreateOrderState, formData: FormD
       weightKg: data.weightKg,
       shipmentDetails: weight ? { lengthCm: data.lengthCm, widthCm: data.widthCm, heightCm: data.heightCm, actualWeightKg: data.weightKg, volumetricWeightKg: weight.volumetricWeightKg, chargeableWeightKg: weight.chargeableWeightKg, volumetricDivisor: weight.divisor } : undefined,
       packageDescription: data.packageDescription || null,
+      chargedAmount,
       codAmount: data.codAmount,
       status: OrderStatus.CREATED,
       statusEvents: {

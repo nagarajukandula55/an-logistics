@@ -17,7 +17,7 @@ import {
 import { getCourierProvider } from "@/lib/courier-providers/registry";
 import { determineZone } from "@/lib/zone";
 import { findServiceableBranches, computePlatformFee, getEffectiveCommission } from "@/lib/courier-queries";
-import { getSellPrice, isBelowMarginFloor } from "@/lib/sell-pricing";
+import { getSellPrice, getSignedCustomerSellPrice, isBelowMarginFloor } from "@/lib/sell-pricing";
 import { pincodeSchema } from "@/lib/validation";
 import { encryptApiKey } from "@/lib/crypto";
 import { debitWalletForOrder } from "@/lib/wallet";
@@ -384,12 +384,18 @@ export async function assignOrderToCourierAction(formData: FormData) {
   // real order-value modeling is a planned next-phase gap (see README).
   const platformFeeAmount = computePlatformFee(commission, order.codAmount);
 
-  // Auto-fill chargedAmount (what we bill the tenant) from the SellRateCard
-  // if it wasn't already set — a manual override upstream (e.g. an admin
-  // typed one in at booking time) always wins, this only fills the gap
-  // when nothing was entered.
+  // A signed customer's agreement is the billing authority. Never preserve a
+  // manually entered amount or fall through to a staff/default card for that
+  // customer. If the agreed card has no matching slab, leave the order
+  // unassigned and make operations fix the rate card first.
   let chargedAmount = order.chargedAmount;
-  if (chargedAmount == null && order.pickupPincode && order.deliveryPincode) {
+  const signedRate = order.pickupPincode && order.deliveryPincode
+    ? await getSignedCustomerSellPrice(order.customerId, determineZone(order.pickupPincode, order.deliveryPincode), order.weightKg ?? 0)
+    : null;
+  if (signedRate?.hasSignedAgreement) {
+    if (signedRate.price <= 0) throw new Error("The signed rate card has no matching zone and weight slab for this shipment");
+    chargedAmount = signedRate.price;
+  } else if (chargedAmount == null && order.pickupPincode && order.deliveryPincode) {
     const zone = determineZone(order.pickupPincode, order.deliveryPincode);
     const sell = await getSellPrice(order.tenantId, zone, order.weightKg ?? 0, order.customerId, session.user.role, partner.id);
     chargedAmount = sell?.price ?? null;

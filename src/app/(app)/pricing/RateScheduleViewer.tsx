@@ -10,7 +10,7 @@ const categoryInfo: Record<CategoryId, { label: string; description: string }> =
   B2B_ECOM: { label: "E-commerce B2B", description: "CPDP online-shipping rates for business shipments." },
   B2C_ECOM: { label: "E-commerce B2C", description: "MLB e-commerce schedules for B2C shipments, separated by DTDC and India Post." },
   BRANCH: { label: "Branch", description: "Branch schedules split between DTDC direct and India Post services." },
-  MLB: { label: "MLB", description: "Multilocation schedules separated by DTDC direct, India Post, Dox, Non-Dox and Blue services." },
+  MLB: { label: "MLB B2B / Non-e-commerce", description: "MLB non-e-commerce schedules separated by DTDC direct, India Post, Dox, Non-Dox and Blue services." },
 };
 
 const serviceLabels: Record<string, string> = {
@@ -38,6 +38,8 @@ const segmentLabels: Record<string, string> = {
 };
 
 function label(value: string) { return value.toLowerCase().replaceAll("_", " ").replace(/\b\w/g, (char) => char.toUpperCase()); }
+const laneLabels: Record<string, string> = { CITY: "City", LOCAL: "Local", METRO: "Metro", REGION: "Region", ZONE: "Zone", ROI: "ROI", ROI_A: "ROI A", ROI_B: "ROI B", SPECIAL_DESTINATION: "Special Destination", SPL_DEST: "Special Destination" };
+function laneLabel(value: string) { return laneLabels[value] ?? label(value); }
 function serviceLabel(value: string) { return serviceLabels[value] ?? label(value); }
 function segmentLabel(value: string) { return segmentLabels[value] ?? label(value); }
 function scheduleLabel(matrix: RateMatrix) {
@@ -80,7 +82,7 @@ export function RateScheduleViewer({ matrices }: { matrices: RateMatrix[] }) {
   const [matrixId, setMatrixId] = useState("");
   const matrix = choices.find((item) => item.id === matrixId) ?? choices[0];
   const weights = matrix ? [...new Map(matrix.rows.map((row) => [`${row.minWeightKg}|${row.maxWeightKg}`, { min: row.minWeightKg, max: row.maxWeightKg }])).values()].sort((a, b) => a.min - b.min) : [];
-  const lanes = [...new Set((matrix?.rows ?? []).map((row) => row.lane))].sort();
+  const lanes = [...new Set((matrix?.rows ?? []).map((row) => row.lane))].sort((a, b) => laneLabel(a).localeCompare(laneLabel(b)));
   const rate = (lane: string, min: number, max: number) => matrix?.rows.find((row) => row.lane === lane && row.minWeightKg === min && row.maxWeightKg === max)?.costPrice ?? null;
   const selectClass = "mt-1 h-10 w-full rounded-control border border-slate-300 bg-white px-3 text-sm text-slate-900 shadow-sm";
   const reset = (nextCategory: CategoryId) => { setCategory(nextCategory); setSegment(""); setService(""); setLevel(""); setMatrixId(""); };

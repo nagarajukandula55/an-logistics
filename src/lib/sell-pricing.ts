@@ -48,6 +48,55 @@ export async function getSellPrice(
 }
 
 /**
+ * Returns the rate card attached to the customer's currently signed,
+ * non-expired agreement. This is deliberately separate from the normal
+ * fallback resolver: once an agreement is signed, billing must use that
+ * agreement and must never silently fall through to a default/staff card.
+ */
+export async function getSignedCustomerRateCard(customerId?: string | null) {
+  if (!customerId) return null;
+  const now = new Date();
+  const agreement = await prisma.agreement.findFirst({
+    where: {
+      customerId,
+      status: "SIGNED",
+      sellRateCardId: { not: null },
+      OR: [{ renewalDate: null }, { renewalDate: { gt: now } }],
+    },
+    orderBy: [{ signedAt: "desc" }, { updatedAt: "desc" }],
+    select: { sellRateCardId: true },
+  });
+  if (!agreement?.sellRateCardId) return null;
+
+  return prisma.sellRateCard.findUnique({
+    where: { id: agreement.sellRateCardId },
+    include: { slabs: { where: { isActive: true } } },
+  });
+}
+
+export async function hasSignedCustomerRateAgreement(customerId?: string | null): Promise<boolean> {
+  return Boolean(await getSignedCustomerRateCard(customerId));
+}
+
+/**
+ * Resolves the exact selling rate from the signed agreement's linked card.
+ * A null result means either there is no signed agreement or that the
+ * agreement has no matching slab; callers that are creating a shipment must
+ * distinguish that case and block rather than use another price list.
+ */
+export async function getSignedCustomerSellPrice(
+  customerId: string | null | undefined,
+  zone: string,
+  weightKg: number
+): Promise<{ hasSignedAgreement: boolean; price: number; minMarginPercent: number | null; sellRateCardId: string } | null> {
+  const card = await getSignedCustomerRateCard(customerId);
+  if (!card) return null;
+  const slab = card.slabs.find((s) => s.zone === zone && weightKg > s.minWeightKg && weightKg <= s.maxWeightKg);
+  if (!slab) return { hasSignedAgreement: true, price: 0, minMarginPercent: card.minMarginPercent, sellRateCardId: card.id };
+  return { hasSignedAgreement: true, price: slab.price, minMarginPercent: card.minMarginPercent, sellRateCardId: card.id };
+}
+
+/**
  * Whether a computed sell price leaves at least minMarginPercent over a
  * given courier cost. Returns false (not flagged) when no floor is
  * configured for the applicable price list — the floor is an opt-in guard,
