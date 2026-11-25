@@ -27,7 +27,7 @@ const applicationSchema = z.object({
     name: z.string().trim().min(2).max(100), email: z.string().trim().email().max(254).transform(v => v.toLowerCase()),
     phone: z.string().trim().regex(/^(?:\+91[ -]?)?[6-9]\d{9}$/, "Enter a valid Indian mobile number"),
     company: z.string().trim().max(200).optional(), accountType: z.enum(["individual", "business", "reseller"]),
-    businessModel: z.string().refine((value) => value.split(",").every((item) => ["ECOM_B2B", "ECOM_B2C", "MLB_B2B", "BIZ_B2B", "BIZ_B2C", "B2B", "B2C", "ECOM", "MIXED", "OTHER"].includes(item)), "Choose valid rate categories").refine((value) => value.length > 0, "Choose at least one rate category"),
+    businessModel: z.string().refine((value) => value.split(",").every((item) => ["ECOM_B2B", "ECOM_B2C", "MLB_B2B", "MLB_B2C", "BIZ_B2B", "BIZ_B2C", "B2B", "B2C", "ECOM", "MIXED", "OTHER"].includes(item)), "Choose valid rate categories").refine((value) => value.length > 0, "Choose at least one rate category"),
     address: z.string().trim().min(10).max(1000), pincode: z.string().regex(/^[1-9]\d{5}$/),
     baseCity: z.string().trim().min(2).max(100), basePincode: z.string().regex(/^[1-9]\d{5}$/), pickupCity: z.string().trim().min(2).max(100),
     gstin: z.string().trim().toUpperCase().regex(/^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "Enter a valid GSTIN or leave blank").optional(),
@@ -50,8 +50,9 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
     const { consent, website, shipmentType, servicePreference, pickupFrequency, operationArea, operatingStates, ...data } = result.data;
     const inferredBaseCity = data.baseCity.trim().toLowerCase() === "vizianagaram" || data.basePincode.startsWith("535");
     const effectiveOperationArea = inferredBaseCity ? "BASE_CITY" : operationArea;
+    if (!inferredBaseCity && data.businessModel.split(",").some((category) => category.startsWith("BIZ_"))) return { ok: false, error: "Branch rates are available only when the operation location matches the local branch area.", formValues };
     if (effectiveOperationArea === "SELECTED_STATES" && !operatingStates) return { ok: false, error: "Select at least one operating state", formValues };
-    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, `Operation area: ${effectiveOperationArea === "BASE_CITY" ? "Vizianagaram, Andhra Pradesh and nearby areas" : effectiveOperationArea}`, operatingStates && `Operating states: ${operatingStates}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
+    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, `Operation area: ${effectiveOperationArea === "BASE_CITY" ? "Local branch coverage and nearby areas" : effectiveOperationArea}`, operatingStates && `Operating states: ${operatingStates}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
     data.requirements = requirements;
     const applicationNumber = `AN-APP-${new Date().getFullYear()}-${randomBytes(4).toString("hex").toUpperCase()}`;
     void consent;
