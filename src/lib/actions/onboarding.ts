@@ -11,6 +11,7 @@ import { randomBytes } from "crypto";
 import { getIndicativeRates } from "@/lib/indicative-pricing";
 import { sendEmail } from "@/lib/email";
 import type { IndicativeRate } from "@/lib/indicative-pricing";
+import { INDIA_STATES_AND_UTS } from "@/lib/india-states";
 export type OnboardingState = {
     ok: boolean;
     error?: string;
@@ -29,15 +30,17 @@ const applicationSchema = z.object({
     gstin: z.string().trim().toUpperCase().regex(/^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "Enter a valid GSTIN or leave blank").optional(),
     billingName: z.string().trim().min(2).max(200), billingEmail: z.string().trim().email().max(254), billingAddress: z.string().trim().min(10).max(1000), billingState: z.string().trim().min(2).max(100),
     billingCycle: z.enum(["PER_SHIPMENT", "FORTNIGHTLY", "MONTHLY"]), paymentTermsDays: z.coerce.number().int().refine(v => [0, 7, 15, 30].includes(v), "Choose valid payment terms"),
-    monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), operationArea: z.enum(["PAN_INDIA", "SELECTED_STATES", "BASE_CITY"]), operatingStates: z.string().trim().max(500).optional(), requirements: z.string().max(2000).optional(),
+    monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), operationArea: z.enum(["PAN_INDIA", "SELECTED_STATES", "BASE_CITY"]), operatingStates: z.string().trim().max(1000).optional().refine((value) => !value || value.split(", ").every((state) => (INDIA_STATES_AND_UTS as readonly string[]).includes(state)), "Choose states from the list"), requirements: z.string().max(2000).optional(),
     consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), website: z.string().max(0).optional(),
 });
 export async function applyPartnerAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
-    const result = applicationSchema.safeParse({ ...Object.fromEntries(fd), businessModel: fd.getAll("businessModel").map(String).join(",") });
+    const selectedStates = fd.getAll("operatingStates").map(String).filter(Boolean).join(", ");
+    const result = applicationSchema.safeParse({ ...Object.fromEntries(fd), businessModel: fd.getAll("businessModel").map(String).join(","), operatingStates: selectedStates });
     if (!result.success)
         return { ok: false, error: result.error.issues[0].message };
     const { consent, website, shipmentType, servicePreference, pickupFrequency, operationArea, operatingStates, ...data } = result.data;
-    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, `Operation area: ${operationArea}`, operatingStates && `Operating states: ${operatingStates}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
+    if (operationArea === "SELECTED_STATES" && !operatingStates) return { ok: false, error: "Select at least one operating state" };
+    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, `Operation area: ${operationArea === "BASE_CITY" ? "Vizianagaram, Andhra Pradesh and nearby areas" : operationArea}`, operatingStates && `Operating states: ${operatingStates}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
     data.requirements = requirements;
     void consent;
     void website;
