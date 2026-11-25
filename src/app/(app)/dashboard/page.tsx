@@ -147,16 +147,16 @@ export default async function DashboardPage() {
       {isStaff && <div className="rounded-card border border-accent/20 bg-accent-soft px-5 py-4 text-sm text-ink-2"><strong className="text-ink">Admin workspace.</strong> Use onboarding for new customers and courier allocation, agreements for signing and rates, and orders for day-to-day dispatch.</div>}
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatTile label="Total orders" value={totalOrders.toLocaleString("en-IN")} />
-        <StatTile label="Delivered" value={deliveredCount.toLocaleString("en-IN")} />
-        <StatTile label="In transit" value={inTransitCount.toLocaleString("en-IN")} />
-        <StatTile label="Pending" value={pendingCount.toLocaleString("en-IN")} />
+        <StatTile label="Total orders" value={totalOrders.toLocaleString("en-IN")} href="/orders" />
+        <StatTile label="Delivered" value={deliveredCount.toLocaleString("en-IN")} href="/orders?status=DELIVERED" />
+        <StatTile label="In transit" value={inTransitCount.toLocaleString("en-IN")} href="/orders?status=IN_TRANSIT" />
+        <StatTile label="Pending" value={pendingCount.toLocaleString("en-IN")} href="/orders?status=CREATED" />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-        <StatTile label="Cancelled / failed" value={cancelledCount.toLocaleString("en-IN")} />
+        <StatTile label="Cancelled / failed" value={cancelledCount.toLocaleString("en-IN")} href="/orders?status=CANCELLED" />
         <StatTile label="COD collected (delivered)" value={`₹${codCollected.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`} />
         <StatTile label="Revenue charged (delivered)" value={`₹${revenueCharged.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`} />
-        <StatTile label="Courier partners used" value={courierData.length.toLocaleString("en-IN")} />
+        <StatTile label="Courier partners used" value={courierData.length.toLocaleString("en-IN")} href="/couriers" />
       </div>
 
       <Card>
@@ -206,13 +206,16 @@ export default async function DashboardPage() {
   );
 }
 
-function StatTile({ label, value }: { label: string; value: string }) {
+function StatTile({ label, value, href = "/billing" }: { label: string; value: string; href?: string }) {
   return (
+    <Link href={href} className="block rounded-card transition hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-accent">
     <Card>
       <CardBody>
         <p className="text-xs text-ink-3">{label}</p>
         <p className="text-2xl font-semibold text-ink tabular mt-1">{value}</p>
+        <p className="mt-2 text-xs text-accent">Open details →</p>
       </CardBody>
     </Card>
+    </Link>
   );
 }

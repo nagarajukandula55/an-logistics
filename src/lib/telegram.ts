@@ -186,7 +186,6 @@ export async function notifyOpsTelegram(event: TelegramNotificationEvent, text: 
   });
   const eventChannel = channels.find((channel) => channel.event === event);
   const configuredOpsChat = process.env.TELEGRAM_OPS_GROUP_CHAT_ID?.trim();
-  const chatIds = [...new Set([...channels.map((channel) => channel.groupChatId), configuredOpsChat].filter((id): id is string => Boolean(id)))];
-  if (eventChannel?.groupChatId && !chatIds.includes(eventChannel.groupChatId)) chatIds.push(eventChannel.groupChatId);
+  const chatIds = [...new Set([eventChannel?.groupChatId, configuredOpsChat].filter((id): id is string => Boolean(id)))];
   await Promise.all(chatIds.map((chatId) => sendRawTelegramMessage(chatId, text)));
 }

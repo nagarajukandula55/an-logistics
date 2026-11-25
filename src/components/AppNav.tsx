@@ -9,16 +9,16 @@ import { cn } from "@/lib/cn";
 import { signOutAction } from "@/lib/actions/auth-signout";
 
 const LINKS = [
-  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard }, { href: "/orders", label: "Orders", icon: Package },
-  { href: "/dispatch", label: "Dispatch", icon: Truck }, { href: "/couriers", label: "Couriers", icon: Handshake },
-  { href: "/pricing", label: "Pricing", icon: Tag },
-  { href: "/tat", label: "TAT Planner", icon: Clock3 },
+  { href: "/dashboard", label: "Home", icon: LayoutDashboard }, { href: "/orders", label: "Shipments", icon: Package },
+  { href: "/dispatch", label: "Dispatch", icon: Truck }, { href: "/couriers", label: "Courier partners", icon: Handshake },
+  { href: "/pricing", label: "Rate cards", icon: Tag },
+  { href: "/tat", label: "Coverage & TAT", icon: Clock3 },
   { href: "/drivers", label: "Drivers", icon: Users }, { href: "/vehicles", label: "Vehicles", icon: Truck },
 ];
 const ADMIN_LINKS = [
-  { href: "/onboarding", label: "Onboarding", icon: Handshake }, { href: "/documents", label: "Documents", icon: Files }, { href: "/quotations", label: "Quotations", icon: FileChartColumn }, { href: "/agreements", label: "Agreements", icon: FileSignature }, { href: "/users", label: "Users", icon: ShieldCheck },
-  { href: "/tenants", label: "Tenants", icon: Building2 }, { href: "/billing/invoices", label: "Billing", icon: Receipt },
-  { href: "/settings/telegram-notifications", label: "Telegram", icon: Send },
+  { href: "/onboarding", label: "Partner applications", icon: Handshake }, { href: "/documents", label: "Files", icon: Files }, { href: "/quotations", label: "Quotes", icon: FileChartColumn }, { href: "/agreements", label: "Agreements", icon: FileSignature }, { href: "/users", label: "Team", icon: ShieldCheck },
+  { href: "/tenants", label: "Connections", icon: Building2 }, { href: "/billing/invoices", label: "Billing", icon: Receipt },
+  { href: "/settings/telegram-notifications", label: "Notifications", icon: Send },
 ];
 
 export function AppNav({ userName, role }: { userName: string; role: string }) {
