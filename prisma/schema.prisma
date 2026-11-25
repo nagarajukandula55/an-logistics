@@ -1121,6 +1121,7 @@ enum ApplicationStatus {
 
 model PartnerApplication {
   id               String            @id @default(cuid())
+    applicationNumber String?          @unique
   email            String            @unique
   name             String
   phone            String

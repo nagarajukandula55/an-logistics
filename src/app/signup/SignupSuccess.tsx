@@ -17,6 +17,7 @@ export function SignupSuccess({ state }: { state: OnboardingState }) {
   }, [preview]);
   return <div role="status" className="rounded-2xl border border-success/30 bg-success-soft p-6 text-success">
     <h2 className="text-xl font-semibold">Application submitted successfully</h2>
+    {state.applicationNumber && <p className="mt-3 inline-flex rounded-lg border border-success/30 bg-surface px-3 py-2 text-sm text-ink"><strong className="mr-2">Application number:</strong>{state.applicationNumber}</p>}
     <p className="mt-2">{state.message}</p>
     {preview && <div className="mt-6 rounded-xl border border-border bg-surface p-4 text-ink">
       <p className="text-sm text-ink-2">Selected rate categories: <strong>{preview.source}</strong></p>

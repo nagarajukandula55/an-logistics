@@ -12,11 +12,14 @@ import { getIndicativeRates } from "@/lib/indicative-pricing";
 import { sendEmail } from "@/lib/email";
 import type { IndicativeRate } from "@/lib/indicative-pricing";
 import { INDIA_STATES_AND_UTS } from "@/lib/india-states";
+import { SERVICE_OPTIONS } from "@/lib/signup-options";
 export type OnboardingState = {
     ok: boolean;
     error?: string;
     message?: string;
     quotationSent?: boolean;
+    applicationNumber?: string;
+    formValues?: Record<string, string | string[]>;
     ratePreview?: { source: string; rates: IndicativeRate[] };
     applicant?: { name: string; email: string; businessModel: string; baseCity: string; basePincode: string; pickupCity: string; pickupPincode: string; monthlyVolume: number };
 };
@@ -30,27 +33,36 @@ const applicationSchema = z.object({
     gstin: z.string().trim().toUpperCase().regex(/^$|^[0-9]{2}[A-Z]{5}[0-9]{4}[A-Z][1-9A-Z]Z[0-9A-Z]$/, "Enter a valid GSTIN or leave blank").optional(),
     billingName: z.string().trim().min(2).max(200), billingEmail: z.string().trim().email().max(254), billingAddress: z.string().trim().min(10).max(1000), billingState: z.string().trim().min(2).max(100),
     billingCycle: z.enum(["PER_SHIPMENT", "FORTNIGHTLY", "MONTHLY"]), paymentTermsDays: z.coerce.number().int().refine(v => [0, 7, 15, 30].includes(v), "Choose valid payment terms"),
-    monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().max(120).optional(), pickupFrequency: z.string().trim().max(80).optional(), operationArea: z.enum(["PAN_INDIA", "SELECTED_STATES", "BASE_CITY"]), operatingStates: z.string().trim().max(1000).optional().refine((value) => !value || value.split(", ").every((state) => (INDIA_STATES_AND_UTS as readonly string[]).includes(state)), "Choose states from the list"), requirements: z.string().max(2000).optional(),
+    monthlyVolume: z.coerce.number().int().min(0).max(10000000), shipmentType: z.string().trim().max(80).optional(), servicePreference: z.string().trim().min(1, "Choose at least one service").max(500).refine((value) => value.split(", ").every((item) => (SERVICE_OPTIONS as readonly string[]).includes(item)), "Choose services from the list"), pickupFrequency: z.string().trim().max(80).optional(), operationArea: z.enum(["PAN_INDIA", "SELECTED_STATES", "BASE_CITY"]), operatingStates: z.string().trim().max(1000).optional().refine((value) => !value || value.split(", ").every((state) => (INDIA_STATES_AND_UTS as readonly string[]).includes(state)), "Choose states from the list"), requirements: z.string().max(2000).optional(),
     consent: z.literal("on", { error: "Please accept the privacy notice and contact consent" }), website: z.string().max(0).optional(),
 });
 export async function applyPartnerAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
     const selectedStates = fd.getAll("operatingStates").map(String).filter(Boolean).join(", ");
-    const result = applicationSchema.safeParse({ ...Object.fromEntries(fd), businessModel: fd.getAll("businessModel").map(String).join(","), operatingStates: selectedStates });
+    const selectedServices = fd.getAll("servicePreference").map(String).filter(Boolean).join(", ");
+    const formValues: Record<string, string | string[]> = {};
+    for (const key of new Set([...fd.keys()])) {
+        const values = fd.getAll(key).map(String);
+        formValues[key] = values.length > 1 ? values : (values[0] ?? "");
+    }
+    const result = applicationSchema.safeParse({ ...Object.fromEntries(fd), businessModel: fd.getAll("businessModel").map(String).join(","), servicePreference: selectedServices, operatingStates: selectedStates });
     if (!result.success)
-        return { ok: false, error: result.error.issues[0].message };
+        return { ok: false, error: result.error.issues[0].message, formValues };
     const { consent, website, shipmentType, servicePreference, pickupFrequency, operationArea, operatingStates, ...data } = result.data;
-    if (operationArea === "SELECTED_STATES" && !operatingStates) return { ok: false, error: "Select at least one operating state" };
-    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, `Operation area: ${operationArea === "BASE_CITY" ? "Vizianagaram, Andhra Pradesh and nearby areas" : operationArea}`, operatingStates && `Operating states: ${operatingStates}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
+    const inferredBaseCity = data.baseCity.trim().toLowerCase() === "vizianagaram" || data.basePincode.startsWith("535");
+    const effectiveOperationArea = inferredBaseCity ? "BASE_CITY" : operationArea;
+    if (effectiveOperationArea === "SELECTED_STATES" && !operatingStates) return { ok: false, error: "Select at least one operating state", formValues };
+    const requirements = [shipmentType && `Shipment type: ${shipmentType}`, servicePreference && `Service needs: ${servicePreference}`, pickupFrequency && `Pickup frequency: ${pickupFrequency}`, `Operation area: ${effectiveOperationArea === "BASE_CITY" ? "Vizianagaram, Andhra Pradesh and nearby areas" : effectiveOperationArea}`, operatingStates && `Operating states: ${operatingStates}`, data.requirements].filter(Boolean).join("\n").slice(0, 2000);
     data.requirements = requirements;
+    const applicationNumber = `AN-APP-${new Date().getFullYear()}-${randomBytes(4).toString("hex").toUpperCase()}`;
     void consent;
     void website;
     const escape = (s: string) => s.replace(/[&<>]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]!));
     try {
-        await prisma.partnerApplication.create({ data: { ...data, consentAt: new Date() } });
+        await prisma.partnerApplication.create({ data: { ...data, applicationNumber, consentAt: new Date() } });
     }
     catch (e) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
-            return { ok: true, message: "Your application is already with our team. We will contact you." };
+            return { ok: false, error: "An application with this email already exists. Please contact AN Logistics for its status." };
         throw e;
     }
     try {
@@ -66,7 +78,7 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
         const grouped = new Map<string, typeof ratePreview.rates>();
         for (const rate of ratePreview.rates) grouped.set(rate.categoryLabel, [...(grouped.get(rate.categoryLabel) ?? []), rate]);
         const rows = [...grouped.entries()].map(([category, rates]) => { const tableRows = rates.slice(0, 80).map((rate) => `<tr><td>${escape(rate.courierName)}</td><td>${escape(rate.serviceCode)}</td><td>${escape(rate.lane)}</td><td>${rate.minWeightKg}-${rate.maxWeightKg} kg</td><td>Rs. ${rate.defaultSellRate.toFixed(2)}</td></tr>`).join(""); return `<h3>${escape(category)}</h3><table border="1" cellpadding="6" cellspacing="0"><tr><th>Courier</th><th>Service</th><th>Lane</th><th>Weight</th><th>Indicative seller rate</th></tr>${tableRows}</table>`; }).join("");
-        quotationSent = await sendEmail({ to: data.email, subject: "AN Logistics applied indicative quotation", html: `<h2>Applied indicative quotation for ${escape(data.company || data.name)}</h2><p>Selected categories: <strong>${escape(ratePreview.source)}</strong></p><p>These are discussion rates only and are not final. Please discuss and confirm the applicable services, rates, coverage, taxes, and additional charges with AN Logistics before the agreement is prepared.</p>${rows || "<p>Our team will prepare the detailed schedule and contact you.</p>"}` });
+        quotationSent = await sendEmail({ to: data.email, subject: `AN Logistics application ${applicationNumber} – indicative quotation`, html: `<h2>Application ${escape(applicationNumber)}</h2><h3>Applied indicative quotation for ${escape(data.company || data.name)}</h3><p>Selected categories: <strong>${escape(ratePreview.source)}</strong></p><p>These are discussion rates only and are not final. Please discuss and confirm the applicable services, rates, coverage, taxes, and additional charges with AN Logistics before the agreement is prepared.</p>${rows || "<p>Our team will prepare the detailed schedule and contact you.</p>"}` });
         const application = await prisma.partnerApplication.findUnique({ where: { email: data.email } });
         if (application && ratePreview) {
             const courier = await prisma.courierPartner.findFirst({ where: { status: "ACTIVE" }, orderBy: { name: "asc" } });
@@ -77,11 +89,11 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
     } catch {
         console.error("Application saved; indicative quotation email failed.");
     }
-    return { ok: true, message: quotationSent ? "Application received. Your applied indicative quotation has been emailed. Please discuss and confirm the rates with AN Logistics before final agreement." : "Application received. We could not send the quotation email yet; our team will contact you to discuss and confirm the rates before final agreement.", quotationSent, ratePreview, applicant: { name: data.name, email: data.email, businessModel: data.businessModel, baseCity: data.baseCity, basePincode: data.basePincode, pickupCity: data.pickupCity, pickupPincode: data.pincode, monthlyVolume: data.monthlyVolume } };
+    return { ok: true, applicationNumber, message: quotationSent ? "Application received. Your applied indicative quotation has been emailed. Please discuss and confirm the rates with AN Logistics before final agreement." : "Application received. We could not send the quotation email yet; our team will contact you to discuss and confirm the rates before final agreement.", quotationSent, ratePreview, applicant: { name: data.name, email: data.email, businessModel: data.businessModel, baseCity: data.baseCity, basePincode: data.basePincode, pickupCity: data.pickupCity, pickupPincode: data.pincode, monthlyVolume: data.monthlyVolume } };
 }
 export async function reviewApplicationAction(_: OnboardingState, fd: FormData): Promise<OnboardingState> {
     await requireOnboardingAdmin();
-    const parsed = z.object({ id: z.string(), status: z.enum(["CONTACTED", "NEGOTIATING", "AGREEMENT", "REJECTED"]), notes: z.string().max(10000) }).safeParse(Object.fromEntries(fd));
+    const parsed = z.object({ id: z.string(), status: z.enum(["CONTACTED", "QUOTATION", "NEGOTIATING", "AGREEMENT", "REJECTED"]), notes: z.string().max(10000) }).safeParse(Object.fromEntries(fd));
     if (!parsed.success)
         return { ok: false, error: "Invalid review details" };
     if (parsed.data.status === "AGREEMENT" && fd.get("ratesConfirmed") !== "on") return { ok: false, error: "Confirm that the applied rates were discussed and agreed before moving this application to agreement." };
