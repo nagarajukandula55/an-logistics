@@ -63,7 +63,7 @@ export async function applyPartnerAction(_: OnboardingState, fd: FormData): Prom
     }
     catch (e) {
         if (e instanceof Prisma.PrismaClientKnownRequestError && e.code === "P2002")
-            return { ok: false, error: "An application with this email already exists. Please contact AN Logistics for its status." };
+            return { ok: false, error: "An application with this email already exists. Please contact AN Logistics for its status.", formValues };
         throw e;
     }
     try {
